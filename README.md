@@ -1,6 +1,8 @@
 Musical Spectrum plugin for DeaDBeeF audio player
 ====================
 
+This plugin is based on DeaDBeeFs stock spectrum. It currently offers more accuracy (FFT size 16384) and the bars are layed out to represent the musical keys. In the future I will add more features like color customization, select FFT size, display music keys or frequencies - basically most of what [foo_musical_spectrum](http://wiki.hydrogenaudio.org/index.php?title=Foobar2000:Components/Musical_Spectrum_%28foo_musical_spectrum%29) already does. 
+
 ## Installation
 
 ### Arch Linux
