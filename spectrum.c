@@ -42,6 +42,7 @@
 #define VIS_FALLOFF_PEAK 2
 #define BAND_WIDTH 5
 #define FFT_SIZE 16384
+//#define FFT_SIZE 32768
 
 
 /* Global variables */
@@ -200,6 +201,40 @@ spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
     }
 }
 
+double CubicInterpolate(double y0, double y1, double y2, double y3, double x)
+{
+    double a, b, c, d;
+
+    a = y0 / -6.0 + y1 / 2.0 - y2 / 2.0 + y3 / 6.0;
+    b = y0 - 5.0 * y1 / 2.0 + 2.0 * y2 - y3 / 2.0;
+    c = -11.0 * y0 / 6.0 + 3.0 * y1 - 3.0 * y2 / 2.0 + y3 / 3.0;
+    d = y0;
+
+    double xx = x * x;
+    double xxx = xx * x;
+
+    return (a * xxx + b * xx + c * x + d);
+}
+
+double
+spectrum_interpolate (gpointer user_data, double bin0, double bin1)
+{
+    w_spectrum_t *w = user_data;
+    double binmid = (bin0 + bin1) / 2.0;
+    //printf ("%f\n",binmid);
+    int ibin = (int) (binmid) - 1;
+    if (ibin < 1)
+        ibin = 1;
+    if (ibin >= w->nsamples/2 - 3)
+        ibin = w->nsamples/2 - 4;
+
+    double value = CubicInterpolate(w->data[ibin],
+            w->data[ibin + 1],
+            w->data[ibin + 2],
+            w->data[ibin + 3], binmid - (double)ibin);
+    return value;
+}
+
 int
 spectrum_lookup_index (gpointer user_data, float freq)
 {
@@ -229,7 +264,9 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     for (int i = 0; i < bands; i++)
     {
         double f = 0.0;
-        f = freq[(int)(w->keys[i]/freq_delta)];
+        //f = freq[(int)(w->keys[i]/freq_delta)];
+        f = spectrum_interpolate (w, w->keys[i]/freq_delta,w->keys[i+1]/freq_delta);
+        printf ("%f\n",f);
         int x = 20 * log10 (f);
         x = CLAMP (x, 0, 50);
 
@@ -302,12 +339,21 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     float base_s = (height / 50.f);
 
     cairo_surface_flush (w->surf);
-    unsigned char *data = cairo_image_surface_get_data (w->surf);
-    if (!data) {
-        return FALSE;
-    }
-    int stride = cairo_image_surface_get_stride (w->surf);
-    memset (data, 0, a.height * stride);
+
+    cairo_pattern_t *pat;
+
+    cairo_save (cr);
+    cairo_set_source_surface (cr, w->surf, 0, 0);
+    cairo_rectangle (cr, 0, 0, a.width, a.height);
+    cairo_fill (cr);
+    cairo_restore (cr);
+    pat = cairo_pattern_create_linear (0.0, 0.0,  0.0, 256.0);
+    cairo_pattern_add_color_stop_rgba (pat, 5.0/6.0, 0, 32.0/255, 100.0/255, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 4.0/6.0, 0, 148.0/255, 160.0/255, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 3.0/6.0, 0.5, 1, 120.0/255, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 2.0/6.0, 1, 1, 0, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1.0/6.0, 1, 0.5, 0, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 0, 1, 0, 0, 1);
 
     int barw = CLAMP (width / bands, 2, 20);
     for (gint i = 0; i <= bands; i++)
@@ -321,18 +367,18 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         if (x + bw >= a.width) {
             bw = a.width-x-1;
         }
-        _draw_bar (data, stride, x+1, y, bw, a.height-y, 0xff007fff);
+        //_draw_bar (data, stride, x+1, y, bw, a.height-y, 0xff007fff);
+        cairo_rectangle (cr, x+1, y, bw, a.height-y);
         y = a.height - w->peaks[i] * base_s;
         if (y < a.height-1) {
-            _draw_bar (data, stride, x + 1, y, bw, 1, 0xffffffff);
+            //_draw_bar (data, stride, x + 1, y, bw, 1, 0xffffffff);
+            cairo_rectangle (cr, x+1, y, bw, 1);
         }
     }
-    cairo_surface_mark_dirty (w->surf);
-    cairo_save (cr);
-    cairo_set_source_surface (cr, w->surf, 0, 0);
-    cairo_rectangle (cr, 0, 0, a.width, a.height);
+    cairo_set_source (cr, pat);
     cairo_fill (cr);
-    cairo_restore (cr);
+    cairo_pattern_destroy (pat);
+    cairo_surface_mark_dirty (w->surf);
 
 #endif
     return FALSE;
