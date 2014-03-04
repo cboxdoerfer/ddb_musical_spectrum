@@ -35,7 +35,7 @@
 #include <deadbeef/deadbeef.h>
 #include <deadbeef/gtkui_api.h>
 
-#define MAX_BANDS 128
+#define MAX_BANDS 126
 #define VIS_DELAY 1
 #define VIS_DELAY_PEAK 10
 #define VIS_FALLOFF 2
@@ -58,6 +58,8 @@ typedef struct {
 #endif
     double *data;
     double hanning[FFT_SIZE];
+    // keys: frequencies of musical notes, c0;d0;...;f10
+    double keys [126];
     double *samples;
     int resized;
     int nsamples;
@@ -92,7 +94,8 @@ do_fft (w_spectrum_t *w)
     {
         real = out[i][0];
         imag = out[i][1];
-        w->data[i] = 10.0 * log10(real*real + imag*imag);
+        //w->data[i] = 10.0 * log10(real*real + imag*imag);
+        w->data[i] = pow(real*real + imag*imag, 1.0/3.0);
     }
     fftw_destroy_plan (p);
     fftw_free (in);
@@ -214,6 +217,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     }
     do_fft (w);
     double *freq = w->data;
+    double freq_delta = 44100.0 / w->nsamples;
     GtkAllocation a;
     gtk_widget_get_allocation (widget, &a);
 
@@ -222,14 +226,10 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     width = a.width;
     height = a.height;
 
-    for (int i = 0; i <= bands; i++)
+    for (int i = 0; i < bands; i++)
     {
         double f = 0.0;
-        double frequency = 440.0 * pow (2.0, (double)(i-58)/12.0);
-        int in = spectrum_lookup_index (w, frequency);
-        if (in < w->nsamples/2 && in >= 0) {
-           f = freq[in];
-        }
+        f = freq[(int)(w->keys[i]/freq_delta)];
         int x = 20 * log10 (f);
         x = CLAMP (x, 0, 50);
 
@@ -361,6 +361,9 @@ w_spectrum_init (ddb_gtkui_widget_t *w) {
     s->nsamples = FFT_SIZE;
     for (int i = 0; i < s->nsamples; i++) {
         s->hanning[i] = (0.5 * (1 - cos (2 * M_PI * i/(s->nsamples/2))));
+    }
+    for (int i = 0; i < 126; i++) {
+        s->keys[i] = 440.0 * pow (2.0, (double)(i-57)/12.0);
     }
 #if USE_OPENGL
     if (!gtkui_gl_init ()) {
