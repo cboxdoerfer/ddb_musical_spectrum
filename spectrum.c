@@ -182,6 +182,9 @@ w_spectrum_draw_cb (void *data) {
 static void
 spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
     w_spectrum_t *w = ctx;
+    if (!w->samples) {
+        return;
+    }
     int nsamples = data->nframes/data->fmt->channels;
     int n;
     float ratio = data->fmt->samplerate / 44100.f;
@@ -269,7 +272,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     for (int i = 0; i < bands; i++)
     {
         double f = 0.0;
-        //f = freq[(int)(w->keys[i]/freq_delta)];
+        f = freq[(int)(w->keys[i]/freq_delta)];
         f = spectrum_interpolate (w, w->keys[i]/freq_delta,w->keys[i+1]/freq_delta);
         int x = 20 * log10 (f);
         x = CLAMP (x, 0, 50);
