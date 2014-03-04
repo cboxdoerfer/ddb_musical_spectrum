@@ -29,7 +29,7 @@ GTK3_CFLAGS?=`pkg-config --cflags gtk+-3.0`
 GTK2_LIBS?=`pkg-config --libs gtk+-2.0`
 GTK3_LIBS?=`pkg-config --libs gtk+-3.0`
 
-FFTW_LIBS?=-fftw3
+FFTW_LIBS?=-lfftw3
 
 CC?=gcc
 CFLAGS+=-Wall -fPIC -std=c99 -D_GNU_SOURCE

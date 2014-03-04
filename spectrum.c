@@ -350,13 +350,13 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     cairo_rectangle (cr, 0, 0, a.width, a.height);
     cairo_fill (cr);
     cairo_restore (cr);
-    pat = cairo_pattern_create_linear (0.0, 0.0,  0.0, 256.0);
-    cairo_pattern_add_color_stop_rgba (pat, 5.0/6.0, 0, 32.0/255, 100.0/255, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 4.0/6.0, 0, 148.0/255, 160.0/255, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 3.0/6.0, 0.5, 1, 120.0/255, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 2.0/6.0, 1, 1, 0, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 1.0/6.0, 1, 0.5, 0, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 0, 1, 0, 0, 1);
+    pat = cairo_pattern_create_linear (0.0, 0.0, 0.0 , a.height);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0, 32.0/255, 100.0/255, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 5.0/6.0, 0, 148.0/255, 160.0/255, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 4.0/6.0, 0.5, 1, 120.0/255, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 3.0/6.0, 1, 1, 0, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 2.0/6.0, 1, 0.5, 0, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1.0/6.0, 1, 0, 0, 1);
 
     int barw = CLAMP (width / bands, 2, 20);
     for (gint i = 0; i <= bands; i++)
