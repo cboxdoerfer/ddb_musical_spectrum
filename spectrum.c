@@ -186,13 +186,12 @@ spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
         return;
     }
     int nsamples = data->nframes/data->fmt->channels;
-    int n;
     float ratio = data->fmt->samplerate / 44100.f;
     int size = nsamples / ratio;
-    int sz = MIN (nsamples, size);
+    int sz = MIN (w->nsamples, size);
+    int n = w->nsamples - sz;
     if (w->buffered >= FFT_SIZE && w->samples) {
         memmove (w->samples, w->samples + sz, (w->nsamples - sz)*sizeof (double));
-        n = w->nsamples - sz;
         do_fft (w);
     }
 
