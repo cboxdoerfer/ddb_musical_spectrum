@@ -200,7 +200,7 @@ spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
         }
     }
 }
-
+// Copied from audacity
 double CubicInterpolate(double y0, double y1, double y2, double y3, double x)
 {
     double a, b, c, d;
@@ -264,9 +264,8 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     for (int i = 0; i < bands; i++)
     {
         double f = 0.0;
-        //f = freq[(int)(w->keys[i]/freq_delta)];
-        f = spectrum_interpolate (w, w->keys[i]/freq_delta,w->keys[i+1]/freq_delta);
-        printf ("%f\n",f);
+        f = freq[(int)(w->keys[i]/freq_delta)];
+        //f = spectrum_interpolate (w, w->keys[i]/freq_delta,w->keys[i+1]/freq_delta);
         int x = 20 * log10 (f);
         x = CLAMP (x, 0, 50);
 
