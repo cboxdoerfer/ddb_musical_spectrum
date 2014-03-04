@@ -96,7 +96,8 @@ do_fft (w_spectrum_t *w)
         real = out[i][0];
         imag = out[i][1];
         //w->data[i] = 10.0 * log10(real*real + imag*imag);
-        w->data[i] = pow(real*real + imag*imag, 1.0/3.0);
+        //w->data[i] = pow(real*real + imag*imag, 1.0/2.0);
+        w->data[i] = (real*real + imag*imag);
     }
     fftw_destroy_plan (p);
     fftw_free (in);
@@ -187,9 +188,11 @@ spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
         int size = nsamples / ratio;
 
         int sz = MIN (w->nsamples, size);
-        int n = w->nsamples-sz;
+        //int n = w->nsamples-sz;
+        int n = 0;
 
-        memmove (w->samples, w->samples + sz, n * sizeof (double));
+        memset (w->samples, 0, w->nsamples * sizeof (double));
+        //memmove (w->samples, w->samples + sz, n * sizeof (double));
         float pos = 0;
         for (int i = 0; i < sz && pos < nsamples; i++, pos += ratio) {
             w->samples[n + i] = data->data[(int)(pos * data->fmt->channels) * data->fmt->channels + 0];
@@ -266,7 +269,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         double f = 0.0;
         f = freq[(int)(w->keys[i]/freq_delta)];
         //f = spectrum_interpolate (w, w->keys[i]/freq_delta,w->keys[i+1]/freq_delta);
-        int x = 20 * log10 (f);
+        int x = 20 * log10 (f*10);
         x = CLAMP (x, 0, 50);
 
         w->bars[i] -= MAX (0, VIS_FALLOFF - w->delay[i]);
