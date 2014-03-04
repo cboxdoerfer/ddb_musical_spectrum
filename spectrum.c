@@ -38,8 +38,8 @@
 #define MAX_BANDS 126
 #define VIS_DELAY 1
 #define VIS_DELAY_PEAK 20
-#define VIS_FALLOFF 2
-#define VIS_FALLOFF_PEAK 2
+#define VIS_FALLOFF 1
+#define VIS_FALLOFF_PEAK 1
 #define BAND_WIDTH 5
 //#define FFT_SIZE 16384
 #define FFT_SIZE 32768
@@ -96,7 +96,7 @@ do_fft (w_spectrum_t *w)
         real = out[i][0];
         imag = out[i][1];
         //w->data[i] = 10.0 * log10(real*real + imag*imag);
-        w->data[i] = pow(real*real + imag*imag, 1.0/2.0);
+        w->data[i] = pow(real*real + imag*imag, 1.0/3.0);
         //w->data[i] = (real*real + imag*imag);
     }
     fftw_destroy_plan (p);
@@ -196,9 +196,9 @@ spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
         //memmove (w->samples, w->samples + sz, n * sizeof (double));
         float pos = 0;
         for (int i = 0; i < sz && pos < nsamples; i++, pos += ratio) {
-            w->samples[n + i] = data->data[(int)(pos * data->fmt->channels)];
+            w->samples[n + i] = data->data[(int)(pos * data->fmt->channels) * data->fmt->channels];
             for (int j = 1; j < data->fmt->channels; j++) {
-                w->samples[n + i] += data->data[(int)(pos * data->fmt->channels) + j];
+                w->samples[n + i] += data->data[(int)(pos * data->fmt->channels) * data->fmt->channels + j];
             }
             w->samples[n+i] /= data->fmt->channels;
         }
