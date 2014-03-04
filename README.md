@@ -15,3 +15,7 @@ First install DeaDBeeF (>=0.6) and fftw3
 make
 ./userinstall.sh
 ```
+
+## Screenshot
+
+![](http://i.imgur.com/xmv2RRl.png)
