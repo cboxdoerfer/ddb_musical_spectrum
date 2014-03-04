@@ -35,6 +35,8 @@
 #include <deadbeef/deadbeef.h>
 #include <deadbeef/gtkui_api.h>
 
+#include "fastftoi.h"
+
 #define MAX_BANDS 126
 #define VIS_DELAY 1
 #define VIS_DELAY_PEAK 20
@@ -60,11 +62,10 @@ typedef struct {
 #endif
     double *data;
     double hanning[FFT_SIZE];
-    // keys: frequencies of musical notes, c0;d0;...;f10
-    double keys [126];
+    // keys: index of frequencies of musical notes (c0;d0;...;f10) in data
+    float keys [126];
     double *samples;
     int resized;
-    int nsamples;
     int buffered;
     int bars[MAX_BANDS + 1];
     int delay[MAX_BANDS + 1];
@@ -81,24 +82,23 @@ do_fft (w_spectrum_t *w)
         return;
     }
     double *in;
-    fftw_complex *out;
+    double *out;
     fftw_plan p;
-    double real, imag;
 
-    in = fftw_malloc (sizeof (double) * w->nsamples);
-    out = fftw_malloc (sizeof (fftw_complex) * w->nsamples);
-    p = fftw_plan_dft_r2c_1d (w->nsamples, in, out, FFTW_ESTIMATE);
-    for (int i = 0; i < w->nsamples; i++) {
+    in = fftw_malloc (sizeof (double) * FFT_SIZE);
+    out = fftw_malloc (sizeof (double) * FFT_SIZE);
+    p = fftw_plan_r2r_1d (FFT_SIZE, in, out, FFTW_R2HC, FFTW_ESTIMATE);
+    for (int i = 0; i < FFT_SIZE; i++) {
         in[i] = (double)w->samples[i] * w->hanning[i];
         //in[i] = (double)w->samples[i] ;
     }
     fftw_execute (p);
-    for (int i = 0; i < w->nsamples/2; i++)
+    for (int i = 0; i < FFT_SIZE/2; i++)
     {
-        real = out[i][0];
-        imag = out[i][1];
+        //real = out[i][0];
+        //imag = out[i][1];
         //w->data[i] = 10.0 * log10(real*real + imag*imag);
-        w->data[i] = pow(real*real + imag*imag, 1.0/3.0);
+        w->data[i] = pow(out[i]*out[i] + out[FFT_SIZE/2-i-1]*out[FFT_SIZE/2-i-1], 1.0/3.0);
         //w->data[i] = (real*real + imag*imag);
     }
     fftw_destroy_plan (p);
@@ -188,18 +188,17 @@ spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
     int nsamples = data->nframes/data->fmt->channels;
     float ratio = data->fmt->samplerate / 44100.f;
     int size = nsamples / ratio;
-    int sz = MIN (w->nsamples, size);
-    int n = w->nsamples - sz;
+    int sz = MIN (FFT_SIZE, size);
+    int n = FFT_SIZE - sz;
     if (w->buffered >= FFT_SIZE && w->samples) {
-        memmove (w->samples, w->samples + sz, (w->nsamples - sz)*sizeof (double));
-        do_fft (w);
+        memmove (w->samples, w->samples + sz, (FFT_SIZE - sz)*sizeof (double));
     }
 
     float pos = 0;
     for (int i = 0; i < sz && pos < nsamples; i++, pos += ratio) {
         w->samples[n+i] = 0.0;
         for (int j = 0; j < data->fmt->channels; j++) {
-            w->samples[n + i] += data->data[(int)(pos * data->fmt->channels) + j];
+            w->samples[n + i] += data->data[ftoi (pos * data->fmt->channels) + j];
         }
         w->samples[n + i] /= data->fmt->channels;
     }
@@ -223,32 +222,30 @@ double CubicInterpolate(double y0, double y1, double y2, double y3, double x)
     return (a * xxx + b * xx + c * x + d);
 }
 
-double
-spectrum_interpolate (gpointer user_data, double bin0, double bin1)
+float
+spectrum_interpolate (gpointer user_data, float bin0, float bin1)
 {
     w_spectrum_t *w = user_data;
     double binmid = (bin0 + bin1) / 2.0;
-    //printf ("%f\n",binmid);
-    int ibin = (int) (binmid) - 1;
+    int ibin = ftoi (binmid) - 1;
     if (ibin < 1)
         ibin = 1;
-    if (ibin >= w->nsamples/2 - 3)
-        ibin = w->nsamples/2 - 4;
+    if (ibin >= FFT_SIZE/2 - 3)
+        ibin = FFT_SIZE/2 - 4;
 
-    double value = CubicInterpolate(w->data[ibin],
+    return CubicInterpolate(w->data[ibin],
             w->data[ibin + 1],
             w->data[ibin + 2],
             w->data[ibin + 3], binmid - (double)ibin);
-    return value;
 }
 
 int
 spectrum_lookup_index (gpointer user_data, float freq)
 {
     w_spectrum_t *w = user_data;
-    double freq_delta = 44100 / (double)w->nsamples;
+    double freq_delta = 44100 / (double)FFT_SIZE;
     int index = 0;
-    return index = (int)(freq/freq_delta);
+    return index = ftoi (freq/freq_delta);
 }
 
 static gboolean
@@ -257,12 +254,10 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     if (!w->samples) {
         return FALSE;
     }
-//    do_fft (w);
-    double *freq = w->data;
-    double freq_delta = 44100.0 / w->nsamples;
     GtkAllocation a;
     gtk_widget_get_allocation (widget, &a);
 
+    do_fft (w);
     int width, height, bands;
     bands = MAX_BANDS;
     width = a.width;
@@ -270,9 +265,8 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
 
     for (int i = 0; i < bands; i++)
     {
-        double f = 0.0;
-        f = freq[(int)(w->keys[i]/freq_delta)];
-        f = spectrum_interpolate (w, w->keys[i]/freq_delta,w->keys[i+1]/freq_delta);
+        //f = freq[ftoi (w->keys[i])];
+        float f = spectrum_interpolate (w, w->keys[i], w->keys[i+1]);
         int x = 20 * log10 (f);
         x = CLAMP (x, 0, 50);
 
@@ -354,12 +348,12 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     cairo_fill (cr);
     cairo_restore (cr);
     pat = cairo_pattern_create_linear (0.0, 0.0, 0.0 , a.height);
-    cairo_pattern_add_color_stop_rgba (pat, 1, 0, 32.0/255, 100.0/255, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 5.0/6.0, 0, 148.0/255, 160.0/255, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 4.0/6.0, 0.5, 1, 120.0/255, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 3.0/6.0, 1, 1, 0, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 2.0/6.0, 1, 0.5, 0, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 1.0/6.0, 1, 0, 0, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 1, 0, 0.125, 0.255, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 0.83, 0, 0.58, 0.627, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 0.67, 0.5, 1, 0.47, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 0.5, 1, 1, 0, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 0.33, 1, 0.5, 0, 1);
+    cairo_pattern_add_color_stop_rgba (pat, 0.17, 1, 0, 0, 1);
 
     int barw = CLAMP (width / bands, 2, 20);
     for (gint i = 0; i <= bands; i++)
@@ -410,12 +404,11 @@ w_spectrum_init (ddb_gtkui_widget_t *w) {
         g_source_remove (s->drawtimer);
         s->drawtimer = 0;
     }
-    s->nsamples = FFT_SIZE;
-    for (int i = 0; i < s->nsamples; i++) {
-        s->hanning[i] = (0.5 * (1 - cos (2 * M_PI * i/(s->nsamples/2))));
+    for (int i = 0; i < FFT_SIZE; i++) {
+        s->hanning[i] = (0.5 * (1 - cos (2 * M_PI * i/(FFT_SIZE/2))));
     }
     for (int i = 0; i < 126; i++) {
-        s->keys[i] = 440.0 * pow (2.0, (double)(i-57)/12.0);
+        s->keys[i] = (float)(440.0 * (pow (2.0, (double)(i-57)/12.0) * FFT_SIZE/44100.0));
     }
 #if USE_OPENGL
     if (!gtkui_gl_init ()) {
@@ -445,7 +438,6 @@ w_musical_spectrum_create (void) {
     w->base.destroy  = w_spectrum_destroy;
     w->drawarea = gtk_drawing_area_new ();
     w->mutex = deadbeef->mutex_create ();
-    w->nsamples = FFT_SIZE;
 #if USE_OPENGL
     int attrlist[] = {GDK_GL_ATTRIB_LIST_NONE};
     GdkGLConfig *conf = gdk_gl_config_new_by_mode ((GdkGLConfigMode)(GDK_GL_MODE_RGB |
