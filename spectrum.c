@@ -41,8 +41,9 @@
 #define VIS_FALLOFF 1
 #define VIS_FALLOFF_PEAK 1
 #define BAND_WIDTH 5
-//#define FFT_SIZE 16384
-#define FFT_SIZE 32768
+#define FFT_SIZE 16384
+//#define FFT_SIZE 32768
+//#define FFT_SIZE 8192
 
 
 /* Global variables */
@@ -64,6 +65,7 @@ typedef struct {
     double *samples;
     int resized;
     int nsamples;
+    int buffered;
     int bars[MAX_BANDS + 1];
     int delay[MAX_BANDS + 1];
     int peaks[MAX_BANDS + 1];
@@ -75,10 +77,9 @@ typedef struct {
 void
 do_fft (w_spectrum_t *w)
 {
-    if (!w->samples) {
+    if (!w->samples || w->buffered < FFT_SIZE) {
         return;
     }
-    deadbeef->mutex_lock (w->mutex);
     double *in;
     fftw_complex *out;
     fftw_plan p;
@@ -89,6 +90,7 @@ do_fft (w_spectrum_t *w)
     p = fftw_plan_dft_r2c_1d (w->nsamples, in, out, FFTW_ESTIMATE);
     for (int i = 0; i < w->nsamples; i++) {
         in[i] = (double)w->samples[i] * w->hanning[i];
+        //in[i] = (double)w->samples[i] ;
     }
     fftw_execute (p);
     for (int i = 0; i < w->nsamples/2; i++)
@@ -102,7 +104,6 @@ do_fft (w_spectrum_t *w)
     fftw_destroy_plan (p);
     fftw_free (in);
     fftw_free (out);
-    deadbeef->mutex_unlock (w->mutex);
 }
 
 static inline void
@@ -181,27 +182,27 @@ w_spectrum_draw_cb (void *data) {
 static void
 spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
     w_spectrum_t *w = ctx;
+    int nsamples = data->nframes/data->fmt->channels;
+    int n;
+    float ratio = data->fmt->samplerate / 44100.f;
+    int size = nsamples / ratio;
+    int sz = MIN (nsamples, size);
+    if (w->buffered >= FFT_SIZE && w->samples) {
+        memmove (w->samples, w->samples + sz, (w->nsamples - sz)*sizeof (double));
+        n = w->nsamples - sz;
+        do_fft (w);
+    }
 
-    if (w->samples) {
-        int nsamples = data->nframes / data->fmt->channels;
-        float ratio = data->fmt->samplerate / 44100.f;
-        int size = nsamples / ratio;
-
-        //int sz = MIN (w->nsamples, size);
-        int sz = w->nsamples;
-        //int n = w->nsamples-sz;
-        int n = 0;
-
-        memset (w->samples, 0, w->nsamples * sizeof (double));
-        //memmove (w->samples, w->samples + sz, n * sizeof (double));
-        float pos = 0;
-        for (int i = 0; i < sz && pos < nsamples; i++, pos += ratio) {
-            w->samples[n + i] = data->data[(int)(pos * data->fmt->channels) * data->fmt->channels];
-            for (int j = 1; j < data->fmt->channels; j++) {
-                w->samples[n + i] += data->data[(int)(pos * data->fmt->channels) * data->fmt->channels + j];
-            }
-            w->samples[n+i] /= data->fmt->channels;
+    float pos = 0;
+    for (int i = 0; i < sz && pos < nsamples; i++, pos += ratio) {
+        w->samples[n+i] = 0.0;
+        for (int j = 0; j < data->fmt->channels; j++) {
+            w->samples[n + i] += data->data[(int)(pos * data->fmt->channels) + j];
         }
+        w->samples[n + i] /= data->fmt->channels;
+    }
+    if (w->buffered < FFT_SIZE) {
+        w->buffered += sz;
     }
 }
 // Copied from audacity
@@ -254,7 +255,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     if (!w->samples) {
         return FALSE;
     }
-    do_fft (w);
+//    do_fft (w);
     double *freq = w->data;
     double freq_delta = 44100.0 / w->nsamples;
     GtkAllocation a;
@@ -268,9 +269,9 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     for (int i = 0; i < bands; i++)
     {
         double f = 0.0;
-        f = freq[(int)(w->keys[i]/freq_delta)];
-        //f = spectrum_interpolate (w, w->keys[i]/freq_delta,w->keys[i+1]/freq_delta);
-        int x = 20 * log10 (f * 50);
+        //f = freq[(int)(w->keys[i]/freq_delta)];
+        f = spectrum_interpolate (w, w->keys[i]/freq_delta,w->keys[i+1]/freq_delta);
+        int x = 20 * log10 (f);
         x = CLAMP (x, 0, 50);
 
         w->bars[i] -= MAX (0, VIS_FALLOFF - w->delay[i]);
