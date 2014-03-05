@@ -47,6 +47,7 @@
 //#define FFT_SIZE 32768
 //#define FFT_SIZE 8192
 
+#define     CONFSTR_MS_DISPLAY_GRADIENT       "musical_spectrum.display_gradient"
 
 /* Global variables */
 static DB_misc_t            plugin;
@@ -56,6 +57,8 @@ static ddb_gtkui_t *        gtkui_plugin = NULL;
 typedef struct {
     ddb_gtkui_widget_t base;
     GtkWidget *drawarea;
+    GtkWidget *popup;
+    GtkWidget *popup_item;
     guint drawtimer;
 #if USE_OPENGL
     GdkGLContext *glcontext;
@@ -79,6 +82,22 @@ static double *in, *out_real;
 static fftw_complex *out_complex;
 static fftw_plan p_r2r;
 static fftw_plan p_r2c;
+
+static gboolean CONFIG_GRADIENT_ENABLED = FALSE;
+
+static void
+save_config (void)
+{
+    deadbeef->conf_set_int (CONFSTR_MS_DISPLAY_GRADIENT,         CONFIG_GRADIENT_ENABLED);
+}
+
+static void
+load_config (void)
+{
+    deadbeef->conf_lock ();
+    CONFIG_GRADIENT_ENABLED = deadbeef->conf_get_int (CONFSTR_MS_DISPLAY_GRADIENT,             FALSE);
+    deadbeef->conf_unlock ();
+}
 
 void
 do_fft (w_spectrum_t *w)
@@ -133,6 +152,98 @@ _draw_bar (uint8_t *data, int stride, int x0, int y0, int w, int h, uint32_t col
         y0++;
         ptr += stride/4-w;
     }
+}
+
+static int
+on_config_changed (uintptr_t ctx)
+{
+    //load_config ();
+    return 0;
+}
+
+#if !GTK_CHECK_VERSION(2,12,0)
+#define gtk_widget_get_window(widget) ((widget)->window)
+#define gtk_dialog_get_content_area(dialog) (dialog->vbox)
+#define gtk_dialog_get_action_area(dialog) (dialog->action_area)
+#endif
+
+#if !GTK_CHECK_VERSION(2,18,0)
+void
+gtk_widget_get_allocation (GtkWidget *widget, GtkAllocation *allocation) {
+    (allocation)->x = widget->allocation.x;
+    (allocation)->y = widget->allocation.y;
+    (allocation)->width = widget->allocation.width;
+    (allocation)->height = widget->allocation.height;
+}
+#define gtk_widget_set_can_default(widget, candefault) {if (candefault) GTK_WIDGET_SET_FLAGS (widget, GTK_CAN_DEFAULT); else GTK_WIDGET_UNSET_FLAGS(widget, GTK_CAN_DEFAULT);}
+#endif
+
+static void
+on_button_config (GtkMenuItem *menuitem, gpointer user_data)
+{
+    GtkWidget *spectrum_properties;
+    GtkWidget *config_dialog;
+    GtkWidget *vbox01;
+    GtkWidget *display_gradient;
+    GtkWidget *dialog_action_area13;
+    GtkWidget *applybutton1;
+    GtkWidget *cancelbutton1;
+    GtkWidget *okbutton1;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    spectrum_properties = gtk_dialog_new ();
+    gtk_widget_set_size_request (spectrum_properties, -1, 350);
+    gtk_window_set_title (GTK_WINDOW (spectrum_properties), "Spectrum Properties");
+    gtk_window_set_type_hint (GTK_WINDOW (spectrum_properties), GDK_WINDOW_TYPE_HINT_DIALOG);
+
+    config_dialog = gtk_dialog_get_content_area (GTK_DIALOG (spectrum_properties));
+    gtk_widget_show (config_dialog);
+
+    vbox01 = gtk_vbox_new (FALSE, 8);
+    gtk_widget_show (vbox01);
+    gtk_box_pack_start (GTK_BOX (config_dialog), vbox01, FALSE, FALSE, 0);
+    gtk_container_set_border_width (GTK_CONTAINER (vbox01), 12);
+
+    display_gradient = gtk_check_button_new_with_label ("Display gradient");
+    gtk_widget_show (display_gradient);
+    gtk_box_pack_start (GTK_BOX (vbox01), display_gradient, FALSE, FALSE, 0);
+
+    dialog_action_area13 = gtk_dialog_get_action_area (GTK_DIALOG (spectrum_properties));
+    gtk_widget_show (dialog_action_area13);
+    gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area13), GTK_BUTTONBOX_END);
+
+    applybutton1 = gtk_button_new_from_stock ("gtk-apply");
+    gtk_widget_show (applybutton1);
+    gtk_dialog_add_action_widget (GTK_DIALOG (spectrum_properties), applybutton1, GTK_RESPONSE_APPLY);
+    gtk_widget_set_can_default (applybutton1, TRUE);
+
+    cancelbutton1 = gtk_button_new_from_stock ("gtk-cancel");
+    gtk_widget_show (cancelbutton1);
+    gtk_dialog_add_action_widget (GTK_DIALOG (spectrum_properties), cancelbutton1, GTK_RESPONSE_CANCEL);
+    gtk_widget_set_can_default (cancelbutton1, TRUE);
+
+    okbutton1 = gtk_button_new_from_stock ("gtk-ok");
+    gtk_widget_show (okbutton1);
+    gtk_dialog_add_action_widget (GTK_DIALOG (spectrum_properties), okbutton1, GTK_RESPONSE_OK);
+    gtk_widget_set_can_default (okbutton1, TRUE);
+
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (display_gradient), CONFIG_GRADIENT_ENABLED);
+
+    for (;;) {
+        int response = gtk_dialog_run (GTK_DIALOG (spectrum_properties));
+        if (response == GTK_RESPONSE_OK || response == GTK_RESPONSE_APPLY) {
+            CONFIG_GRADIENT_ENABLED = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (display_gradient));
+            //save_config ();
+            deadbeef->sendmessage (DB_EV_CONFIGCHANGED, 0, 0, 0);
+        }
+        if (response == GTK_RESPONSE_APPLY) {
+            continue;
+        }
+        break;
+    }
+    gtk_widget_destroy (spectrum_properties);
+#pragma GCC diagnostic pop
+    return;
 }
 
 ///// spectrum vis
@@ -354,20 +465,30 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
 
     cairo_surface_flush (w->surf);
 
-    cairo_pattern_t *pat;
 
     cairo_save (cr);
     cairo_set_source_surface (cr, w->surf, 0, 0);
     cairo_rectangle (cr, 0, 0, a.width, a.height);
     cairo_fill (cr);
     cairo_restore (cr);
-    pat = cairo_pattern_create_linear (0.0, 0.0, 0.0 , a.height);
-    cairo_pattern_add_color_stop_rgba (pat, 1, 0, 0.125, 0.255, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 0.83, 0, 0.58, 0.627, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 0.67, 0.5, 1, 0.47, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 0.5, 1, 1, 0, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 0.33, 1, 0.5, 0, 1);
-    cairo_pattern_add_color_stop_rgba (pat, 0.17, 1, 0, 0, 1);
+    unsigned char *data = cairo_image_surface_get_data (w->surf);
+    int stride = 0;
+    cairo_pattern_t *pat;
+    if (!data) {
+        return FALSE;
+    }
+    stride = cairo_image_surface_get_stride (w->surf);
+    memset (data, 0, a.height * stride);
+
+    if (CONFIG_GRADIENT_ENABLED) {
+        pat = cairo_pattern_create_linear (0.0, 0.0, 0.0 , a.height);
+        cairo_pattern_add_color_stop_rgba (pat, 1, 0, 0.125, 0.255, 1);
+        cairo_pattern_add_color_stop_rgba (pat, 0.83, 0, 0.58, 0.627, 1);
+        cairo_pattern_add_color_stop_rgba (pat, 0.67, 0.5, 1, 0.47, 1);
+        cairo_pattern_add_color_stop_rgba (pat, 0.5, 1, 1, 0, 1);
+        cairo_pattern_add_color_stop_rgba (pat, 0.33, 1, 0.5, 0, 1);
+        cairo_pattern_add_color_stop_rgba (pat, 0.17, 1, 0, 0, 1);
+    }
 
     int barw = CLAMP (width / bands, 2, 20);
     for (gint i = 0; i <= bands; i++)
@@ -381,17 +502,27 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         if (x + bw >= a.width) {
             bw = a.width-x-1;
         }
-        //_draw_bar (data, stride, x+1, y, bw, a.height-y, 0xff007fff);
-        cairo_rectangle (cr, x+1, y, bw, a.height-y);
+        if (!CONFIG_GRADIENT_ENABLED) {
+            _draw_bar (data, stride, x+1, y, bw, a.height-y, 0xff007fff);
+        }
+        else {
+            cairo_rectangle (cr, x+1, y, bw, a.height-y);
+        }
         y = a.height - w->peaks[i] * base_s;
         if (y < a.height-1) {
-            //_draw_bar (data, stride, x + 1, y, bw, 1, 0xffffffff);
-            cairo_rectangle (cr, x+1, y, bw, 1);
+            if (!CONFIG_GRADIENT_ENABLED) {
+                _draw_bar (data, stride, x + 1, y, bw, 1, 0xffffffff);
+            }
+            else {
+                cairo_rectangle (cr, x+1, y, bw, 1);
+            }
         }
     }
-    cairo_set_source (cr, pat);
-    cairo_fill (cr);
-    cairo_pattern_destroy (pat);
+    if (CONFSTR_MS_DISPLAY_GRADIENT) {
+        cairo_set_source (cr, pat);
+        cairo_fill (cr);
+        cairo_pattern_destroy (pat);
+    }
     cairo_surface_mark_dirty (w->surf);
 
 #endif
@@ -406,6 +537,43 @@ spectrum_expose_event (GtkWidget *widget, GdkEventExpose *event, gpointer user_d
     cairo_destroy (cr);
     return res;
 }
+
+
+gboolean
+spectrum_button_press_event (GtkWidget *widget, GdkEventButton *event, gpointer user_data)
+{
+    w_spectrum_t *w = user_data;
+    if (event->button == 3) {
+      return TRUE;
+    }
+    return TRUE;
+}
+
+gboolean
+spectrum_button_release_event (GtkWidget *widget, GdkEventButton *event, gpointer user_data)
+{
+    w_spectrum_t *w = user_data;
+    if (event->button == 3) {
+      gtk_menu_popup (GTK_MENU (w->popup), NULL, NULL, NULL, w->drawarea, 0, gtk_get_current_event_time ());
+      return TRUE;
+    }
+    return TRUE;
+}
+
+static int
+spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2)
+{
+    w_spectrum_t *w = (w_spectrum_t *)widget;
+    intptr_t tid;
+
+    switch (id) {
+    case DB_EV_CONFIGCHANGED:
+        on_config_changed (ctx);
+        break;
+    }
+    return 0;
+}
+
 void
 w_spectrum_init (ddb_gtkui_widget_t *w) {
     w_spectrum_t *s = (w_spectrum_t *)w;
@@ -455,7 +623,10 @@ w_musical_spectrum_create (void) {
     w->base.widget = gtk_event_box_new ();
     w->base.init = w_spectrum_init;
     w->base.destroy  = w_spectrum_destroy;
+    w->base.message = spectrum_message;
     w->drawarea = gtk_drawing_area_new ();
+    w->popup = gtk_menu_new ();
+    w->popup_item = gtk_menu_item_new_with_mnemonic ("Configure");
     w->mutex = deadbeef->mutex_create ();
 #if USE_OPENGL
     int attrlist[] = {GDK_GL_ATTRIB_LIST_NONE};
@@ -465,12 +636,19 @@ w_musical_spectrum_create (void) {
 #endif
     gtk_widget_show (w->drawarea);
     gtk_container_add (GTK_CONTAINER (w->base.widget), w->drawarea);
+    gtk_widget_show (w->popup);
+    //gtk_container_add (GTK_CONTAINER (w->drawarea), w->popup);
+    gtk_widget_show (w->popup_item);
+    gtk_container_add (GTK_CONTAINER (w->popup), w->popup_item);
 #if !GTK_CHECK_VERSION(3,0,0)
     g_signal_connect_after ((gpointer) w->drawarea, "expose_event", G_CALLBACK (spectrum_expose_event), w);
 #else
     g_signal_connect_after ((gpointer) w->drawarea, "draw", G_CALLBACK (spectrum_draw), w);
 #endif
     g_signal_connect_after (G_OBJECT (w->drawarea), "realize", G_CALLBACK (musical_spectrum_realize), w);
+    g_signal_connect_after ((gpointer) w->base.widget, "button_press_event", G_CALLBACK (spectrum_button_press_event), w);
+    g_signal_connect_after ((gpointer) w->base.widget, "button_release_event", G_CALLBACK (spectrum_button_release_event), w);
+    g_signal_connect_after ((gpointer) w->popup_item, "activate", G_CALLBACK (on_button_config), w);
     gtkui_plugin->w_override_signals (w->base.widget, w);
     deadbeef->vis_waveform_listen (w, spectrum_wavedata_listener);
     return (ddb_gtkui_widget_t *)w;
