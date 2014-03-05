@@ -590,7 +590,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
             }
         }
     }
-    if (CONFIG_GRADIENT_ENABLED) {
+    if (CONFIG_GRADIENT_ENABLED && pat) {
         cairo_set_source (cr, pat);
         cairo_fill (cr);
         cairo_pattern_destroy (pat);
