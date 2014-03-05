@@ -75,35 +75,31 @@ typedef struct {
     cairo_surface_t *surf;
 } w_spectrum_t;
 
+static double *in, *out_real;
+static fftw_complex *out_complex;
+static fftw_plan p_r2r;
+static fftw_plan p_r2c;
+
 void
 do_fft (w_spectrum_t *w)
 {
     if (!w->samples || w->buffered < FFT_SIZE) {
         return;
     }
-    double *in;
-    double *out;
-    fftw_plan p;
+    //double real,imag;
 
-    in = fftw_malloc (sizeof (double) * FFT_SIZE);
-    out = fftw_malloc (sizeof (double) * FFT_SIZE);
-    p = fftw_plan_r2r_1d (FFT_SIZE, in, out, FFTW_R2HC, FFTW_ESTIMATE);
     for (int i = 0; i < FFT_SIZE; i++) {
         in[i] = (double)w->samples[i] * w->hanning[i];
-        //in[i] = (double)w->samples[i] ;
     }
-    fftw_execute (p);
+    fftw_execute (p_r2r);
+    //fftw_execute (p_r2c);
     for (int i = 0; i < FFT_SIZE/2; i++)
     {
         //real = out[i][0];
         //imag = out[i][1];
-        //w->data[i] = 10.0 * log10(real*real + imag*imag);
-        w->data[i] = pow(out[i]*out[i] + out[FFT_SIZE/2-i-1]*out[FFT_SIZE/2-i-1], 1.0/3.0);
         //w->data[i] = (real*real + imag*imag);
+        w->data[i] = out_real[i]*out_real[i] + out_real[FFT_SIZE-i-1]*out_real[FFT_SIZE-i-1];
     }
-    fftw_destroy_plan (p);
-    fftw_free (in);
-    fftw_free (out);
 }
 
 static inline void
@@ -151,6 +147,24 @@ w_spectrum_destroy (ddb_gtkui_widget_t *w) {
     if (s->samples) {
         free (s->samples);
         s->samples = NULL;
+    }
+    if (p_r2r) {
+        fftw_destroy_plan (p_r2r);
+    }
+    if (p_r2c) {
+        fftw_destroy_plan (p_r2c);
+    }
+    if (in) {
+        fftw_free (in);
+        in = NULL;
+    }
+    if (out_real) {
+        fftw_free (out_real);
+        out_real = NULL;
+    }
+    if (out_complex) {
+        fftw_free (out_complex);
+        out_complex = NULL;
     }
     if (s->drawtimer) {
         g_source_remove (s->drawtimer);
@@ -265,9 +279,9 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
 
     for (int i = 0; i < bands; i++)
     {
-        //f = freq[ftoi (w->keys[i])];
-        float f = spectrum_interpolate (w, w->keys[i], w->keys[i+1]);
-        int x = 20 * log10 (f);
+        float f = w->data[ftoi (w->keys[i])];
+        //float f = spectrum_interpolate (w, w->keys[i], w->keys[i+1]);
+        int x = 10 * log10 (f);
         x = CLAMP (x, 0, 50);
 
         w->bars[i] -= MAX (0, VIS_FALLOFF - w->delay[i]);
@@ -405,11 +419,16 @@ w_spectrum_init (ddb_gtkui_widget_t *w) {
         s->drawtimer = 0;
     }
     for (int i = 0; i < FFT_SIZE; i++) {
-        s->hanning[i] = (0.5 * (1 - cos (2 * M_PI * i/(FFT_SIZE/2))));
+        s->hanning[i] = (0.5 * (1 - cos (2 * M_PI * i/FFT_SIZE)));
     }
     for (int i = 0; i < 126; i++) {
         s->keys[i] = (float)(440.0 * (pow (2.0, (double)(i-57)/12.0) * FFT_SIZE/44100.0));
     }
+    in = fftw_malloc (sizeof (double) * FFT_SIZE);
+    out_real = fftw_malloc (sizeof (double) * FFT_SIZE);
+    out_complex = fftw_malloc (sizeof (fftw_complex) * FFT_SIZE);
+    p_r2r = fftw_plan_r2r_1d (FFT_SIZE, in, out_real, FFTW_R2HC, FFTW_ESTIMATE);
+    p_r2c = fftw_plan_dft_r2c_1d (FFT_SIZE, in, out_complex, FFTW_ESTIMATE);
 #if USE_OPENGL
     if (!gtkui_gl_init ()) {
       :  s->drawtimer = g_timeout_add (33, w_spectrum_draw_cb, w);
