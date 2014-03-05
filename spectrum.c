@@ -67,6 +67,7 @@ typedef struct {
     double hanning[FFT_SIZE];
     // keys: index of frequencies of musical notes (c0;d0;...;f10) in data
     float keys [126];
+    int colors [1024];
     double *samples;
     int resized;
     int buffered;
@@ -140,18 +141,89 @@ _draw_vline (uint8_t *data, int stride, int x0, int y0, int y1) {
 }
 
 static inline void
-_draw_bar (uint8_t *data, int stride, int x0, int y0, int w, int h, uint32_t color) {
+_draw_bar (uint8_t *data, int stride, int x0, int y0, int w, int h, int total_h, gpointer user_data) {
+    w_spectrum_t *s = user_data;
     int y1 = y0+h-1;
     int x1 = x0+w-1;
     uint32_t *ptr = (uint32_t*)&data[y0*stride+x0*4];
     while (y0 <= y1) {
         int x = x0;
+        int index = ftoi(((double)y0/(double)total_h) * 1023);
+        index = CLAMP (index, 0, 1023);
         while (x++ <= x1) {
-            *ptr++ = color;
+            *ptr++ = s->colors[index];
         }
         y0++;
         ptr += stride/4-w;
     }
+}
+
+/* based on Delphi function by Witold J.Janik */
+int
+create_gradient (double position)
+{
+    /* if position > 1 then we have repetition of colors it maybe useful    */
+    if (position>1.0){if (position-(int)position==0.0)position=1.0; else position=position-(int)position;}
+
+    unsigned char nmax=6; /* number of color segments */
+    double m=nmax* position;
+
+    int n=(int)m; // integer of m
+
+    double f=m-n;  // fraction of m
+    unsigned char t=(int)(f*255);
+
+    char c [3];
+    switch( n){
+        case 0: {
+                    c[0] = 255;
+                    c[1] = 0;
+                    c[2] = 0;
+                    break;
+                };
+        case 1: {
+                    c[0] = 255;
+                    c[1] = t/2;
+                    c[2] = 0;
+                    break;
+                };
+        case 2: {
+                    c[0] = 255;
+                    c[1] = 128+(t/2);
+                    c[2] = 0;
+                    break;
+                };
+        case 3: {
+                    c[0] = 255-(t/2);
+                    c[1] = 255;
+                    c[2] = 0+(t*120/255);
+                    break;
+                };
+        case 4: {
+                    c[0] = 128-(t/2);
+                    c[1] = 255-(t*107/255);
+                    c[2] = 120+(t*40/255);
+                    break;
+                };
+        case 5: {
+                    c[0] = 0;
+                    c[1] = 148-(t*112/255);
+                    c[2] = 160-(t*60/255);
+                    break;
+                };
+        default: {
+                     c[0] = 255;
+                     c[1] = 0;
+                     c[2] = 0;
+                     break;
+                 };
+    }; // case
+
+
+    return ((255 & 0xFF) << 24) | //alpha
+        (((int)c[0] & 0xFF) << 16) | //red
+        (((int)c[1] & 0xFF) << 8)  | //green
+        (((int)c[2] & 0xFF) << 0); //blue
 }
 
 static int
@@ -503,7 +575,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
             bw = a.width-x-1;
         }
         if (!CONFIG_GRADIENT_ENABLED) {
-            _draw_bar (data, stride, x+1, y, bw, a.height-y, 0xff007fff);
+            _draw_bar (data, stride, x+1, y, bw, a.height-y, a.height, user_data);
         }
         else {
             cairo_rectangle (cr, x+1, y, bw, a.height-y);
@@ -511,7 +583,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         y = a.height - w->peaks[i] * base_s;
         if (y < a.height-1) {
             if (!CONFIG_GRADIENT_ENABLED) {
-                _draw_bar (data, stride, x + 1, y, bw, 1, 0xffffffff);
+                _draw_bar (data, stride, x + 1, y, bw, 1, a.height, user_data);
             }
             else {
                 cairo_rectangle (cr, x+1, y, bw, 1);
@@ -591,6 +663,9 @@ w_spectrum_init (ddb_gtkui_widget_t *w) {
     }
     for (int i = 0; i < 126; i++) {
         s->keys[i] = (float)(440.0 * (pow (2.0, (double)(i-57)/12.0) * FFT_SIZE/44100.0));
+    }
+    for (int i = 0; i < 1024; i++) {
+        s->colors[i] = create_gradient ((double)i/1024);
     }
     in = fftw_malloc (sizeof (double) * FFT_SIZE);
     out_real = fftw_malloc (sizeof (double) * FFT_SIZE);
