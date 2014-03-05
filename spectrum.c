@@ -60,9 +60,6 @@ typedef struct {
     GtkWidget *popup;
     GtkWidget *popup_item;
     guint drawtimer;
-#if USE_OPENGL
-    GdkGLContext *glcontext;
-#endif
     double *data;
     double hanning[FFT_SIZE];
     // keys: index of frequencies of musical notes (c0;d0;...;f10) in data
@@ -361,12 +358,6 @@ w_spectrum_destroy (ddb_gtkui_widget_t *w) {
         deadbeef->mutex_free (s->mutex);
         s->mutex = 0;
     }
-#if USE_OPENGL
-    if (s->glcontext) {
-        gdk_gl_context_destroy (s->glcontext);
-        s->glcontext = NULL;
-    }
-#endif
 }
 
 gboolean
@@ -489,43 +480,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         }
     }
 
-#if USE_OPENGL
-    GdkGLDrawable *d = gtk_widget_get_gl_drawable (widget);
-    gdk_gl_drawable_gl_begin (d, w->glcontext);
-
-    glClear (GL_COLOR_B UFFER_BIT);
-    glMatrixMode (GL_PROJECTION);
-    glLoadIdentity ();
-    gluOrtho2D(0,a.width,a.height,0);
-    glMatrixMode (GL_MODELVIEW);
-    glViewport (0, 0, a.width, a.height);
-
-    glBegin (GL_QUADS);
-    float base_s = (height / 50.f);
-
-    for (gint i = 0; i <= bands; i++)
-    {
-        gint x = ((width / bands) * i) + 2;
-        int y = a.height - w->bars[i] * base_s;
-        glColor3f (0, 0.5, 1);
-        glVertex2f (x + 1, y);
-        glVertex2f (x + 1 + (width / bands) - 1, y);
-        glVertex2f (x + 1 + (width / bands) - 1, a.height);
-        glVertex2f (x + 1, a.height);
-
-        // peak
-        glColor3f (1, 1, 1);
-        y = a.height - w->peaks[i] * base_s;
-        glVertex2f (x + 1, y);
-        glVertex2f (x + 1 + (width / bands) - 1, y);
-        glVertex2f (x + 1 + (width / bands) - 1, y+1);
-        glVertex2f (x + 1, y+1);
-    }
-    glEnd();
-    gdk_gl_drawable_swap_buffers (d);
-
-    gdk_gl_drawable_gl_end (d);
-#else
+    // start drawing
     if (!w->surf || cairo_image_surface_get_width (w->surf) != a.width || cairo_image_surface_get_height (w->surf) != a.height) {
         if (w->surf) {
             cairo_surface_destroy (w->surf);
@@ -597,7 +552,6 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     }
     cairo_surface_mark_dirty (w->surf);
 
-#endif
     return FALSE;
 }
 
@@ -636,7 +590,6 @@ static int
 spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2)
 {
     w_spectrum_t *w = (w_spectrum_t *)widget;
-    intptr_t tid;
 
     switch (id) {
     case DB_EV_CONFIGCHANGED:
@@ -672,22 +625,8 @@ w_spectrum_init (ddb_gtkui_widget_t *w) {
     out_complex = fftw_malloc (sizeof (fftw_complex) * FFT_SIZE);
     p_r2r = fftw_plan_r2r_1d (FFT_SIZE, in, out_real, FFTW_R2HC, FFTW_ESTIMATE);
     p_r2c = fftw_plan_dft_r2c_1d (FFT_SIZE, in, out_complex, FFTW_ESTIMATE);
-#if USE_OPENGL
-    if (!gtkui_gl_init ()) {
-      :  s->drawtimer = g_timeout_add (33, w_spectrum_draw_cb, w);
-    }
-#else
     s->drawtimer = g_timeout_add (33, w_spectrum_draw_cb, w);
-#endif
     deadbeef->mutex_unlock (s->mutex);
-}
-
-void
-musical_spectrum_realize (GtkWidget *widget, gpointer data) {
-    w_spectrum_t *w = data;
-#if USE_OPENGL
-    w->glcontext = gtk_widget_create_gl_context (w->drawarea, NULL, TRUE, GDK_GL_RGBA_TYPE);
-#endif
 }
 
 ddb_gtkui_widget_t *
@@ -703,12 +642,6 @@ w_musical_spectrum_create (void) {
     w->popup = gtk_menu_new ();
     w->popup_item = gtk_menu_item_new_with_mnemonic ("Configure");
     w->mutex = deadbeef->mutex_create ();
-#if USE_OPENGL
-    int attrlist[] = {GDK_GL_ATTRIB_LIST_NONE};
-    GdkGLConfig *conf = gdk_gl_config_new_by_mode ((GdkGLConfigMode)(GDK_GL_MODE_RGB |
-                        GDK_GL_MODE_DOUBLE));
-    gboolean cap = gtk_widget_set_gl_capability (w->drawarea, conf, NULL, TRUE, GDK_GL_RGBA_TYPE);
-#endif
     gtk_widget_show (w->drawarea);
     gtk_container_add (GTK_CONTAINER (w->base.widget), w->drawarea);
     gtk_widget_show (w->popup);
@@ -720,7 +653,6 @@ w_musical_spectrum_create (void) {
 #else
     g_signal_connect_after ((gpointer) w->drawarea, "draw", G_CALLBACK (spectrum_draw), w);
 #endif
-    g_signal_connect_after (G_OBJECT (w->drawarea), "realize", G_CALLBACK (musical_spectrum_realize), w);
     g_signal_connect_after ((gpointer) w->base.widget, "button_press_event", G_CALLBACK (spectrum_button_press_event), w);
     g_signal_connect_after ((gpointer) w->base.widget, "button_release_event", G_CALLBACK (spectrum_button_release_event), w);
     g_signal_connect_after ((gpointer) w->popup_item, "activate", G_CALLBACK (on_button_config), w);
