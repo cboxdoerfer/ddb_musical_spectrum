@@ -63,7 +63,7 @@ typedef struct {
     double *data;
     double hanning[FFT_SIZE];
     // keys: index of frequencies of musical notes (c0;d0;...;f10) in data
-    float keys [126];
+    int keys [126];
     uint32_t colors [1024];
     double *samples;
     int resized;
@@ -81,7 +81,7 @@ static fftw_complex *out_complex;
 static fftw_plan p_r2r;
 static fftw_plan p_r2c;
 
-static gboolean CONFIG_GRADIENT_ENABLED = FALSE;
+static gboolean CONFIG_GRADIENT_ENABLED = TRUE;
 
 static void
 save_config (void)
@@ -445,7 +445,7 @@ spectrum_interpolate (gpointer user_data, float bin0, float bin1)
 int
 spectrum_lookup_index (gpointer user_data, float freq)
 {
-    w_spectrum_t *w = user_data;
+    //w_spectrum_t *w = user_data;
     double freq_delta = 44100 / (double)FFT_SIZE;
     int index = 0;
     return index = ftoi (freq/freq_delta);
@@ -468,7 +468,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
 
     for (int i = 0; i < bands; i++)
     {
-        float f = w->data[ftoi (w->keys[i])];
+        float f = w->data[w->keys[i]];
         //float f = spectrum_interpolate (w, w->keys[i], w->keys[i+1]);
         int x = 10 * log10 (f);
         x = CLAMP (x, 0, 50);
@@ -566,7 +566,7 @@ spectrum_expose_event (GtkWidget *widget, GdkEventExpose *event, gpointer user_d
 gboolean
 spectrum_button_press_event (GtkWidget *widget, GdkEventButton *event, gpointer user_data)
 {
-    w_spectrum_t *w = user_data;
+    //w_spectrum_t *w = user_data;
     if (event->button == 3) {
       return TRUE;
     }
@@ -587,7 +587,7 @@ spectrum_button_release_event (GtkWidget *widget, GdkEventButton *event, gpointe
 static int
 spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2)
 {
-    w_spectrum_t *w = (w_spectrum_t *)widget;
+    //w_spectrum_t *w = (w_spectrum_t *)widget;
 
     switch (id) {
     case DB_EV_CONFIGCHANGED:
@@ -613,7 +613,7 @@ w_spectrum_init (ddb_gtkui_widget_t *w) {
         s->hanning[i] = (0.5 * (1 - cos (2 * M_PI * i/FFT_SIZE)));
     }
     for (int i = 0; i < 126; i++) {
-        s->keys[i] = (float)(440.0 * (pow (2.0, (double)(i-57)/12.0) * FFT_SIZE/44100.0));
+        s->keys[i] = ftoi (440.0 * (pow (2.0, (double)(i-57)/12.0) * FFT_SIZE/44100.0));
     }
     for (int i = 0; i < 1024; i++) {
         s->colors[i] = create_gradient ((double)i/1024);
