@@ -162,7 +162,7 @@ create_gradient (double position)
     /* if position > 1 then we have repetition of colors it maybe useful    */
     if (position>1.0){if (position-(int)position==0.0)position=1.0; else position=position-(int)position;}
 
-    unsigned char nmax=6; /* number of color segments */
+    unsigned char nmax=5; /* number of color segments */
     double m=nmax* position;
 
     int n=(int)m; // integer of m
@@ -170,42 +170,43 @@ create_gradient (double position)
     double f=m-n;  // fraction of m
     unsigned char t=(int)(f*255);
 
-    char c [3];
-    switch( n){
+    char c[3];
+
+    switch(n){
         case 0: {
-                    c[0] = 255;
-                    c[1] = 0;
-                    c[2] = 0;
-                    break;
-                };
-        case 1: {
                     c[0] = 255;
                     c[1] = t/2;
                     c[2] = 0;
                     break;
                 };
-        case 2: {
+        case 1: {
                     c[0] = 255;
                     c[1] = 128+(t/2);
                     c[2] = 0;
                     break;
                 };
-        case 3: {
+        case 2: {
                     c[0] = 255-(t/2);
                     c[1] = 255;
                     c[2] = 0+(t*120/255);
                     break;
                 };
-        case 4: {
+        case 3: {
                     c[0] = 128-(t/2);
                     c[1] = 255-(t*107/255);
                     c[2] = 120+(t*40/255);
                     break;
                 };
-        case 5: {
+        case 4: {
                     c[0] = 0;
                     c[1] = 148-(t*112/255);
                     c[2] = 160-(t*60/255);
+                    break;
+                };
+        case 5: {
+                    c[0] = 0;
+                    c[1] = 32;
+                    c[2] = 100;
                     break;
                 };
         default: {
@@ -213,9 +214,8 @@ create_gradient (double position)
                      c[1] = 0;
                      c[2] = 0;
                      break;
-                 };
+                };
     }; // case
-
 
     return ((255 & 0xFF) << 24) | //alpha
         (((int)c[0] & 0xFF) << 16) | //red
