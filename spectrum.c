@@ -64,7 +64,7 @@ typedef struct {
     double hanning[FFT_SIZE];
     // keys: index of frequencies of musical notes (c0;d0;...;f10) in data
     float keys [126];
-    int colors [1024];
+    uint32_t colors [1024];
     double *samples;
     int resized;
     int buffered;
@@ -138,7 +138,22 @@ _draw_vline (uint8_t *data, int stride, int x0, int y0, int y1) {
 }
 
 static inline void
-_draw_bar (uint8_t *data, int stride, int x0, int y0, int w, int h, int total_h, gpointer user_data) {
+_draw_bar (uint8_t *data, int stride, int x0, int y0, int w, int h, uint32_t color) {
+    int y1 = y0+h-1;
+    int x1 = x0+w-1;
+    uint32_t *ptr = (uint32_t*)&data[y0*stride+x0*4];
+    while (y0 <= y1) {
+        int x = x0;
+        while (x++ <= x1) {
+            *ptr++ = color;
+        }
+        y0++;
+        ptr += stride/4-w;
+    }
+}
+
+static inline void
+_draw_bar_gradient (gpointer user_data, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_h) {
     w_spectrum_t *s = user_data;
     int y1 = y0+h-1;
     int x1 = x0+w-1;
@@ -156,7 +171,7 @@ _draw_bar (uint8_t *data, int stride, int x0, int y0, int w, int h, int total_h,
 }
 
 /* based on Delphi function by Witold J.Janik */
-int
+uint32_t
 create_gradient (double position)
 {
     /* if position > 1 then we have repetition of colors it maybe useful    */
@@ -217,10 +232,10 @@ create_gradient (double position)
                 };
     }; // case
 
-    return ((255 & 0xFF) << 24) | //alpha
-        (((int)c[0] & 0xFF) << 16) | //red
-        (((int)c[1] & 0xFF) << 8)  | //green
-        (((int)c[2] & 0xFF) << 0); //blue
+    return ((uint32_t)(255 & 0xFF) << 24) | //alpha
+        (((uint32_t)c[0] & 0xFF) << 16) | //red
+        (((uint32_t)c[1] & 0xFF) << 8)  | //green
+        (((uint32_t)c[2] & 0xFF) << 0); //blue
 }
 
 static int
@@ -492,30 +507,18 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
 
     cairo_surface_flush (w->surf);
 
-
     cairo_save (cr);
     cairo_set_source_surface (cr, w->surf, 0, 0);
     cairo_rectangle (cr, 0, 0, a.width, a.height);
     cairo_fill (cr);
     cairo_restore (cr);
+
     unsigned char *data = cairo_image_surface_get_data (w->surf);
-    int stride = 0;
-    cairo_pattern_t *pat;
     if (!data) {
         return FALSE;
     }
-    stride = cairo_image_surface_get_stride (w->surf);
+    int stride = cairo_image_surface_get_stride (w->surf);
     memset (data, 0, a.height * stride);
-
-    if (CONFIG_GRADIENT_ENABLED) {
-        pat = cairo_pattern_create_linear (0.0, 0.0, 0.0 , a.height);
-        cairo_pattern_add_color_stop_rgba (pat, 1, 0, 0.125, 0.255, 1);
-        cairo_pattern_add_color_stop_rgba (pat, 0.83, 0, 0.58, 0.627, 1);
-        cairo_pattern_add_color_stop_rgba (pat, 0.67, 0.5, 1, 0.47, 1);
-        cairo_pattern_add_color_stop_rgba (pat, 0.5, 1, 1, 0, 1);
-        cairo_pattern_add_color_stop_rgba (pat, 0.33, 1, 0.5, 0, 1);
-        cairo_pattern_add_color_stop_rgba (pat, 0.17, 1, 0, 0, 1);
-    }
 
     int barw = CLAMP (width / bands, 2, 20);
     for (gint i = 0; i <= bands; i++)
@@ -529,26 +532,21 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         if (x + bw >= a.width) {
             bw = a.width-x-1;
         }
-        if (!CONFIG_GRADIENT_ENABLED) {
-            _draw_bar (data, stride, x+1, y, bw, a.height-y, a.height, user_data);
+        if (CONFIG_GRADIENT_ENABLED) {
+            _draw_bar_gradient (user_data, data, stride, x+1, y, bw, a.height-y, a.height);
         }
         else {
-            cairo_rectangle (cr, x+1, y, bw, a.height-y);
+            _draw_bar (data, stride, x+1, y, bw, a.height-y, 0xffffffff);
         }
         y = a.height - w->peaks[i] * base_s;
         if (y < a.height-1) {
-            if (!CONFIG_GRADIENT_ENABLED) {
-                _draw_bar (data, stride, x + 1, y, bw, 1, a.height, user_data);
+            if (CONFIG_GRADIENT_ENABLED) {
+                _draw_bar_gradient (user_data, data, stride, x + 1, y, bw, 1, a.height);
             }
             else {
-                cairo_rectangle (cr, x+1, y, bw, 1);
+                _draw_bar (data, stride, x + 1, y, bw, 1, 0xffffffff);
             }
         }
-    }
-    if (CONFIG_GRADIENT_ENABLED && pat) {
-        cairo_set_source (cr, pat);
-        cairo_fill (cr);
-        cairo_pattern_destroy (pat);
     }
     cairo_surface_mark_dirty (w->surf);
 
