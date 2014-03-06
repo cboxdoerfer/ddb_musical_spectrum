@@ -507,12 +507,6 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
 
     cairo_surface_flush (w->surf);
 
-    cairo_save (cr);
-    cairo_set_source_surface (cr, w->surf, 0, 0);
-    cairo_rectangle (cr, 0, 0, a.width, a.height);
-    cairo_fill (cr);
-    cairo_restore (cr);
-
     unsigned char *data = cairo_image_surface_get_data (w->surf);
     if (!data) {
         return FALSE;
@@ -549,6 +543,12 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         }
     }
     cairo_surface_mark_dirty (w->surf);
+
+    cairo_save (cr);
+    cairo_set_source_surface (cr, w->surf, 0, 0);
+    cairo_rectangle (cr, 0, 0, a.width, a.height);
+    cairo_fill (cr);
+    cairo_restore (cr);
 
     return FALSE;
 }
