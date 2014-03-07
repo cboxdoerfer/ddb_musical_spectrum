@@ -44,10 +44,19 @@
 #define VIS_FALLOFF_PEAK 1
 #define BAND_WIDTH 5
 #define FFT_SIZE 16384
+#define GRADIENT_TABLE_SIZE 1024
 //#define FFT_SIZE 32768
 //#define FFT_SIZE 8192
 
 #define     CONFSTR_MS_DISPLAY_GRADIENT       "musical_spectrum.display_gradient"
+#define     CONFSTR_MS_GRADIENT_ORIENTATION   "musical_spectrum.gradient_orientation"
+#define     CONFSTR_MS_COLOR_BG               "musical_spectrum.color.background"
+#define     CONFSTR_MS_COLOR_GRADIENT_00      "musical_spectrum.color.gradient_00"
+#define     CONFSTR_MS_COLOR_GRADIENT_01      "musical_spectrum.color.gradient_01"
+#define     CONFSTR_MS_COLOR_GRADIENT_02      "musical_spectrum.color.gradient_02"
+#define     CONFSTR_MS_COLOR_GRADIENT_03      "musical_spectrum.color.gradient_03"
+#define     CONFSTR_MS_COLOR_GRADIENT_04      "musical_spectrum.color.gradient_04"
+#define     CONFSTR_MS_COLOR_GRADIENT_05      "musical_spectrum.color.gradient_05"
 
 /* Global variables */
 static DB_misc_t            plugin;
@@ -63,8 +72,8 @@ typedef struct {
     double *data;
     double hanning[FFT_SIZE];
     // keys: index of frequencies of musical notes (c0;d0;...;f10) in data
-    int keys [126];
-    uint32_t colors [1024];
+    int keys[MAX_BANDS];
+    uint32_t colors[GRADIENT_TABLE_SIZE];
     double *samples;
     int resized;
     int buffered;
@@ -82,7 +91,9 @@ static fftw_plan p_r2r;
 static fftw_plan p_r2c;
 
 static gboolean CONFIG_GRADIENT_ENABLED = TRUE;
-static int CONFIG_GRADIENT_COLORS [18] = {255,0,0,
+static int CONFIG_GRADIENT_ORIENTATION = 0;
+static int CONFIG_COLOR_BG[3] =          {  0,   0,   0};
+static int CONFIG_GRADIENT_COLORS [18] = {0,0,0,
                                           255,128,0,
                                           255,255,0,
                                           128,255,120,
@@ -92,14 +103,46 @@ static int CONFIG_GRADIENT_COLORS [18] = {255,0,0,
 static void
 save_config (void)
 {
-    deadbeef->conf_set_int (CONFSTR_MS_DISPLAY_GRADIENT,         CONFIG_GRADIENT_ENABLED);
+    deadbeef->conf_set_int (CONFSTR_MS_DISPLAY_GRADIENT,            CONFIG_GRADIENT_ENABLED);
+    deadbeef->conf_set_int (CONFSTR_MS_GRADIENT_ORIENTATION,        CONFIG_GRADIENT_ORIENTATION);
+    char color[20];
+    snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_BG[0], CONFIG_COLOR_BG[1], CONFIG_COLOR_BG[2]);
+    deadbeef->conf_set_str (CONFSTR_MS_COLOR_BG, color);
+    snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[0], CONFIG_GRADIENT_COLORS[1], CONFIG_GRADIENT_COLORS[2]);
+    deadbeef->conf_set_str (CONFSTR_MS_COLOR_GRADIENT_00, color);
+    snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[3], CONFIG_GRADIENT_COLORS[4], CONFIG_GRADIENT_COLORS[5]);
+    deadbeef->conf_set_str (CONFSTR_MS_COLOR_GRADIENT_01, color);
+    snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[6], CONFIG_GRADIENT_COLORS[7], CONFIG_GRADIENT_COLORS[8]);
+    deadbeef->conf_set_str (CONFSTR_MS_COLOR_GRADIENT_02, color);
+    snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[9], CONFIG_GRADIENT_COLORS[10], CONFIG_GRADIENT_COLORS[11]);
+    deadbeef->conf_set_str (CONFSTR_MS_COLOR_GRADIENT_03, color);
+    snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[12], CONFIG_GRADIENT_COLORS[13], CONFIG_GRADIENT_COLORS[14]);
+    deadbeef->conf_set_str (CONFSTR_MS_COLOR_GRADIENT_04, color);
+    snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[15], CONFIG_GRADIENT_COLORS[16], CONFIG_GRADIENT_COLORS[17]);
+    deadbeef->conf_set_str (CONFSTR_MS_COLOR_GRADIENT_05, color);
 }
 
 static void
 load_config (void)
 {
     deadbeef->conf_lock ();
-    CONFIG_GRADIENT_ENABLED = deadbeef->conf_get_int (CONFSTR_MS_DISPLAY_GRADIENT,             FALSE);
+    CONFIG_GRADIENT_ENABLED = deadbeef->conf_get_int (CONFSTR_MS_DISPLAY_GRADIENT,              FALSE);
+    CONFIG_GRADIENT_ORIENTATION = deadbeef->conf_get_int (CONFSTR_MS_GRADIENT_ORIENTATION,          0);
+    const char *color;
+    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_BG,                            "0 0 0");
+    sscanf (color, "%d %d %d", &CONFIG_COLOR_BG[0], &CONFIG_COLOR_BG[1], &CONFIG_COLOR_BG[2]);
+    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_00,        "255 0 0");
+    sscanf (color, "%d %d %d", &CONFIG_GRADIENT_COLORS[0], &CONFIG_GRADIENT_COLORS[1], &CONFIG_GRADIENT_COLORS[2]);
+    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_01,      "255 128 0");
+    sscanf (color, "%d %d %d", &CONFIG_GRADIENT_COLORS[3], &CONFIG_GRADIENT_COLORS[4], &CONFIG_GRADIENT_COLORS[5]);
+    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_02,      "255 255 0");
+    sscanf (color, "%d %d %d", &CONFIG_GRADIENT_COLORS[6], &CONFIG_GRADIENT_COLORS[7], &CONFIG_GRADIENT_COLORS[8]);
+    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_03,    "128 255 120");
+    sscanf (color, "%d %d %d", &CONFIG_GRADIENT_COLORS[9], &CONFIG_GRADIENT_COLORS[10], &CONFIG_GRADIENT_COLORS[11]);
+    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_04,      "0 148 160");
+    sscanf (color, "%d %d %d", &CONFIG_GRADIENT_COLORS[12], &CONFIG_GRADIENT_COLORS[13], &CONFIG_GRADIENT_COLORS[14]);
+    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_05,       "0 32 100");
+    sscanf (color, "%d %d %d", &CONFIG_GRADIENT_COLORS[15], &CONFIG_GRADIENT_COLORS[16], &CONFIG_GRADIENT_COLORS[17]);
     deadbeef->conf_unlock ();
 }
 
@@ -166,8 +209,8 @@ _draw_bar_gradient (gpointer user_data, uint8_t *data, int stride, int x0, int y
     uint32_t *ptr = (uint32_t*)&data[y0*stride+x0*4];
     while (y0 <= y1) {
         int x = x0;
-        int index = ftoi(((double)y0/(double)total_h) * 1023);
-        index = CLAMP (index, 0, 1023);
+        int index = ftoi(((double)y0/(double)total_h) * (GRADIENT_TABLE_SIZE - 1));
+        index = CLAMP (index, 0, GRADIENT_TABLE_SIZE - 1);
         while (x++ <= x1) {
             *ptr++ = s->colors[index];
         }
@@ -186,8 +229,8 @@ create_gradient_table (gpointer user_data, int *colors, int num_colors)
     }
     num_colors -= 1;
 
-    for (int i = 0; i < 1024; i++) {
-        double position = (double)i/1024;
+    for (int i = 0; i < GRADIENT_TABLE_SIZE; i++) {
+        double position = (double)i/GRADIENT_TABLE_SIZE;
         /* if position > 1 then we have repetition of colors it maybe useful    */
         if (position > 1.0) {
             if (position - ftoi (position) == 0.0) {
@@ -593,7 +636,7 @@ w_spectrum_init (ddb_gtkui_widget_t *w) {
     for (int i = 0; i < FFT_SIZE; i++) {
         s->hanning[i] = (0.5 * (1 - cos (2 * M_PI * i/FFT_SIZE)));
     }
-    for (int i = 0; i < 126; i++) {
+    for (int i = 0; i < MAX_BANDS; i++) {
         s->keys[i] = ftoi (440.0 * (pow (2.0, (double)(i-57)/12.0) * FFT_SIZE/44100.0));
     }
     create_gradient_table (s, CONFIG_GRADIENT_COLORS, 6);
