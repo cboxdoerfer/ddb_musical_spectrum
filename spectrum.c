@@ -177,36 +177,46 @@ _draw_bar_gradient (gpointer user_data, uint8_t *data, int stride, int x0, int y
 }
 
 /* based on Delphi function by Witold J.Janik */
-uint32_t
-create_gradient (double position, int *colors, int num_colors)
+void
+create_gradient_table (gpointer user_data, int *colors, int num_colors)
 {
+    w_spectrum_t *w = user_data;
     if (num_colors < 2) {
-        return 0xFF000000;
+        return;
     }
-    /* if position > 1 then we have repetition of colors it maybe useful    */
-    if (position>1.0){if (position-(int)position==0.0)position=1.0; else position=position-(int)position;}
-
     num_colors -= 1;
-    double m= num_colors * position;
 
-    int n=(int)m; // integer of m
+    for (int i = 0; i < 1024; i++) {
+        double position = (double)i/1024;
+        /* if position > 1 then we have repetition of colors it maybe useful    */
+        if (position > 1.0) {
+            if (position - ftoi (position) == 0.0) {
+                position = 1.0;
+            }
+            else {
+                position = position - ftoi (position);
+            }
+        }
 
-    double f=m-n;  // fraction of m
+        double m= num_colors * position;
+        int n=(int)m; // integer of m
+        double f=m-n;  // fraction of m
 
-
-    uint32_t color = 0xFF000000;
-    if (m < num_colors) {
-        color = ((uint32_t)(colors[(n*3)+0] + f * (colors[(n+1)*3+0]-colors[n*3+0])) & 0xFF) << 16 |
+        w->colors[i] = 0xFF000000;
+        if (n < num_colors) {
+            w->colors[i] = ((uint32_t)(colors[(n*3)+0] + f * (colors[(n+1)*3+0]-colors[n*3+0])) & 0xFF) << 16 |
                 ((uint32_t)(colors[(n*3)+1] + f * (colors[(n+1)*3+1]-colors[n*3+1])) & 0xFF) << 8 |
                 ((uint32_t)(colors[(n*3)+2] + f * (colors[(n+1)*3+2]-colors[n*3+2])) & 0xFF) << 0;
-    }
-    else if (n == num_colors) {
-        color = ((uint32_t)colors[(n*3)+0] & 0xFF) << 16 |
+        }
+        else if (n == num_colors) {
+            w->colors[i] = ((uint32_t)colors[(n*3)+0] & 0xFF) << 16 |
                 ((uint32_t)colors[(n*3)+1] & 0xFF) << 8 |
                 ((uint32_t)colors[(n*3)+2] & 0xFF) << 0;
+        }
+        else {
+            w->colors[i] = 0xFFFFFFFF;
+        }
     }
-
-    return color;
 }
 
 static int
@@ -586,9 +596,7 @@ w_spectrum_init (ddb_gtkui_widget_t *w) {
     for (int i = 0; i < 126; i++) {
         s->keys[i] = ftoi (440.0 * (pow (2.0, (double)(i-57)/12.0) * FFT_SIZE/44100.0));
     }
-    for (int i = 0; i < 1024; i++) {
-        s->colors[i] = create_gradient ((double)i/1024, CONFIG_GRADIENT_COLORS, 6);
-    }
+    create_gradient_table (s, CONFIG_GRADIENT_COLORS, 6);
     in = fftw_malloc (sizeof (double) * FFT_SIZE);
     out_real = fftw_malloc (sizeof (double) * FFT_SIZE);
     out_complex = fftw_malloc (sizeof (fftw_complex) * FFT_SIZE);
