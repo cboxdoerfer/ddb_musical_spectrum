@@ -48,7 +48,9 @@
 //#define FFT_SIZE 32768
 //#define FFT_SIZE 8192
 
-#define     CONFSTR_MS_DISPLAY_GRADIENT       "musical_spectrum.display_gradient"
+#define     STR_GRADIENT_VERTICAL "Vertical"
+#define     STR_GRADIENT_HORIZONTAL "Horizontal"
+
 #define     CONFSTR_MS_GRADIENT_ORIENTATION   "musical_spectrum.gradient_orientation"
 #define     CONFSTR_MS_COLOR_BG               "musical_spectrum.color.background"
 #define     CONFSTR_MS_COLOR_GRADIENT_00      "musical_spectrum.color.gradient_00"
@@ -90,35 +92,29 @@ static fftw_complex *out_complex;
 static fftw_plan p_r2r;
 static fftw_plan p_r2c;
 
-static gboolean CONFIG_GRADIENT_ENABLED = TRUE;
 static int CONFIG_GRADIENT_ORIENTATION = 0;
-static int CONFIG_COLOR_BG[3] =          {  0,   0,   0};
-static int CONFIG_GRADIENT_COLORS [18] = {0,0,0,
-                                          255,128,0,
-                                          255,255,0,
-                                          128,255,120,
-                                          0,148,160,
-                                          0,32,100};
+static int CONFIG_NUM_COLORS = 6;
+static GdkColor CONFIG_COLOR_BG;
+static GdkColor CONFIG_GRADIENT_COLORS[6];
 
 static void
 save_config (void)
 {
-    deadbeef->conf_set_int (CONFSTR_MS_DISPLAY_GRADIENT,            CONFIG_GRADIENT_ENABLED);
     deadbeef->conf_set_int (CONFSTR_MS_GRADIENT_ORIENTATION,        CONFIG_GRADIENT_ORIENTATION);
-    char color[20];
-    snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_BG[0], CONFIG_COLOR_BG[1], CONFIG_COLOR_BG[2]);
+    char color[100];
+    snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_BG.red, CONFIG_COLOR_BG.green, CONFIG_COLOR_BG.blue);
     deadbeef->conf_set_str (CONFSTR_MS_COLOR_BG, color);
-    snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[0], CONFIG_GRADIENT_COLORS[1], CONFIG_GRADIENT_COLORS[2]);
+    snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[0].red, CONFIG_GRADIENT_COLORS[0].green, CONFIG_GRADIENT_COLORS[0].blue);
     deadbeef->conf_set_str (CONFSTR_MS_COLOR_GRADIENT_00, color);
-    snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[3], CONFIG_GRADIENT_COLORS[4], CONFIG_GRADIENT_COLORS[5]);
+    snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[1].red, CONFIG_GRADIENT_COLORS[1].green, CONFIG_GRADIENT_COLORS[1].blue);
     deadbeef->conf_set_str (CONFSTR_MS_COLOR_GRADIENT_01, color);
-    snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[6], CONFIG_GRADIENT_COLORS[7], CONFIG_GRADIENT_COLORS[8]);
+    snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[2].red, CONFIG_GRADIENT_COLORS[2].green, CONFIG_GRADIENT_COLORS[2].blue);
     deadbeef->conf_set_str (CONFSTR_MS_COLOR_GRADIENT_02, color);
-    snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[9], CONFIG_GRADIENT_COLORS[10], CONFIG_GRADIENT_COLORS[11]);
+    snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[3].red, CONFIG_GRADIENT_COLORS[3].green, CONFIG_GRADIENT_COLORS[3].blue);
     deadbeef->conf_set_str (CONFSTR_MS_COLOR_GRADIENT_03, color);
-    snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[12], CONFIG_GRADIENT_COLORS[13], CONFIG_GRADIENT_COLORS[14]);
+    snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[4].red, CONFIG_GRADIENT_COLORS[4].green, CONFIG_GRADIENT_COLORS[4].blue);
     deadbeef->conf_set_str (CONFSTR_MS_COLOR_GRADIENT_04, color);
-    snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[15], CONFIG_GRADIENT_COLORS[16], CONFIG_GRADIENT_COLORS[17]);
+    snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[5].red, CONFIG_GRADIENT_COLORS[5].green, CONFIG_GRADIENT_COLORS[5].blue);
     deadbeef->conf_set_str (CONFSTR_MS_COLOR_GRADIENT_05, color);
 }
 
@@ -126,23 +122,22 @@ static void
 load_config (void)
 {
     deadbeef->conf_lock ();
-    CONFIG_GRADIENT_ENABLED = deadbeef->conf_get_int (CONFSTR_MS_DISPLAY_GRADIENT,              FALSE);
     CONFIG_GRADIENT_ORIENTATION = deadbeef->conf_get_int (CONFSTR_MS_GRADIENT_ORIENTATION,          0);
     const char *color;
     color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_BG,                            "0 0 0");
-    sscanf (color, "%d %d %d", &CONFIG_COLOR_BG[0], &CONFIG_COLOR_BG[1], &CONFIG_COLOR_BG[2]);
-    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_00,        "255 0 0");
-    sscanf (color, "%d %d %d", &CONFIG_GRADIENT_COLORS[0], &CONFIG_GRADIENT_COLORS[1], &CONFIG_GRADIENT_COLORS[2]);
-    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_01,      "255 128 0");
-    sscanf (color, "%d %d %d", &CONFIG_GRADIENT_COLORS[3], &CONFIG_GRADIENT_COLORS[4], &CONFIG_GRADIENT_COLORS[5]);
-    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_02,      "255 255 0");
-    sscanf (color, "%d %d %d", &CONFIG_GRADIENT_COLORS[6], &CONFIG_GRADIENT_COLORS[7], &CONFIG_GRADIENT_COLORS[8]);
-    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_03,    "128 255 120");
-    sscanf (color, "%d %d %d", &CONFIG_GRADIENT_COLORS[9], &CONFIG_GRADIENT_COLORS[10], &CONFIG_GRADIENT_COLORS[11]);
-    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_04,      "0 148 160");
-    sscanf (color, "%d %d %d", &CONFIG_GRADIENT_COLORS[12], &CONFIG_GRADIENT_COLORS[13], &CONFIG_GRADIENT_COLORS[14]);
-    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_05,       "0 32 100");
-    sscanf (color, "%d %d %d", &CONFIG_GRADIENT_COLORS[15], &CONFIG_GRADIENT_COLORS[16], &CONFIG_GRADIENT_COLORS[17]);
+    sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_BG.red, &CONFIG_COLOR_BG.green, &CONFIG_COLOR_BG.blue);
+    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_00,        "65535 0 0");
+    sscanf (color, "%hd %hd %hd", &(CONFIG_GRADIENT_COLORS[0].red), &(CONFIG_GRADIENT_COLORS[0].green), &(CONFIG_GRADIENT_COLORS[0].blue));
+    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_01,      "65535 32896 0");
+    sscanf (color, "%hd %hd %hd", &(CONFIG_GRADIENT_COLORS[1].red), &(CONFIG_GRADIENT_COLORS[1].green), &(CONFIG_GRADIENT_COLORS[1].blue));
+    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_02,      "65535 65535 0");
+    sscanf (color, "%hd %hd %hd", &(CONFIG_GRADIENT_COLORS[2].red), &(CONFIG_GRADIENT_COLORS[2].green), &(CONFIG_GRADIENT_COLORS[2].blue));
+    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_03,    "32896 65535 30840");
+    sscanf (color, "%hd %hd %hd", &(CONFIG_GRADIENT_COLORS[3].red), &(CONFIG_GRADIENT_COLORS[3].green), &(CONFIG_GRADIENT_COLORS[3].blue));
+    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_04,      "0 38036 41120");
+    sscanf (color, "%hd %hd %hd", &(CONFIG_GRADIENT_COLORS[4].red), &(CONFIG_GRADIENT_COLORS[4].green), &(CONFIG_GRADIENT_COLORS[4].blue));
+    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_05,       "0 8224 25700");
+    sscanf (color, "%hd %hd %hd", &(CONFIG_GRADIENT_COLORS[5].red), &(CONFIG_GRADIENT_COLORS[5].green), &(CONFIG_GRADIENT_COLORS[5].blue));
     deadbeef->conf_unlock ();
 }
 
@@ -202,7 +197,7 @@ _draw_bar (uint8_t *data, int stride, int x0, int y0, int w, int h, uint32_t col
 }
 
 static inline void
-_draw_bar_gradient (gpointer user_data, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_h) {
+_draw_bar_gradient_v (gpointer user_data, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_h) {
     w_spectrum_t *s = user_data;
     int y1 = y0+h-1;
     int x1 = x0+w-1;
@@ -219,14 +214,30 @@ _draw_bar_gradient (gpointer user_data, uint8_t *data, int stride, int x0, int y
     }
 }
 
+static inline void
+_draw_bar_gradient_h (gpointer user_data, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_w) {
+    w_spectrum_t *s = user_data;
+    int y1 = y0+h-1;
+    int x1 = x0+w-1;
+    uint32_t *ptr = (uint32_t*)&data[y0*stride+x0*4];
+    while (y0 <= y1) {
+        int x = x0;
+        while (x++ <= x1) {
+            int index = ftoi(((double)x/(double)total_w) * (GRADIENT_TABLE_SIZE - 1));
+            index = CLAMP (index, 0, GRADIENT_TABLE_SIZE - 1);
+            *ptr++ = s->colors[index];
+        }
+        y0++;
+        ptr += stride/4-w;
+    }
+}
+
 /* based on Delphi function by Witold J.Janik */
 void
-create_gradient_table (gpointer user_data, int *colors, int num_colors)
+create_gradient_table (gpointer user_data, GdkColor *colors, int num_colors)
 {
     w_spectrum_t *w = user_data;
-    if (num_colors < 2) {
-        return;
-    }
+
     num_colors -= 1;
 
     for (int i = 0; i < GRADIENT_TABLE_SIZE; i++) {
@@ -246,15 +257,20 @@ create_gradient_table (gpointer user_data, int *colors, int num_colors)
         double f=m-n;  // fraction of m
 
         w->colors[i] = 0xFF000000;
-        if (n < num_colors) {
-            w->colors[i] = ((uint32_t)(colors[(n*3)+0] + f * (colors[(n+1)*3+0]-colors[n*3+0])) & 0xFF) << 16 |
-                ((uint32_t)(colors[(n*3)+1] + f * (colors[(n+1)*3+1]-colors[n*3+1])) & 0xFF) << 8 |
-                ((uint32_t)(colors[(n*3)+2] + f * (colors[(n+1)*3+2]-colors[n*3+2])) & 0xFF) << 0;
+        if (num_colors == 0) {
+            w->colors[i] = ((uint32_t)(colors[0].red*255/65535) & 0xFF) << 16 |
+                ((uint32_t)(colors[0].green*255/65535) & 0xFF) << 8 |
+                ((uint32_t)(colors[0].blue*255/65535) & 0xFF) << 0;
+        }
+        else if (n < num_colors) {
+            w->colors[i] = ((uint32_t)((colors[n].red*255/65535) + f * ((colors[n+1].red*255/65535)-(colors[n].red*255/65535))) & 0xFF) << 16 |
+                ((uint32_t)((colors[n].green*255/65535) + f * ((colors[n+1].green*255/65535)-(colors[n].green*255/65535))) & 0xFF) << 8 |
+                ((uint32_t)((colors[n].blue*255/65535) + f * ((colors[n+1].blue*255/65535)-(colors[n].blue*255/65535))) & 0xFF) << 0;
         }
         else if (n == num_colors) {
-            w->colors[i] = ((uint32_t)colors[(n*3)+0] & 0xFF) << 16 |
-                ((uint32_t)colors[(n*3)+1] & 0xFF) << 8 |
-                ((uint32_t)colors[(n*3)+2] & 0xFF) << 0;
+            w->colors[i] = ((uint32_t)(colors[n].red*255/65535) & 0xFF) << 16 |
+                ((uint32_t)(colors[n].green*255/65535) & 0xFF) << 8 |
+                ((uint32_t)(colors[n].blue*255/65535) & 0xFF) << 0;
         }
         else {
             w->colors[i] = 0xFFFFFFFF;
@@ -263,9 +279,10 @@ create_gradient_table (gpointer user_data, int *colors, int num_colors)
 }
 
 static int
-on_config_changed (uintptr_t ctx)
+on_config_changed (gpointer user_data, uintptr_t ctx)
 {
-    //load_config ();
+    create_gradient_table (user_data, CONFIG_GRADIENT_COLORS, CONFIG_NUM_COLORS);
+    load_config ();
     return 0;
 }
 
@@ -292,7 +309,21 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     GtkWidget *spectrum_properties;
     GtkWidget *config_dialog;
     GtkWidget *vbox01;
-    GtkWidget *display_gradient;
+    GtkWidget *vbox02;
+    GtkWidget *hbox01;
+    GtkWidget *hbox02;
+    GtkWidget *color_label;
+    GtkWidget *color_frame;
+    GtkWidget *color_bg;
+    GtkWidget *color_gradient_00;
+    GtkWidget *color_gradient_01;
+    GtkWidget *color_gradient_02;
+    GtkWidget *color_gradient_03;
+    GtkWidget *color_gradient_04;
+    GtkWidget *color_gradient_05;
+    GtkWidget *num_colors_label;
+    GtkWidget *num_colors;
+    GtkWidget *gradient_orientation;
     GtkWidget *dialog_action_area13;
     GtkWidget *applybutton1;
     GtkWidget *cancelbutton1;
@@ -300,21 +331,98 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     spectrum_properties = gtk_dialog_new ();
-    gtk_widget_set_size_request (spectrum_properties, -1, 350);
+    gtk_widget_set_size_request (spectrum_properties, -1, 450);
     gtk_window_set_title (GTK_WINDOW (spectrum_properties), "Spectrum Properties");
     gtk_window_set_type_hint (GTK_WINDOW (spectrum_properties), GDK_WINDOW_TYPE_HINT_DIALOG);
 
     config_dialog = gtk_dialog_get_content_area (GTK_DIALOG (spectrum_properties));
     gtk_widget_show (config_dialog);
 
+    hbox01 = gtk_hbox_new (FALSE, 8);
+    gtk_widget_show (hbox01);
+    gtk_box_pack_start (GTK_BOX (config_dialog), hbox01, FALSE, FALSE, 0);
+    gtk_container_set_border_width (GTK_CONTAINER (hbox01), 12);
+
+    color_label = gtk_label_new (NULL);
+    gtk_label_set_markup (GTK_LABEL (color_label),"<b>Colors</b>");
+    gtk_widget_show (color_label);
+
+    color_frame = gtk_frame_new ("Colors");
+    gtk_frame_set_label_widget ((GtkFrame *)color_frame, color_label);
+    gtk_frame_set_shadow_type ((GtkFrame *)color_frame, GTK_SHADOW_IN);
+    gtk_widget_show (color_frame);
+    gtk_box_pack_start (GTK_BOX (hbox01), color_frame, TRUE, FALSE, 0);
+
+    vbox02 = gtk_vbox_new (FALSE, 8);
+    gtk_widget_show (vbox02);
+    gtk_container_add (GTK_CONTAINER (color_frame), vbox02);
+    gtk_container_set_border_width (GTK_CONTAINER (vbox02), 12);
+
+    color_bg = gtk_color_button_new ();
+    gtk_color_button_set_use_alpha ((GtkColorButton *)color_bg, TRUE);
+    gtk_widget_show (color_bg);
+    gtk_box_pack_start (GTK_BOX (vbox02), color_bg, TRUE, FALSE, 0);
+
+    num_colors_label = gtk_label_new (NULL);
+    gtk_label_set_markup (GTK_LABEL (num_colors_label),"Number of colors:");
+    gtk_widget_show (num_colors_label);
+    gtk_box_pack_start (GTK_BOX (vbox02), num_colors_label, FALSE, FALSE, 0);
+
+    num_colors = gtk_spin_button_new_with_range (1,6,1);
+    gtk_widget_show (num_colors);
+    gtk_box_pack_start (GTK_BOX (vbox02), num_colors, FALSE, FALSE, 0);
+
+    color_gradient_00 = gtk_color_button_new ();
+    gtk_color_button_set_use_alpha ((GtkColorButton *)color_gradient_00, TRUE);
+    gtk_widget_show (color_gradient_00);
+    gtk_box_pack_start (GTK_BOX (vbox02), color_gradient_00, TRUE, FALSE, 0);
+    gtk_widget_set_size_request (color_gradient_00, -1, 30);
+
+    color_gradient_01 = gtk_color_button_new ();
+    gtk_color_button_set_use_alpha ((GtkColorButton *)color_gradient_01, TRUE);
+    gtk_widget_show (color_gradient_01);
+    gtk_box_pack_start (GTK_BOX (vbox02), color_gradient_01, TRUE, FALSE, 0);
+    gtk_widget_set_size_request (color_gradient_01, -1, 30);
+
+    color_gradient_02 = gtk_color_button_new ();
+    gtk_color_button_set_use_alpha ((GtkColorButton *)color_gradient_02, TRUE);
+    gtk_widget_show (color_gradient_02);
+    gtk_box_pack_start (GTK_BOX (vbox02), color_gradient_02, TRUE, FALSE, 0);
+    gtk_widget_set_size_request (color_gradient_02, -1, 30);
+
+    color_gradient_03 = gtk_color_button_new ();
+    gtk_color_button_set_use_alpha ((GtkColorButton *)color_gradient_03, TRUE);
+    gtk_widget_show (color_gradient_03);
+    gtk_box_pack_start (GTK_BOX (vbox02), color_gradient_03, TRUE, FALSE, 0);
+    gtk_widget_set_size_request (color_gradient_03, -1, 30);
+
+    color_gradient_04 = gtk_color_button_new ();
+    gtk_color_button_set_use_alpha ((GtkColorButton *)color_gradient_04, TRUE);
+    gtk_widget_show (color_gradient_04);
+    gtk_box_pack_start (GTK_BOX (vbox02), color_gradient_04, TRUE, FALSE, 0);
+    gtk_widget_set_size_request (color_gradient_04, -1, 30);
+
+    color_gradient_05 = gtk_color_button_new ();
+    gtk_color_button_set_use_alpha ((GtkColorButton *)color_gradient_05, TRUE);
+    gtk_widget_show (color_gradient_05);
+    gtk_box_pack_start (GTK_BOX (vbox02), color_gradient_05, TRUE, FALSE, 0);
+    gtk_widget_set_size_request (color_gradient_05, -1, 30);
+
     vbox01 = gtk_vbox_new (FALSE, 8);
     gtk_widget_show (vbox01);
-    gtk_box_pack_start (GTK_BOX (config_dialog), vbox01, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (hbox01), vbox01, FALSE, FALSE, 0);
     gtk_container_set_border_width (GTK_CONTAINER (vbox01), 12);
 
-    display_gradient = gtk_check_button_new_with_label ("Display gradient");
-    gtk_widget_show (display_gradient);
-    gtk_box_pack_start (GTK_BOX (vbox01), display_gradient, FALSE, FALSE, 0);
+    hbox02 = gtk_hbox_new (FALSE, 8);
+    gtk_widget_show (hbox02);
+    gtk_box_pack_start (GTK_BOX (vbox01), hbox02, FALSE, FALSE, 0);
+    gtk_container_set_border_width (GTK_CONTAINER (hbox01), 12);
+
+    gradient_orientation = gtk_combo_box_text_new ();
+    gtk_widget_show (gradient_orientation);
+    gtk_box_pack_start (GTK_BOX (vbox01), gradient_orientation, FALSE, FALSE, 0);
+    gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT(gradient_orientation), STR_GRADIENT_VERTICAL);
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(gradient_orientation), STR_GRADIENT_HORIZONTAL);
 
     dialog_action_area13 = gtk_dialog_get_action_area (GTK_DIALOG (spectrum_properties));
     gtk_widget_show (dialog_action_area13);
@@ -335,13 +443,84 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_dialog_add_action_widget (GTK_DIALOG (spectrum_properties), okbutton1, GTK_RESPONSE_OK);
     gtk_widget_set_can_default (okbutton1, TRUE);
 
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (display_gradient), CONFIG_GRADIENT_ENABLED);
+    gtk_combo_box_set_active (GTK_COMBO_BOX (gradient_orientation), CONFIG_GRADIENT_ORIENTATION);
+    gtk_spin_button_set_value (GTK_SPIN_BUTTON (num_colors), CONFIG_NUM_COLORS);
+    gtk_color_button_set_color (GTK_COLOR_BUTTON (color_bg), &CONFIG_COLOR_BG);
+    gtk_color_button_set_color (GTK_COLOR_BUTTON (color_gradient_00), &(CONFIG_GRADIENT_COLORS[0]));
+    gtk_color_button_set_color (GTK_COLOR_BUTTON (color_gradient_01), &(CONFIG_GRADIENT_COLORS[1]));
+    gtk_color_button_set_color (GTK_COLOR_BUTTON (color_gradient_02), &(CONFIG_GRADIENT_COLORS[2]));
+    gtk_color_button_set_color (GTK_COLOR_BUTTON (color_gradient_03), &(CONFIG_GRADIENT_COLORS[3]));
+    gtk_color_button_set_color (GTK_COLOR_BUTTON (color_gradient_04), &(CONFIG_GRADIENT_COLORS[4]));
+    gtk_color_button_set_color (GTK_COLOR_BUTTON (color_gradient_05), &(CONFIG_GRADIENT_COLORS[5]));
 
+    char *text;
     for (;;) {
         int response = gtk_dialog_run (GTK_DIALOG (spectrum_properties));
         if (response == GTK_RESPONSE_OK || response == GTK_RESPONSE_APPLY) {
-            CONFIG_GRADIENT_ENABLED = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (display_gradient));
-            //save_config ();
+            gtk_color_button_get_color (GTK_COLOR_BUTTON (color_bg), &CONFIG_COLOR_BG);
+            gtk_color_button_get_color (GTK_COLOR_BUTTON (color_gradient_00), &CONFIG_GRADIENT_COLORS[0]);
+            gtk_color_button_get_color (GTK_COLOR_BUTTON (color_gradient_01), &CONFIG_GRADIENT_COLORS[1]);
+            gtk_color_button_get_color (GTK_COLOR_BUTTON (color_gradient_02), &CONFIG_GRADIENT_COLORS[2]);
+            gtk_color_button_get_color (GTK_COLOR_BUTTON (color_gradient_03), &CONFIG_GRADIENT_COLORS[3]);
+            gtk_color_button_get_color (GTK_COLOR_BUTTON (color_gradient_04), &CONFIG_GRADIENT_COLORS[4]);
+            gtk_color_button_get_color (GTK_COLOR_BUTTON (color_gradient_05), &CONFIG_GRADIENT_COLORS[5]);
+
+            CONFIG_NUM_COLORS = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (num_colors));
+            switch (CONFIG_NUM_COLORS) {
+                case 1:
+                    gtk_widget_hide (color_gradient_01);
+                    gtk_widget_hide (color_gradient_02);
+                    gtk_widget_hide (color_gradient_03);
+                    gtk_widget_hide (color_gradient_04);
+                    gtk_widget_hide (color_gradient_05);
+                    break;
+                case 2:
+                    gtk_widget_show (color_gradient_01);
+                    gtk_widget_hide (color_gradient_02);
+                    gtk_widget_hide (color_gradient_03);
+                    gtk_widget_hide (color_gradient_04);
+                    gtk_widget_hide (color_gradient_05);
+                    break;
+                case 3:
+                    gtk_widget_show (color_gradient_01);
+                    gtk_widget_show (color_gradient_02);
+                    gtk_widget_hide (color_gradient_03);
+                    gtk_widget_hide (color_gradient_04);
+                    gtk_widget_hide (color_gradient_05);
+                    break;
+                case 4:
+                    gtk_widget_show (color_gradient_01);
+                    gtk_widget_show (color_gradient_02);
+                    gtk_widget_show (color_gradient_03);
+                    gtk_widget_hide (color_gradient_04);
+                    gtk_widget_hide (color_gradient_05);
+                    break;
+                case 5:
+                    gtk_widget_show (color_gradient_01);
+                    gtk_widget_show (color_gradient_02);
+                    gtk_widget_show (color_gradient_03);
+                    gtk_widget_show (color_gradient_04);
+                    gtk_widget_hide (color_gradient_05);
+                    break;
+                case 6:
+                    gtk_widget_show (color_gradient_01);
+                    gtk_widget_show (color_gradient_02);
+                    gtk_widget_show (color_gradient_03);
+                    gtk_widget_show (color_gradient_04);
+                    gtk_widget_show (color_gradient_05);
+                    break;
+            }
+            text = gtk_combo_box_text_get_active_text (GTK_COMBO_BOX_TEXT (gradient_orientation));
+            if (strcmp (text, STR_GRADIENT_VERTICAL) == 0) {
+                CONFIG_GRADIENT_ORIENTATION = 0;
+            }
+            else if (strcmp (text, STR_GRADIENT_HORIZONTAL) == 0) {
+                CONFIG_GRADIENT_ORIENTATION = 1;
+            }
+            else {
+                CONFIG_GRADIENT_ORIENTATION = -1;
+            }
+            save_config ();
             deadbeef->sendmessage (DB_EV_CONFIGCHANGED, 0, 0, 0);
         }
         if (response == GTK_RESPONSE_APPLY) {
@@ -550,19 +729,19 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         if (x + bw >= a.width) {
             bw = a.width-x-1;
         }
-        if (CONFIG_GRADIENT_ENABLED) {
-            _draw_bar_gradient (user_data, data, stride, x+1, y, bw, a.height-y, a.height);
+        if (CONFIG_GRADIENT_ORIENTATION == 0) {
+            _draw_bar_gradient_v (user_data, data, stride, x+1, y, bw, a.height-y, a.height);
         }
         else {
-            _draw_bar (data, stride, x+1, y, bw, a.height-y, 0xffffffff);
+            _draw_bar_gradient_h (user_data, data, stride, x+1, y, bw, a.height-y, a.width);
         }
         y = a.height - w->peaks[i] * base_s;
         if (y < a.height-1) {
-            if (CONFIG_GRADIENT_ENABLED) {
-                _draw_bar_gradient (user_data, data, stride, x + 1, y, bw, 1, a.height);
+            if (CONFIG_GRADIENT_ORIENTATION == 0) {
+                _draw_bar_gradient_v (user_data, data, stride, x + 1, y, bw, 1, a.height);
             }
             else {
-                _draw_bar (data, stride, x + 1, y, bw, 1, 0xffffffff);
+                _draw_bar_gradient_h (user_data, data, stride, x + 1, y, bw, 1, a.width);
             }
         }
     }
@@ -611,11 +790,11 @@ spectrum_button_release_event (GtkWidget *widget, GdkEventButton *event, gpointe
 static int
 spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2)
 {
-    //w_spectrum_t *w = (w_spectrum_t *)widget;
+    w_spectrum_t *w = (w_spectrum_t *)widget;
 
     switch (id) {
     case DB_EV_CONFIGCHANGED:
-        on_config_changed (ctx);
+        on_config_changed (w, ctx);
         break;
     }
     return 0;
@@ -639,7 +818,7 @@ w_spectrum_init (ddb_gtkui_widget_t *w) {
     for (int i = 0; i < MAX_BANDS; i++) {
         s->keys[i] = ftoi (440.0 * (pow (2.0, (double)(i-57)/12.0) * FFT_SIZE/44100.0));
     }
-    create_gradient_table (s, CONFIG_GRADIENT_COLORS, 6);
+    create_gradient_table (s, CONFIG_GRADIENT_COLORS, CONFIG_NUM_COLORS);
     in = fftw_malloc (sizeof (double) * FFT_SIZE);
     out_real = fftw_malloc (sizeof (double) * FFT_SIZE);
     out_complex = fftw_malloc (sizeof (fftw_complex) * FFT_SIZE);
@@ -700,14 +879,14 @@ musical_spectrum_connect (void)
 int
 musical_spectrum_start (void)
 {
-    //load_config ();
+    load_config ();
     return 0;
 }
 
 int
 musical_spectrum_stop (void)
 {
-    //save_config ();
+    save_config ();
     return 0;
 }
 
