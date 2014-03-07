@@ -82,6 +82,12 @@ static fftw_plan p_r2r;
 static fftw_plan p_r2c;
 
 static gboolean CONFIG_GRADIENT_ENABLED = TRUE;
+static int CONFIG_GRADIENT_COLORS [18] = {255,0,0,
+                                          255,128,0,
+                                          255,255,0,
+                                          128,255,120,
+                                          0,148,160,
+                                          0,32,100};
 
 static void
 save_config (void)
@@ -172,70 +178,35 @@ _draw_bar_gradient (gpointer user_data, uint8_t *data, int stride, int x0, int y
 
 /* based on Delphi function by Witold J.Janik */
 uint32_t
-create_gradient (double position)
+create_gradient (double position, int *colors, int num_colors)
 {
+    if (num_colors < 2) {
+        return 0xFF000000;
+    }
     /* if position > 1 then we have repetition of colors it maybe useful    */
     if (position>1.0){if (position-(int)position==0.0)position=1.0; else position=position-(int)position;}
 
-    unsigned char nmax=5; /* number of color segments */
-    double m=nmax* position;
+    num_colors -= 1;
+    double m= num_colors * position;
 
     int n=(int)m; // integer of m
 
     double f=m-n;  // fraction of m
-    unsigned char t=(int)(f*255);
 
-    char c[3];
 
-    switch(n){
-        case 0: {
-                    c[0] = 255;
-                    c[1] = t/2;
-                    c[2] = 0;
-                    break;
-                };
-        case 1: {
-                    c[0] = 255;
-                    c[1] = 128+(t/2);
-                    c[2] = 0;
-                    break;
-                };
-        case 2: {
-                    c[0] = 255-(t/2);
-                    c[1] = 255;
-                    c[2] = 0+(t*120/255);
-                    break;
-                };
-        case 3: {
-                    c[0] = 128-(t/2);
-                    c[1] = 255-(t*107/255);
-                    c[2] = 120+(t*40/255);
-                    break;
-                };
-        case 4: {
-                    c[0] = 0;
-                    c[1] = 148-(t*112/255);
-                    c[2] = 160-(t*60/255);
-                    break;
-                };
-        case 5: {
-                    c[0] = 0;
-                    c[1] = 32;
-                    c[2] = 100;
-                    break;
-                };
-        default: {
-                     c[0] = 255;
-                     c[1] = 0;
-                     c[2] = 0;
-                     break;
-                };
-    }; // case
+    uint32_t color = 0xFF000000;
+    if (m < num_colors) {
+        color = ((uint32_t)(colors[(n*3)+0] + f * (colors[(n+1)*3+0]-colors[n*3+0])) & 0xFF) << 16 |
+                ((uint32_t)(colors[(n*3)+1] + f * (colors[(n+1)*3+1]-colors[n*3+1])) & 0xFF) << 8 |
+                ((uint32_t)(colors[(n*3)+2] + f * (colors[(n+1)*3+2]-colors[n*3+2])) & 0xFF) << 0;
+    }
+    else if (n == num_colors) {
+        color = ((uint32_t)colors[(n*3)+0] & 0xFF) << 16 |
+                ((uint32_t)colors[(n*3)+1] & 0xFF) << 8 |
+                ((uint32_t)colors[(n*3)+2] & 0xFF) << 0;
+    }
 
-    return ((uint32_t)(255 & 0xFF) << 24) | //alpha
-        (((uint32_t)c[0] & 0xFF) << 16) | //red
-        (((uint32_t)c[1] & 0xFF) << 8)  | //green
-        (((uint32_t)c[2] & 0xFF) << 0); //blue
+    return color;
 }
 
 static int
@@ -616,7 +587,7 @@ w_spectrum_init (ddb_gtkui_widget_t *w) {
         s->keys[i] = ftoi (440.0 * (pow (2.0, (double)(i-57)/12.0) * FFT_SIZE/44100.0));
     }
     for (int i = 0; i < 1024; i++) {
-        s->colors[i] = create_gradient ((double)i/1024);
+        s->colors[i] = create_gradient ((double)i/1024, CONFIG_GRADIENT_COLORS, 6);
     }
     in = fftw_malloc (sizeof (double) * FFT_SIZE);
     out_real = fftw_malloc (sizeof (double) * FFT_SIZE);
