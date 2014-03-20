@@ -40,13 +40,13 @@
 #define MAX_BANDS 126
 #define VIS_DELAY 1
 #define VIS_DELAY_PEAK 20
-#define VIS_FALLOFF 5
-#define VIS_FALLOFF_PEAK 5
+#define VIS_FALLOFF 60
+#define VIS_FALLOFF_PEAK 3
 #define BAND_WIDTH 5
-#define FFT_SIZE 16384
+//#define FFT_SIZE 16384
 #define GRADIENT_TABLE_SIZE 1024
 //#define FFT_SIZE 32768
-//#define FFT_SIZE 8192
+#define FFT_SIZE 8192
 
 #define     STR_GRADIENT_VERTICAL "Vertical"
 #define     STR_GRADIENT_HORIZONTAL "Horizontal"
@@ -606,22 +606,22 @@ spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
     }
     deadbeef->mutex_lock (w->mutex);
     w->samplerate = (float)data->fmt->samplerate;
-    int nsamples = data->nframes/data->fmt->channels;
+    int nsamples = data->nframes;
     float ratio = data->fmt->samplerate / 44100.f;
     int size = nsamples / ratio;
     int sz = MIN (FFT_SIZE, size);
     int n = FFT_SIZE - sz;
-    //if (w->buffered >= FFT_SIZE && w->samples) {
+    if (w->buffered >= FFT_SIZE && w->samples) {
         memmove (w->samples, w->samples + sz, (FFT_SIZE - sz)*sizeof (double));
-    //}
+    }
 
     float pos = 0;
     for (int i = 0; i < sz && pos < nsamples; i++, pos += ratio) {
-        w->samples[n+i] = 0.0;
+        w->samples[n+i] = -1000.0;
         for (int j = 0; j < data->fmt->channels; j++) {
-            w->samples[n + i] += data->data[ftoi (pos * data->fmt->channels) + j];
+            w->samples[n + i] = MAX (w->samples[n + i], data->data[ftoi (pos * data->fmt->channels) + j]);
         }
-        w->samples[n + i] /= data->fmt->channels;
+        //w->samples[n + i] /= data->fmt->channels;
     }
     deadbeef->mutex_unlock (w->mutex);
     if (w->buffered < FFT_SIZE) {
@@ -693,7 +693,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
             f = spectrum_get_value (w, start, end);
         }
         //float f = spectrum_interpolate (w, w->keys[i], w->keys[i+1]);
-        int x = 10 * log10 (f) - 10;
+        int x = 10 * log10 (f) - 5;
         x = CLAMP (x, 0, 60);
 
         w->bars[i] -= MAX (0, VIS_FALLOFF - w->delay[i]);
@@ -742,7 +742,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         if (a.height <= 10 || a.width <= 10) {
             break;
         }
-        _draw_hline (data, stride, 1, ftoi (i/6.0 * (a.height)), a.width);
+        _draw_hline (data, stride, 1, ftoi (i/6.0 * (a.height)) + 5, a.width);
     }
     for (gint i = 0; i <= bands; i++)
     {
