@@ -40,8 +40,8 @@
 #define MAX_BANDS 126
 #define VIS_DELAY 1
 #define VIS_DELAY_PEAK 20
-#define VIS_FALLOFF 1
-#define VIS_FALLOFF_PEAK 1
+#define VIS_FALLOFF 5
+#define VIS_FALLOFF_PEAK 5
 #define BAND_WIDTH 5
 #define FFT_SIZE 16384
 #define GRADIENT_TABLE_SIZE 1024
@@ -77,6 +77,7 @@ typedef struct {
     int keys[MAX_BANDS];
     uint32_t colors[GRADIENT_TABLE_SIZE];
     double *samples;
+    float samplerate;
     int resized;
     int buffered;
     int bars[MAX_BANDS + 1];
@@ -178,6 +179,15 @@ _draw_vline (uint8_t *data, int stride, int x0, int y0, int y1) {
         uint32_t *ptr = (uint32_t*)&data[y0*stride+x0*4];
         *ptr = 0xffffffff;
         y0++;
+    }
+}
+
+static inline void
+_draw_hline (uint8_t *data, int stride, int x0, int y0, int x1) {
+    uint32_t *ptr = (uint32_t*)&data[y0*stride+x0*4];
+    while (x0 <= x1) {
+        *ptr++ = 0xff666666;
+        x0++;
     }
 }
 
@@ -592,6 +602,7 @@ spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
     if (!w->samples) {
         return;
     }
+    w->samplerate = (float)data->fmt->samplerate;
     int nsamples = data->nframes/data->fmt->channels;
     float ratio = data->fmt->samplerate / 44100.f;
     int size = nsamples / ratio;
@@ -613,37 +624,20 @@ spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
         w->buffered += sz;
     }
 }
-// Copied from audacity
-double CubicInterpolate(double y0, double y1, double y2, double y3, double x)
-{
-    double a, b, c, d;
 
-    a = y0 / -6.0 + y1 / 2.0 - y2 / 2.0 + y3 / 6.0;
-    b = y0 - 5.0 * y1 / 2.0 + 2.0 * y2 - y3 / 2.0;
-    c = -11.0 * y0 / 6.0 + 3.0 * y1 - 3.0 * y2 / 2.0 + y3 / 3.0;
-    d = y0;
-
-    double xx = x * x;
-    double xxx = xx * x;
-
-    return (a * xxx + b * xx + c * x + d);
-}
-
-float
-spectrum_interpolate (gpointer user_data, float bin0, float bin1)
+static inline  float
+spectrum_get_value (gpointer user_data, int start, int end)
 {
     w_spectrum_t *w = user_data;
-    double binmid = (bin0 + bin1) / 2.0;
-    int ibin = ftoi (binmid) - 1;
-    if (ibin < 1)
-        ibin = 1;
-    if (ibin >= FFT_SIZE/2 - 3)
-        ibin = FFT_SIZE/2 - 4;
-
-    return CubicInterpolate(w->data[ibin],
-            w->data[ibin + 1],
-            w->data[ibin + 2],
-            w->data[ibin + 3], binmid - (double)ibin);
+    float value = 0.0;
+    //for (int i = start; i < end; i++) {
+    //    value += w->data[i] * w->data[i];
+    //}
+    for (int i = start; i < end; i++) {
+        value = MAX (w->data[i],value);
+    }
+    //return sqrt (value/(end-start));
+    return value;
 }
 
 int
@@ -672,10 +666,31 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
 
     for (int i = 0; i < bands; i++)
     {
-        float f = w->data[w->keys[i]];
+        float f;
+        int start = 0;
+        int end = 0;
+        if (i > 0) {
+            start = (w->keys[i] - w->keys[i-1])/2 + w->keys[i-1];
+        }
+        else {
+            start = w->keys[i];
+        }
+
+        if (i < bands-1) {
+            end = (w->keys[i+1] - w->keys[i])/2 + w->keys[i];
+        }
+        else {
+            end = w->keys[i];
+        }
+        if (start >= end) {
+            f = w->data[w->keys[i]];
+        }
+        else {
+            f = spectrum_get_value (w, start, end);
+        }
         //float f = spectrum_interpolate (w, w->keys[i], w->keys[i+1]);
-        int x = 10 * log10 (f);
-        x = CLAMP (x, 0, 50);
+        int x = 10 * log10 (f) - 10;
+        x = CLAMP (x, 0, 60);
 
         w->bars[i] -= MAX (0, VIS_FALLOFF - w->delay[i]);
         w->peaks[i] -= MAX (0, VIS_FALLOFF_PEAK - w->delay_peak[i]);;
@@ -707,7 +722,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         }
         w->surf = cairo_image_surface_create (CAIRO_FORMAT_RGB24, a.width, a.height);
     }
-    float base_s = (height / 50.f);
+    float base_s = (height / 60.f);
 
     cairo_surface_flush (w->surf);
 
@@ -719,6 +734,12 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     memset (data, 0, a.height * stride);
 
     int barw = CLAMP (width / bands, 2, 20);
+    for (int i = 1; i < 6; i++) {
+        if (a.height <= 10 || a.width <= 10) {
+            break;
+        }
+        _draw_hline (data, stride, 1, ftoi (i/6.0 * (a.height)), a.width);
+    }
     for (gint i = 0; i <= bands; i++)
     {
         int x = barw * i;
@@ -754,6 +775,17 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     cairo_fill (cr);
     cairo_restore (cr);
 
+    //cairo_save (cr);
+    //// draw grid
+    //cairo_set_source_rgb (cr, 1,1,1);
+    //cairo_set_line_width (cr, 1.0);
+    //cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
+    //for (int i = 1; i <= 6; i++) {
+    //    cairo_move_to (cr, 0, ftoi (i/6.0 * a.height));
+    //    cairo_line_to (cr, a.width, ftoi (i/6.0 * a.height));
+    //    cairo_stroke (cr);
+    //}
+    //cairo_restore (cr);
     return FALSE;
 }
 
@@ -792,11 +824,18 @@ static int
 spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2)
 {
     w_spectrum_t *w = (w_spectrum_t *)widget;
+    int samplerate;
 
     switch (id) {
-    case DB_EV_CONFIGCHANGED:
-        on_config_changed (w, ctx);
-        break;
+        //case DB_EV_SONGSTARTED:
+        //    samplerate = w->samplerate;
+        //    for (int i = 0; i < MAX_BANDS; i++) {
+        //        w->keys[i] = ftoi (440.0 * (pow (2.0, (double)(i-57)/12.0) * FFT_SIZE/w->samplerate));
+        //    }
+        //    break;
+        case DB_EV_CONFIGCHANGED:
+            on_config_changed (w, ctx);
+            break;
     }
     return 0;
 }
@@ -814,11 +853,13 @@ w_spectrum_init (ddb_gtkui_widget_t *w) {
         s->drawtimer = 0;
     }
     for (int i = 0; i < FFT_SIZE; i++) {
-        s->hanning[i] = (0.5 * (1 - cos (2 * M_PI * i/FFT_SIZE)));
+        s->hanning[i] = (0.5 * (1 - cos (2 * M_PI * i/(FFT_SIZE-1))));
+        //s->hanning[i] = (0.54 + 0.46 * cos (2 * M_PI * i/(FFT_SIZE-1)));
     }
     for (int i = 0; i < MAX_BANDS; i++) {
         s->keys[i] = ftoi (440.0 * (pow (2.0, (double)(i-57)/12.0) * FFT_SIZE/44100.0));
     }
+    s->samplerate = 44100.0;
     create_gradient_table (s, CONFIG_GRADIENT_COLORS, CONFIG_NUM_COLORS);
     in = fftw_malloc (sizeof (double) * FFT_SIZE);
     out_real = fftw_malloc (sizeof (double) * FFT_SIZE);
