@@ -148,11 +148,13 @@ do_fft (w_spectrum_t *w)
     if (!w->samples || w->buffered < FFT_SIZE) {
         return;
     }
+    deadbeef->mutex_lock (w->mutex);
     //double real,imag;
 
     for (int i = 0; i < FFT_SIZE; i++) {
         in[i] = (double)w->samples[i] * w->hanning[i];
     }
+    deadbeef->mutex_unlock (w->mutex);
     fftw_execute (p_r2r);
     //fftw_execute (p_r2c);
     for (int i = 0; i < FFT_SIZE/2; i++)
@@ -602,15 +604,16 @@ spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
     if (!w->samples) {
         return;
     }
+    deadbeef->mutex_lock (w->mutex);
     w->samplerate = (float)data->fmt->samplerate;
     int nsamples = data->nframes/data->fmt->channels;
     float ratio = data->fmt->samplerate / 44100.f;
     int size = nsamples / ratio;
     int sz = MIN (FFT_SIZE, size);
     int n = FFT_SIZE - sz;
-    if (w->buffered >= FFT_SIZE && w->samples) {
+    //if (w->buffered >= FFT_SIZE && w->samples) {
         memmove (w->samples, w->samples + sz, (FFT_SIZE - sz)*sizeof (double));
-    }
+    //}
 
     float pos = 0;
     for (int i = 0; i < sz && pos < nsamples; i++, pos += ratio) {
@@ -620,6 +623,7 @@ spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
         }
         w->samples[n + i] /= data->fmt->channels;
     }
+    deadbeef->mutex_unlock (w->mutex);
     if (w->buffered < FFT_SIZE) {
         w->buffered += sz;
     }
