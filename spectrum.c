@@ -621,7 +621,6 @@ spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
         for (int j = 0; j < data->fmt->channels; j++) {
             w->samples[n + i] = MAX (w->samples[n + i], data->data[ftoi (pos * data->fmt->channels) + j]);
         }
-        //w->samples[n + i] /= data->fmt->channels;
     }
     deadbeef->mutex_unlock (w->mutex);
     if (w->buffered < FFT_SIZE) {
@@ -634,13 +633,9 @@ spectrum_get_value (gpointer user_data, int start, int end)
 {
     w_spectrum_t *w = user_data;
     float value = 0.0;
-    //for (int i = start; i < end; i++) {
-    //    value += w->data[i] * w->data[i];
-    //}
     for (int i = start; i < end; i++) {
         value = MAX (w->data[i],value);
     }
-    //return sqrt (value/(end-start));
     return value;
 }
 
@@ -679,7 +674,6 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         else {
             start = w->keys[i];
         }
-
         if (i < bands-1) {
             end = (w->keys[i+1] - w->keys[i])/2 + w->keys[i];
         }
@@ -692,9 +686,9 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         else {
             f = spectrum_get_value (w, start, end);
         }
-        //float f = spectrum_interpolate (w, w->keys[i], w->keys[i+1]);
-        int x = 10 * log10 (f) - 5;
-        x = CLAMP (x, 0, 60);
+
+        int x = 10 * log10 (f);
+        x = CLAMP (x, 0, 70);
 
         w->bars[i] -= MAX (0, VIS_FALLOFF - w->delay[i]);
         w->peaks[i] -= MAX (0, VIS_FALLOFF_PEAK - w->delay_peak[i]);;
@@ -726,7 +720,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         }
         w->surf = cairo_image_surface_create (CAIRO_FORMAT_RGB24, a.width, a.height);
     }
-    float base_s = (height / 60.f);
+    float base_s = (height / 70.f);
 
     cairo_surface_flush (w->surf);
 
@@ -738,12 +732,18 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     memset (data, 0, a.height * stride);
 
     int barw = CLAMP (width / bands, 2, 20);
-    for (int i = 1; i < 6; i++) {
+
+    //draw background
+    _draw_bar (data, stride, 0, 0, a.width, a.height, 0xff22222222);
+
+    // draw horizontal grid
+    for (int i = 1; i < 7; i++) {
         if (a.height <= 10 || a.width <= 10) {
             break;
         }
-        _draw_hline (data, stride, 1, ftoi (i/6.0 * (a.height)) + 5, a.width);
+        _draw_hline (data, stride, 1, ftoi (i/7.0 * (a.height)), a.width);
     }
+
     for (gint i = 0; i <= bands; i++)
     {
         int x = barw * i;
@@ -770,6 +770,10 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
                 _draw_bar_gradient_h (user_data, data, stride, x + 1, y, bw, 1, a.width);
             }
         }
+        // draw vertical grid
+        if (x < a.width) {
+            _draw_bar (data, stride, x, 0, 1, a.height-1, 0xff000000);
+        }
     }
     cairo_surface_mark_dirty (w->surf);
 
@@ -779,17 +783,6 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     cairo_fill (cr);
     cairo_restore (cr);
 
-    //cairo_save (cr);
-    //// draw grid
-    //cairo_set_source_rgb (cr, 1,1,1);
-    //cairo_set_line_width (cr, 1.0);
-    //cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
-    //for (int i = 1; i <= 6; i++) {
-    //    cairo_move_to (cr, 0, ftoi (i/6.0 * a.height));
-    //    cairo_line_to (cr, a.width, ftoi (i/6.0 * a.height));
-    //    cairo_stroke (cr);
-    //}
-    //cairo_restore (cr);
     return FALSE;
 }
 
@@ -866,6 +859,7 @@ w_spectrum_init (ddb_gtkui_widget_t *w) {
     s->samplerate = 44100.0;
     create_gradient_table (s, CONFIG_GRADIENT_COLORS, CONFIG_NUM_COLORS);
     in = fftw_malloc (sizeof (double) * FFT_SIZE);
+    memset (in, 0, sizeof (double) * FFT_SIZE);
     out_real = fftw_malloc (sizeof (double) * FFT_SIZE);
     out_complex = fftw_malloc (sizeof (fftw_complex) * FFT_SIZE);
     p_r2r = fftw_plan_r2r_1d (FFT_SIZE, in, out_real, FFTW_R2HC, FFTW_ESTIMATE);
