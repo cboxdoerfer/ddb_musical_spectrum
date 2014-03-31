@@ -77,14 +77,15 @@ typedef struct {
     int keys[MAX_BANDS];
     uint32_t colors[GRADIENT_TABLE_SIZE];
     double *samples;
-    float samplerate;
     int resized;
     int buffered;
+    int low_res_end;
     int bars[MAX_BANDS + 1];
     int delay[MAX_BANDS + 1];
     int peaks[MAX_BANDS + 1];
     int delay_peak[MAX_BANDS + 1];
     intptr_t mutex;
+    intptr_t mutex_keys;
     cairo_surface_t *surf;
 } w_spectrum_t;
 
@@ -589,6 +590,10 @@ w_spectrum_destroy (ddb_gtkui_widget_t *w) {
         deadbeef->mutex_free (s->mutex);
         s->mutex = 0;
     }
+    if (s->mutex_keys) {
+        deadbeef->mutex_free (s->mutex_keys);
+        s->mutex_keys = 0;
+    }
 }
 
 gboolean
@@ -605,18 +610,13 @@ spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
         return;
     }
     deadbeef->mutex_lock (w->mutex);
-    w->samplerate = (float)data->fmt->samplerate;
     int nsamples = data->nframes;
-    float ratio = data->fmt->samplerate / 44100.f;
-    int size = nsamples / ratio;
-    int sz = MIN (FFT_SIZE, size);
+    int sz = MIN (FFT_SIZE, nsamples);
     int n = FFT_SIZE - sz;
-    if (w->buffered >= FFT_SIZE && w->samples) {
-        memmove (w->samples, w->samples + sz, (FFT_SIZE - sz)*sizeof (double));
-    }
+    memmove (w->samples, w->samples + sz, n * sizeof (double));
 
-    float pos = 0;
-    for (int i = 0; i < sz && pos < nsamples; i++, pos += ratio) {
+    int pos = 0;
+    for (int i = 0; i < sz && pos < nsamples; i++, pos++ ) {
         w->samples[n+i] = -1000.0;
         for (int j = 0; j < data->fmt->channels; j++) {
             w->samples[n + i] = MAX (w->samples[n + i], data->data[ftoi (pos * data->fmt->channels) + j]);
@@ -628,24 +628,27 @@ spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
     }
 }
 
-static inline  float
+static inline float
+cosine_interpolate (float y1, float y2, float mu)
+{
+    float mu2;
+
+    mu2 = (1 - cos (mu * M_PI))/2;
+    return (y1 * (1 - mu2) + y2 * mu2);
+}
+
+static inline float
 spectrum_get_value (gpointer user_data, int start, int end)
 {
     w_spectrum_t *w = user_data;
+    if (start >= end) {
+        return w->data[end];
+    }
     float value = 0.0;
-    for (int i = start; i < end; i++) {
+    for (int i = start; i <= end; i++) {
         value = MAX (w->data[i],value);
     }
     return value;
-}
-
-int
-spectrum_lookup_index (gpointer user_data, float freq)
-{
-    //w_spectrum_t *w = user_data;
-    double freq_delta = 44100 / (double)FFT_SIZE;
-    int index = 0;
-    return index = ftoi (freq/freq_delta);
 }
 
 static gboolean
@@ -663,54 +666,75 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     width = a.width;
     height = a.height;
 
-    for (int i = 0; i < bands; i++)
-    {
-        float f;
-        int start = 0;
-        int end = 0;
-        if (i > 0) {
-            start = (w->keys[i] - w->keys[i-1])/2 + w->keys[i-1];
-        }
-        else {
-            start = w->keys[i];
-        }
-        if (i < bands-1) {
-            end = (w->keys[i+1] - w->keys[i])/2 + w->keys[i];
-        }
-        else {
-            end = w->keys[i];
-        }
-        if (start >= end) {
-            f = w->data[w->keys[i]];
-        }
-        else {
-            f = spectrum_get_value (w, start, end);
-        }
-
-        int x = 10 * log10 (f);
-        x = CLAMP (x, 0, 70);
-
-        w->bars[i] -= MAX (0, VIS_FALLOFF - w->delay[i]);
-        w->peaks[i] -= MAX (0, VIS_FALLOFF_PEAK - w->delay_peak[i]);;
-
-        if (w->delay[i])
-            w->delay[i]--;
-        if (w->delay_peak[i])
-            w->delay_peak[i]--;
-
-        if (x > w->bars[i])
+    deadbeef->mutex_lock (w->mutex_keys);
+    if (deadbeef->get_output ()->state () == OUTPUT_STATE_PLAYING) {
+        for (int i = 0; i < bands; i++)
         {
-            w->bars[i] = x;
-            w->delay[i] = VIS_DELAY;
-        }
-        if (x > w->peaks[i]) {
-            w->peaks[i] = x;
-            w->delay_peak[i] = VIS_DELAY_PEAK;
-        }
-        if (w->peaks[i] < w->bars[i]) {
-            w->peaks[i] = w->bars[i];
+            float f;
+            int start = 0;
+            int end = 0;
+            if (i > 0) {
+                start = (w->keys[i] - w->keys[i-1])/2 + w->keys[i-1];
+                if (start == w->keys[i-1]) start = w->keys[i];
+            }
+            else {
+                start = w->keys[i];
+            }
+            if (i < bands-1) {
+                end = (w->keys[i+1] - w->keys[i])/2 + w->keys[i];
+                if (end == w->keys[i+1]) end = w->keys[i];
+            }
+            else {
+                end = w->keys[i];
+            }
+
+            f = spectrum_get_value (w, start, end);
+            int x = 10 * log10 (f);
+
+            // interpolate
+            if (i <= w->low_res_end+1) {
+                int j = 0;
+                // find index of next value
+                while (i+j < MAX_BANDS && w->keys[i+j] == w->keys[i]) {
+                    j++;
+                }
+                float v0 = x;
+                float v1 = 10 * log10 (w->data[w->keys[i+j]]);
+
+                int k = 0;
+                while ((k+i) >= 0 && w->keys[k+i] == w->keys[i]) {
+                    j++;
+                    k--;
+                }
+                x = ftoi (cosine_interpolate (v0,v1,(1.0/j) * ((-1) * k)));
+            }
+
+            x = CLAMP (x, 0, 70);
+
+            //w->bars[i] -= MAX (0, VIS_FALLOFF - w->delay[i]);
+            w->bars[i] = 0;
+            w->peaks[i] -= MAX (0, VIS_FALLOFF_PEAK - w->delay_peak[i]);;
+
+            if (w->delay[i])
+                w->delay[i]--;
+            if (w->delay_peak[i])
+                w->delay_peak[i]--;
+
+            if (x > w->bars[i])
+            {
+                w->bars[i] = x;
+                w->delay[i] = VIS_DELAY;
+            }
+            if (x > w->peaks[i]) {
+                w->peaks[i] = x;
+                w->delay_peak[i] = VIS_DELAY_PEAK;
+            }
+            if (w->peaks[i] < w->bars[i]) {
+                w->peaks[i] = w->bars[i];
+            }
         }
     }
+    deadbeef->mutex_unlock (w->mutex_keys);
 
     // start drawing
     if (!w->surf || cairo_image_surface_get_width (w->surf) != a.width || cairo_image_surface_get_height (w->surf) != a.height) {
@@ -734,7 +758,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     int barw = CLAMP (width / bands, 2, 20);
 
     //draw background
-    _draw_bar (data, stride, 0, 0, a.width, a.height, 0xff22222222);
+    _draw_bar (data, stride, 0, 0, a.width, a.height, 0xff222222);
 
     // draw horizontal grid
     for (int i = 1; i < 7; i++) {
@@ -821,15 +845,20 @@ static int
 spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2)
 {
     w_spectrum_t *w = (w_spectrum_t *)widget;
-    int samplerate;
+    int samplerate = 44100;
 
     switch (id) {
-        //case DB_EV_SONGSTARTED:
-        //    samplerate = w->samplerate;
-        //    for (int i = 0; i < MAX_BANDS; i++) {
-        //        w->keys[i] = ftoi (440.0 * (pow (2.0, (double)(i-57)/12.0) * FFT_SIZE/w->samplerate));
-        //    }
-        //    break;
+        case DB_EV_SONGCHANGED:
+            deadbeef->mutex_lock (w->mutex_keys);
+            samplerate = deadbeef->get_output ()->fmt.samplerate;
+            if (samplerate == 0) samplerate = 44100;
+            for (int i = 0; i < MAX_BANDS; i++) {
+                w->keys[i] = ftoi (440.0 * (pow (2.0, (double)(i-57)/12.0) * FFT_SIZE/(float)samplerate));
+                if (i > 0 && w->keys[i-1] == w->keys[i])
+                    w->low_res_end = i;
+            }
+            deadbeef->mutex_unlock (w->mutex_keys);
+            break;
         case DB_EV_CONFIGCHANGED:
             on_config_changed (w, ctx);
             break;
@@ -850,13 +879,15 @@ w_spectrum_init (ddb_gtkui_widget_t *w) {
         s->drawtimer = 0;
     }
     for (int i = 0; i < FFT_SIZE; i++) {
-        s->hanning[i] = (0.5 * (1 - cos (2 * M_PI * i/(FFT_SIZE-1))));
+        s->hanning[i] = (0.5 * (1 - cos (2 * M_PI * i/(FFT_SIZE))));
         //s->hanning[i] = (0.54 + 0.46 * cos (2 * M_PI * i/(FFT_SIZE-1)));
     }
+    s->low_res_end = 0;
     for (int i = 0; i < MAX_BANDS; i++) {
         s->keys[i] = ftoi (440.0 * (pow (2.0, (double)(i-57)/12.0) * FFT_SIZE/44100.0));
+        if (i > 0 && s->keys[i-1] == s->keys[i])
+            s->low_res_end = i;
     }
-    s->samplerate = 44100.0;
     create_gradient_table (s, CONFIG_GRADIENT_COLORS, CONFIG_NUM_COLORS);
     in = fftw_malloc (sizeof (double) * FFT_SIZE);
     memset (in, 0, sizeof (double) * FFT_SIZE);
@@ -881,6 +912,7 @@ w_musical_spectrum_create (void) {
     w->popup = gtk_menu_new ();
     w->popup_item = gtk_menu_item_new_with_mnemonic ("Configure");
     w->mutex = deadbeef->mutex_create ();
+    w->mutex_keys = deadbeef->mutex_create ();
     gtk_widget_show (w->drawarea);
     gtk_container_add (GTK_CONTAINER (w->base.widget), w->drawarea);
     gtk_widget_show (w->popup);
