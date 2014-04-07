@@ -706,7 +706,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
                     j++;
                     k--;
                 }
-                x = ftoi (cosine_interpolate (v0,v1,(1.0/j) * ((-1) * k)));
+                x = ftoi (cosine_interpolate (v0,v1,(1.0/(j-1)) * ((-1) * (k+1))));
             }
 
             x = CLAMP (x, 0, 70);
