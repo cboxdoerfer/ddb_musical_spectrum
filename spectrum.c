@@ -645,7 +645,7 @@ spectrum_get_value (gpointer user_data, int start, int end)
         return w->data[end];
     }
     float value = 0.0;
-    for (int i = start; i <= end; i++) {
+    for (int i = start; i < end; i++) {
         value = MAX (w->data[i],value);
     }
     return value;
@@ -759,6 +759,13 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
 
     //draw background
     _draw_bar (data, stride, 0, 0, a.width, a.height, 0xff222222);
+    for (int i = 0; i <= bands; i++) {
+        // draw vertical grid
+        int x = barw * i;
+        if (x < a.width) {
+            _draw_bar (data, stride, x, 0, 1, height-1, 0xff000000);
+        }
+    }
 
     // draw horizontal grid
     for (int i = 1; i < 7; i++) {
@@ -793,10 +800,6 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
             else {
                 _draw_bar_gradient_h (user_data, data, stride, x + 1, y, bw, 1, a.width);
             }
-        }
-        // draw vertical grid
-        if (x < a.width) {
-            _draw_bar (data, stride, x, 0, 1, a.height-1, 0xff000000);
         }
     }
     cairo_surface_mark_dirty (w->surf);
