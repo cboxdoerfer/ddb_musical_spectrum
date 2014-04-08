@@ -943,7 +943,7 @@ musical_spectrum_connect (void)
         if (gtkui_plugin->gui.plugin.version_major == 2) {
             //printf ("fb api2\n");
             // 0.6+, use the new widget API
-            gtkui_plugin->w_reg_widget ("Musical Spectrum", DDB_WF_SINGLE_INSTANCE, w_musical_spectrum_create, "musical_spectrum", NULL);
+            gtkui_plugin->w_reg_widget ("Musical Spectrum", 0, w_musical_spectrum_create, "musical_spectrum", NULL);
             return 0;
         }
     }
