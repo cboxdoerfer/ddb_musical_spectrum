@@ -709,6 +709,8 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
                 x = ftoi (cosine_interpolate (v0,v1,(1.0/(j-1)) * ((-1) * (k+1))));
             }
 
+            // TODO: get rid of hardcoding
+            x += 7;
             x = CLAMP (x, 0, 70);
 
             //w->bars[i] -= MAX (0, VIS_FALLOFF - w->delay[i]);
