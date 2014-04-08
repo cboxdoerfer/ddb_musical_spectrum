@@ -72,11 +72,16 @@ typedef struct {
     GtkWidget *popup_item;
     guint drawtimer;
     double *data;
-    double hanning[FFT_SIZE];
+    double window[FFT_SIZE];
     // keys: index of frequencies of musical notes (c0;d0;...;f10) in data
     int keys[MAX_BANDS];
     uint32_t colors[GRADIENT_TABLE_SIZE];
     double *samples;
+    double *in;
+    //double *out_real;
+    fftw_complex *out_complex;
+    //fftw_plan p_r2r;
+    fftw_plan p_r2c;
     int resized;
     int buffered;
     int low_res_end;
@@ -88,11 +93,6 @@ typedef struct {
     intptr_t mutex_keys;
     cairo_surface_t *surf;
 } w_spectrum_t;
-
-static double *in, *out_real;
-static fftw_complex *out_complex;
-static fftw_plan p_r2r;
-static fftw_plan p_r2c;
 
 static int CONFIG_GRADIENT_ORIENTATION = 0;
 static int CONFIG_NUM_COLORS = 6;
@@ -150,20 +150,20 @@ do_fft (w_spectrum_t *w)
         return;
     }
     deadbeef->mutex_lock (w->mutex);
-    //double real,imag;
+    double real,imag;
 
     for (int i = 0; i < FFT_SIZE; i++) {
-        in[i] = (double)w->samples[i] * w->hanning[i];
+        w->in[i] = (double)w->samples[i] * w->window[i];
     }
     deadbeef->mutex_unlock (w->mutex);
-    fftw_execute (p_r2r);
-    //fftw_execute (p_r2c);
+    //fftw_execute (p_r2r);
+    fftw_execute (w->p_r2c);
     for (int i = 0; i < FFT_SIZE/2; i++)
     {
-        //real = out[i][0];
-        //imag = out[i][1];
-        //w->data[i] = (real*real + imag*imag);
-        w->data[i] = out_real[i]*out_real[i] + out_real[FFT_SIZE-i-1]*out_real[FFT_SIZE-i-1];
+        real = w->out_complex[i][0];
+        imag = w->out_complex[i][1];
+        w->data[i] = (real*real + imag*imag);
+        //w->data[i] = out_real[i]*out_real[i] + out_real[FFT_SIZE-i-1]*out_real[FFT_SIZE-i-1];
     }
 }
 
@@ -560,23 +560,23 @@ w_spectrum_destroy (ddb_gtkui_widget_t *w) {
         free (s->samples);
         s->samples = NULL;
     }
-    if (p_r2r) {
-        fftw_destroy_plan (p_r2r);
+    //if (s->p_r2r) {
+    //    fftw_destroy_plan (s->p_r2r);
+    //}
+    if (s->p_r2c) {
+        fftw_destroy_plan (s->p_r2c);
     }
-    if (p_r2c) {
-        fftw_destroy_plan (p_r2c);
+    if (s->in) {
+        fftw_free (s->in);
+        s->in = NULL;
     }
-    if (in) {
-        fftw_free (in);
-        in = NULL;
-    }
-    if (out_real) {
-        fftw_free (out_real);
-        out_real = NULL;
-    }
-    if (out_complex) {
-        fftw_free (out_complex);
-        out_complex = NULL;
+    //if (s->out_real) {
+    //    fftw_free (s->out_real);
+    //    s->out_real = NULL;
+    //}
+    if (s->out_complex) {
+        fftw_free (s->out_complex);
+        s->out_complex = NULL;
     }
     if (s->drawtimer) {
         g_source_remove (s->drawtimer);
@@ -879,8 +879,10 @@ w_spectrum_init (ddb_gtkui_widget_t *w) {
         s->drawtimer = 0;
     }
     for (int i = 0; i < FFT_SIZE; i++) {
-        s->hanning[i] = (0.5 * (1 - cos (2 * M_PI * i/(FFT_SIZE))));
-        //s->hanning[i] = (0.54 + 0.46 * cos (2 * M_PI * i/(FFT_SIZE-1)));
+        // Hanning
+        //s->window[i] = (0.5 * (1 - cos (2 * M_PI * i/(FFT_SIZE))));
+        // Blackman-Harris
+        s->window[i] = 0.35875 - 0.48829 * cos(2 * M_PI * i /(FFT_SIZE)) + 0.14128 * cos(4 * M_PI * i/(FFT_SIZE)) - 0.01168 * cos(6 * M_PI * i/(FFT_SIZE));;
     }
     s->low_res_end = 0;
     for (int i = 0; i < MAX_BANDS; i++) {
@@ -889,12 +891,12 @@ w_spectrum_init (ddb_gtkui_widget_t *w) {
             s->low_res_end = i;
     }
     create_gradient_table (s, CONFIG_GRADIENT_COLORS, CONFIG_NUM_COLORS);
-    in = fftw_malloc (sizeof (double) * FFT_SIZE);
-    memset (in, 0, sizeof (double) * FFT_SIZE);
-    out_real = fftw_malloc (sizeof (double) * FFT_SIZE);
-    out_complex = fftw_malloc (sizeof (fftw_complex) * FFT_SIZE);
-    p_r2r = fftw_plan_r2r_1d (FFT_SIZE, in, out_real, FFTW_R2HC, FFTW_ESTIMATE);
-    p_r2c = fftw_plan_dft_r2c_1d (FFT_SIZE, in, out_complex, FFTW_ESTIMATE);
+    s->in = fftw_malloc (sizeof (double) * FFT_SIZE);
+    memset (s->in, 0, sizeof (double) * FFT_SIZE);
+    //s->out_real = fftw_malloc (sizeof (double) * FFT_SIZE);
+    s->out_complex = fftw_malloc (sizeof (fftw_complex) * FFT_SIZE);
+    //s->p_r2r = fftw_plan_r2r_1d (FFT_SIZE, s->in, s->out_real, FFTW_R2HC, FFTW_ESTIMATE);
+    s->p_r2c = fftw_plan_dft_r2c_1d (FFT_SIZE, s->in, s->out_complex, FFTW_ESTIMATE);
     s->drawtimer = g_timeout_add (33, w_spectrum_draw_cb, w);
     deadbeef->mutex_unlock (s->mutex);
 }
