@@ -638,6 +638,20 @@ cosine_interpolate (float y1, float y2, float mu)
 }
 
 static inline float
+cubic_interpolate (float y0, float y1, float y2, float y3, float mu)
+{
+    float a0, a1, a2, a3, mu2;
+
+    mu2 = mu*mu;
+    a0 = y3 - y2 - y0 + y1;
+    a1 = y0 - y1 - a0;
+    a2 = y2 - y0;
+    a3 = y1;
+
+    return (a0 * mu * mu2 + a1 * mu2 + a2 * mu + a3);
+}
+
+static inline float
 spectrum_get_value (gpointer user_data, int start, int end)
 {
     w_spectrum_t *w = user_data;
@@ -693,20 +707,30 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
 
             // interpolate
             if (i <= w->low_res_end+1) {
-                int j = 0;
+                float v1 = x;
+
                 // find index of next value
+                int j = 0;
                 while (i+j < MAX_BANDS && w->keys[i+j] == w->keys[i]) {
                     j++;
                 }
-                float v0 = x;
-                float v1 = 10 * log10 (w->data[w->keys[i+j]]);
+                float v2 = 10 * log10 (w->data[w->keys[i+j]]);
+
+                int l = j;
+                while (i+l < MAX_BANDS && w->keys[i+l] == w->keys[i]) {
+                    l++;
+                }
+                float v3 = 10 * log10 (w->data[w->keys[i+l]]);
 
                 int k = 0;
                 while ((k+i) >= 0 && w->keys[k+i] == w->keys[i]) {
                     j++;
                     k--;
                 }
-                x = ftoi (cosine_interpolate (v0,v1,(1.0/(j-1)) * ((-1) * (k+1))));
+                float v0 = 10 * log10 (w->data[CLAMP (w->keys[i+k+1],0,bands-1)]);
+
+                //x = ftoi (cosine_interpolate (v1,v2,(1.0/(j-1)) * ((-1) * (k+1))));
+                x = ftoi (cubic_interpolate (v0,v1,v2,v3,(1.0/(j-1)) * ((-1) * (k+1))));
             }
 
             // TODO: get rid of hardcoding
