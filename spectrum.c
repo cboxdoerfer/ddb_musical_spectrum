@@ -798,7 +798,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         if (a.height <= 10 || a.width <= 10) {
             break;
         }
-        _draw_hline (data, stride, 1, ftoi (i/7.0 * (a.height)), a.width);
+        _draw_hline (data, stride, 1, ftoi (i/7.0 * (a.height)), a.width-1);
     }
 
     for (gint i = 0; i <= bands; i++)
