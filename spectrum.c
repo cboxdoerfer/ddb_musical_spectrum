@@ -51,6 +51,10 @@
 #define     STR_GRADIENT_VERTICAL "Vertical"
 #define     STR_GRADIENT_HORIZONTAL "Horizontal"
 
+#define     CONFSTR_MS_BAR_FALLOFF            "musical_spectrum.bar_falloff"
+#define     CONFSTR_MS_BAR_DELAY              "musical_spectrum.bar_delay"
+#define     CONFSTR_MS_PEAK_FALLOFF           "musical_spectrum.peak_falloff"
+#define     CONFSTR_MS_PEAK_DELAY             "musical_spectrum.peak_delay"
 #define     CONFSTR_MS_GRADIENT_ORIENTATION   "musical_spectrum.gradient_orientation"
 #define     CONFSTR_MS_COLOR_BG               "musical_spectrum.color.background"
 #define     CONFSTR_MS_COLOR_GRADIENT_00      "musical_spectrum.color.gradient_00"
@@ -85,15 +89,19 @@ typedef struct {
     int resized;
     int buffered;
     int low_res_end;
-    int bars[MAX_BANDS + 1];
+    float bars[MAX_BANDS + 1];
     int delay[MAX_BANDS + 1];
-    int peaks[MAX_BANDS + 1];
+    float peaks[MAX_BANDS + 1];
     int delay_peak[MAX_BANDS + 1];
     intptr_t mutex;
     intptr_t mutex_keys;
     cairo_surface_t *surf;
 } w_spectrum_t;
 
+static int CONFIG_BAR_FALLOFF = -1;
+static int CONFIG_BAR_DELAY = 0;
+static int CONFIG_PEAK_FALLOFF = 90;
+static int CONFIG_PEAK_DELAY = 500;
 static int CONFIG_GRADIENT_ORIENTATION = 0;
 static int CONFIG_NUM_COLORS = 6;
 static GdkColor CONFIG_COLOR_BG;
@@ -102,6 +110,10 @@ static GdkColor CONFIG_GRADIENT_COLORS[6];
 static void
 save_config (void)
 {
+    deadbeef->conf_set_int (CONFSTR_MS_BAR_FALLOFF,                 CONFIG_BAR_FALLOFF);
+    deadbeef->conf_set_int (CONFSTR_MS_BAR_DELAY,                   CONFIG_BAR_DELAY);
+    deadbeef->conf_set_int (CONFSTR_MS_PEAK_FALLOFF,                CONFIG_PEAK_FALLOFF);
+    deadbeef->conf_set_int (CONFSTR_MS_PEAK_DELAY,                  CONFIG_PEAK_DELAY);
     deadbeef->conf_set_int (CONFSTR_MS_GRADIENT_ORIENTATION,        CONFIG_GRADIENT_ORIENTATION);
     char color[100];
     snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_BG.red, CONFIG_COLOR_BG.green, CONFIG_COLOR_BG.blue);
@@ -125,6 +137,10 @@ load_config (void)
 {
     deadbeef->conf_lock ();
     CONFIG_GRADIENT_ORIENTATION = deadbeef->conf_get_int (CONFSTR_MS_GRADIENT_ORIENTATION,          0);
+    CONFIG_BAR_FALLOFF = deadbeef->conf_get_int (CONFSTR_MS_BAR_FALLOFF,                    -1);
+    CONFIG_BAR_DELAY = deadbeef->conf_get_int (CONFSTR_MS_BAR_DELAY,                    0);
+    CONFIG_PEAK_FALLOFF = deadbeef->conf_get_int (CONFSTR_MS_PEAK_FALLOFF,                  90);
+    CONFIG_PEAK_DELAY = deadbeef->conf_get_int (CONFSTR_MS_PEAK_DELAY,         500);
     const char *color;
     color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_BG,                            "0 0 0");
     sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_BG.red, &CONFIG_COLOR_BG.green, &CONFIG_COLOR_BG.blue);
@@ -680,6 +696,11 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     width = a.width;
     height = a.height;
 
+    float bar_falloff = MAX (1,CONFIG_BAR_FALLOFF/1000.0 * 33);
+    float peak_falloff = MAX (1,CONFIG_PEAK_FALLOFF/1000.0 * 33);
+    int bar_delay = ftoi (CONFIG_PEAK_DELAY/33.0);
+    int peak_delay = ftoi (CONFIG_PEAK_DELAY/33.0);
+
     deadbeef->mutex_lock (w->mutex_keys);
     if (deadbeef->get_output ()->state () == OUTPUT_STATE_PLAYING) {
         for (int i = 0; i < bands; i++)
@@ -703,7 +724,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
             }
 
             f = spectrum_get_value (w, start, end);
-            int x = 10 * log10 (f);
+            float x = 10 * log10 (f);
 
             // interpolate
             if (i <= w->low_res_end+1) {
@@ -730,30 +751,39 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
                 float v0 = 10 * log10 (w->data[CLAMP (w->keys[i+k+1],0,bands-1)]);
 
                 //x = ftoi (cosine_interpolate (v1,v2,(1.0/(j-1)) * ((-1) * (k+1))));
-                x = ftoi (cubic_interpolate (v0,v1,v2,v3,(1.0/(j-1)) * ((-1) * (k+1))));
+                x = cubic_interpolate (v0,v1,v2,v3,(1.0/(j-1)) * ((-1) * (k+1)));
             }
 
             // TODO: get rid of hardcoding
             x += 7;
             x = CLAMP (x, 0, 70);
 
-            //w->bars[i] -= MAX (0, VIS_FALLOFF - w->delay[i]);
-            w->bars[i] = 0;
-            w->peaks[i] -= MAX (0, VIS_FALLOFF_PEAK - w->delay_peak[i]);;
+            if (CONFIG_BAR_FALLOFF != -1) {
+                w->bars[i] -= MAX (0, bar_falloff - w->delay[i]);
+            }
+            else {
+                w->bars[i] = 0;
+            }
+            if (CONFIG_PEAK_FALLOFF != -1) {
+                w->peaks[i] -= MAX (0, peak_falloff - w->delay_peak[i]);
+            }
+            else {
+                w->peaks[i] = 0;
+            }
 
             if (w->delay[i])
-                w->delay[i]--;
+                w->delay[i] --;
             if (w->delay_peak[i])
-                w->delay_peak[i]--;
+                w->delay_peak[i] --;
 
             if (x > w->bars[i])
             {
                 w->bars[i] = x;
-                w->delay[i] = VIS_DELAY;
+                w->delay[i] = bar_delay;
             }
             if (x > w->peaks[i]) {
                 w->peaks[i] = x;
-                w->delay_peak[i] = VIS_DELAY_PEAK;
+                w->delay_peak[i] = peak_delay;
             }
             if (w->peaks[i] < w->bars[i]) {
                 w->peaks[i] = w->bars[i];
@@ -804,7 +834,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     for (gint i = 0; i <= bands; i++)
     {
         int x = barw * i;
-        int y = a.height - w->bars[i] * base_s;
+        int y = a.height - ftoi (w->bars[i] * base_s);
         if (y < 0) {
             y = 0;
         }
@@ -1011,10 +1041,12 @@ musical_spectrum_disconnect (void)
     return 0;
 }
 
-// static const char settings_dlg[] =
-//     "property \"Ignore files longer than x minutes "
-//                 "(-1 scans every file): \"          spinbtn[-1,9999,1] "      CONFSTR_WF_MAX_FILE_LENGTH        " 180 ;\n"
-// ;
+static const char settings_dlg[] =
+    "property \"Bar falloff (dB/s): \"           spinbtn[-1,1000,1] "      CONFSTR_MS_BAR_FALLOFF         " -1 ;\n"
+    "property \"Bar delay (ms): \"                spinbtn[0,10000,100] "      CONFSTR_MS_BAR_DELAY           " 0 ;\n"
+    "property \"Peak falloff (dB/s): \"          spinbtn[-1,1000,1] "      CONFSTR_MS_PEAK_FALLOFF        " 90 ;\n"
+    "property \"Peak delay (ms): \"               spinbtn[0,10000,100] "      CONFSTR_MS_PEAK_DELAY          " 500 ;\n"
+;
 
 static DB_misc_t plugin = {
     //DB_PLUGIN_SET_API_VERSION
@@ -1054,7 +1086,7 @@ static DB_misc_t plugin = {
     .plugin.stop            = musical_spectrum_stop,
     .plugin.connect         = musical_spectrum_connect,
     .plugin.disconnect      = musical_spectrum_disconnect,
-    //.plugin.configdialog    = settings_dlg,
+    .plugin.configdialog    = settings_dlg,
 };
 
 #if !GTK_CHECK_VERSION(3,0,0)
