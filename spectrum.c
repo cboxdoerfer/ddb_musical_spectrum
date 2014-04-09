@@ -795,10 +795,10 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
 
     // draw horizontal grid
     for (int i = 1; i < 7; i++) {
-        if (a.height <= 10 || a.width <= 10) {
+        if (a.height <= 10 || a.width <= 1) {
             break;
         }
-        _draw_hline (data, stride, 1, ftoi (i/7.0 * (a.height)), a.width-1);
+        _draw_hline (data, stride, 0, ftoi (i/7.0 * (a.height)), a.width-1);
     }
 
     for (gint i = 0; i <= bands; i++)
