@@ -696,9 +696,9 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     width = a.width;
     height = a.height;
 
-    float bar_falloff = MAX (1,CONFIG_BAR_FALLOFF/1000.0 * 33);
-    float peak_falloff = MAX (1,CONFIG_PEAK_FALLOFF/1000.0 * 33);
-    int bar_delay = ftoi (CONFIG_PEAK_DELAY/33.0);
+    float bar_falloff = CONFIG_BAR_FALLOFF/1000.0 * 33;
+    float peak_falloff = CONFIG_PEAK_FALLOFF/1000.0 * 33;
+    int bar_delay = ftoi (CONFIG_BAR_DELAY/33.0);
     int peak_delay = ftoi (CONFIG_PEAK_DELAY/33.0);
 
     deadbeef->mutex_lock (w->mutex_keys);
@@ -759,22 +759,27 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
             x = CLAMP (x, 0, 70);
 
             if (CONFIG_BAR_FALLOFF != -1) {
-                w->bars[i] -= MAX (0, bar_falloff - w->delay[i]);
+                if (w->delay[i] < 0) {
+                    w->bars[i] -= bar_falloff;
+                }
+                else {
+                    w->delay[i]--;
+                }
             }
             else {
                 w->bars[i] = 0;
             }
             if (CONFIG_PEAK_FALLOFF != -1) {
-                w->peaks[i] -= MAX (0, peak_falloff - w->delay_peak[i]);
+                if (w->delay_peak[i] < 0) {
+                    w->peaks[i] -= peak_falloff;
+                }
+                else {
+                    w->delay_peak[i]--;
+                }
             }
             else {
                 w->peaks[i] = 0;
             }
-
-            if (w->delay[i])
-                w->delay[i] --;
-            if (w->delay_peak[i])
-                w->delay_peak[i] --;
 
             if (x > w->bars[i])
             {
