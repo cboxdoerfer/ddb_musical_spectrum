@@ -38,14 +38,8 @@
 #include "fastftoi.h"
 
 #define MAX_BANDS 126
-#define VIS_DELAY 1
-#define VIS_DELAY_PEAK 20
-#define VIS_FALLOFF 60
-#define VIS_FALLOFF_PEAK 3
-#define BAND_WIDTH 5
-//#define FFT_SIZE 16384
+#define REFRESH_INTERVAL 33
 #define GRADIENT_TABLE_SIZE 1024
-//#define FFT_SIZE 32768
 #define FFT_SIZE 8192
 
 #define     STR_GRADIENT_VERTICAL "Vertical"
@@ -344,7 +338,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     GtkWidget *hbox02;
     GtkWidget *color_label;
     GtkWidget *color_frame;
-    GtkWidget *color_bg;
+    //GtkWidget *color_bg;
     GtkWidget *color_gradient_00;
     GtkWidget *color_gradient_01;
     GtkWidget *color_gradient_02;
@@ -388,10 +382,10 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_container_add (GTK_CONTAINER (color_frame), vbox02);
     gtk_container_set_border_width (GTK_CONTAINER (vbox02), 12);
 
-    color_bg = gtk_color_button_new ();
-    gtk_color_button_set_use_alpha ((GtkColorButton *)color_bg, TRUE);
-    gtk_widget_show (color_bg);
-    gtk_box_pack_start (GTK_BOX (vbox02), color_bg, TRUE, FALSE, 0);
+    //color_bg = gtk_color_button_new ();
+    //gtk_color_button_set_use_alpha ((GtkColorButton *)color_bg, TRUE);
+    //gtk_widget_show (color_bg);
+    //gtk_box_pack_start (GTK_BOX (vbox02), color_bg, TRUE, FALSE, 0);
 
     num_colors_label = gtk_label_new (NULL);
     gtk_label_set_markup (GTK_LABEL (num_colors_label),"Number of colors:");
@@ -475,7 +469,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
 
     gtk_combo_box_set_active (GTK_COMBO_BOX (gradient_orientation), CONFIG_GRADIENT_ORIENTATION);
     gtk_spin_button_set_value (GTK_SPIN_BUTTON (num_colors), CONFIG_NUM_COLORS);
-    gtk_color_button_set_color (GTK_COLOR_BUTTON (color_bg), &CONFIG_COLOR_BG);
+    //gtk_color_button_set_color (GTK_COLOR_BUTTON (color_bg), &CONFIG_COLOR_BG);
     gtk_color_button_set_color (GTK_COLOR_BUTTON (color_gradient_00), &(CONFIG_GRADIENT_COLORS[0]));
     gtk_color_button_set_color (GTK_COLOR_BUTTON (color_gradient_01), &(CONFIG_GRADIENT_COLORS[1]));
     gtk_color_button_set_color (GTK_COLOR_BUTTON (color_gradient_02), &(CONFIG_GRADIENT_COLORS[2]));
@@ -487,7 +481,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     for (;;) {
         int response = gtk_dialog_run (GTK_DIALOG (spectrum_properties));
         if (response == GTK_RESPONSE_OK || response == GTK_RESPONSE_APPLY) {
-            gtk_color_button_get_color (GTK_COLOR_BUTTON (color_bg), &CONFIG_COLOR_BG);
+            //gtk_color_button_get_color (GTK_COLOR_BUTTON (color_bg), &CONFIG_COLOR_BG);
             gtk_color_button_get_color (GTK_COLOR_BUTTON (color_gradient_00), &CONFIG_GRADIENT_COLORS[0]);
             gtk_color_button_get_color (GTK_COLOR_BUTTON (color_gradient_01), &CONFIG_GRADIENT_COLORS[1]);
             gtk_color_button_get_color (GTK_COLOR_BUTTON (color_gradient_02), &CONFIG_GRADIENT_COLORS[2]);
@@ -645,6 +639,12 @@ spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
 }
 
 static inline float
+linear_interpolate (float y1, float y2, float mu)
+{
+       return (y1 * (1 - mu) + y2 * mu);
+}
+
+static inline float
 cosine_interpolate (float y1, float y2, float mu)
 {
     float mu2;
@@ -696,39 +696,19 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     width = a.width;
     height = a.height;
 
-    float bar_falloff = CONFIG_BAR_FALLOFF/1000.0 * 33;
-    float peak_falloff = CONFIG_PEAK_FALLOFF/1000.0 * 33;
-    int bar_delay = ftoi (CONFIG_BAR_DELAY/33.0);
-    int peak_delay = ftoi (CONFIG_PEAK_DELAY/33.0);
+    float bar_falloff = CONFIG_BAR_FALLOFF/1000.0 * REFRESH_INTERVAL;
+    float peak_falloff = CONFIG_PEAK_FALLOFF/1000.0 * REFRESH_INTERVAL;
+    int bar_delay = ftoi (CONFIG_BAR_DELAY/REFRESH_INTERVAL);
+    int peak_delay = ftoi (CONFIG_PEAK_DELAY/REFRESH_INTERVAL);
 
     deadbeef->mutex_lock (w->mutex_keys);
     if (deadbeef->get_output ()->state () == OUTPUT_STATE_PLAYING) {
         for (int i = 0; i < bands; i++)
         {
-            float f;
-            int start = 0;
-            int end = 0;
-            if (i > 0) {
-                start = (w->keys[i] - w->keys[i-1])/2 + w->keys[i-1];
-                if (start == w->keys[i-1]) start = w->keys[i];
-            }
-            else {
-                start = w->keys[i];
-            }
-            if (i < bands-1) {
-                end = (w->keys[i+1] - w->keys[i])/2 + w->keys[i];
-                if (end == w->keys[i+1]) end = w->keys[i];
-            }
-            else {
-                end = w->keys[i];
-            }
-
-            f = spectrum_get_value (w, start, end);
-            float x = 10 * log10 (f);
-
+            float x;
             // interpolate
             if (i <= w->low_res_end+1) {
-                float v1 = x;
+                float v1 = 10 * log10 (w->data[w->keys[i]]);
 
                 // find index of next value
                 int j = 0;
@@ -737,21 +717,41 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
                 }
                 float v2 = 10 * log10 (w->data[w->keys[i+j]]);
 
-                int l = j;
-                while (i+l < MAX_BANDS && w->keys[i+l] == w->keys[i]) {
-                    l++;
-                }
-                float v3 = 10 * log10 (w->data[w->keys[i+l]]);
+                //int l = j;
+                //while (i+l < MAX_BANDS && w->keys[i+l] == w->keys[i+j]) {
+                //    l++;
+                //}
+                //float v3 = 10 * log10 (w->data[w->keys[i+l]]);
 
                 int k = 0;
                 while ((k+i) >= 0 && w->keys[k+i] == w->keys[i]) {
                     j++;
                     k--;
                 }
-                float v0 = 10 * log10 (w->data[CLAMP (w->keys[i+k+1],0,bands-1)]);
+                //float v0 = 10 * log10 (w->data[CLAMP (w->keys[i+k+1],0,bands-1)]);
 
-                //x = ftoi (cosine_interpolate (v1,v2,(1.0/(j-1)) * ((-1) * (k+1))));
-                x = cubic_interpolate (v0,v1,v2,v3,(1.0/(j-1)) * ((-1) * (k+1)));
+                x = linear_interpolate (v1,v2,(1.0/(j-1)) * ((-1 * k) - 1));
+                //x = cosine_interpolate (v1,v2,(1.0/(j-1)) * ((-1 * k) - 1));
+                //x = cubic_interpolate (v0,v1,v2,v3,(1.0/(j-1)) * ((-1 * k) - 1));
+            }
+            else {
+                int start = 0;
+                int end = 0;
+                if (i > 0) {
+                    start = (w->keys[i] - w->keys[i-1])/2 + w->keys[i-1];
+                    if (start == w->keys[i-1]) start = w->keys[i];
+                }
+                else {
+                    start = w->keys[i];
+                }
+                if (i < bands-1) {
+                    end = (w->keys[i+1] - w->keys[i])/2 + w->keys[i];
+                    if (end == w->keys[i+1]) end = w->keys[i];
+                }
+                else {
+                    end = w->keys[i];
+                }
+                x = 10 * log10 (spectrum_get_value (w, start, end));
             }
 
             // TODO: get rid of hardcoding
@@ -961,7 +961,7 @@ w_spectrum_init (ddb_gtkui_widget_t *w) {
     s->out_complex = fftw_malloc (sizeof (fftw_complex) * FFT_SIZE);
     //s->p_r2r = fftw_plan_r2r_1d (FFT_SIZE, s->in, s->out_real, FFTW_R2HC, FFTW_ESTIMATE);
     s->p_r2c = fftw_plan_dft_r2c_1d (FFT_SIZE, s->in, s->out_complex, FFTW_ESTIMATE);
-    s->drawtimer = g_timeout_add (33, w_spectrum_draw_cb, w);
+    s->drawtimer = g_timeout_add (REFRESH_INTERVAL, w_spectrum_draw_cb, w);
     deadbeef->mutex_unlock (s->mutex);
 }
 
