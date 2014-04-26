@@ -38,13 +38,14 @@
 #include "fastftoi.h"
 
 #define MAX_BANDS 126
-#define REFRESH_INTERVAL 33
+#define REFRESH_INTERVAL 25
 #define GRADIENT_TABLE_SIZE 1024
 #define FFT_SIZE 8192
 
 #define     STR_GRADIENT_VERTICAL "Vertical"
 #define     STR_GRADIENT_HORIZONTAL "Horizontal"
 
+#define     CONFSTR_MS_REFRESH_INTERVAL       "musical_spectrum.refresh_interval"
 #define     CONFSTR_MS_BAR_FALLOFF            "musical_spectrum.bar_falloff"
 #define     CONFSTR_MS_BAR_DELAY              "musical_spectrum.bar_delay"
 #define     CONFSTR_MS_PEAK_FALLOFF           "musical_spectrum.peak_falloff"
@@ -92,6 +93,7 @@ typedef struct {
     cairo_surface_t *surf;
 } w_spectrum_t;
 
+static int CONFIG_REFRESH_INTERVAL = 25;
 static int CONFIG_BAR_FALLOFF = -1;
 static int CONFIG_BAR_DELAY = 0;
 static int CONFIG_PEAK_FALLOFF = 90;
@@ -104,6 +106,7 @@ static GdkColor CONFIG_GRADIENT_COLORS[6];
 static void
 save_config (void)
 {
+    deadbeef->conf_set_int (CONFSTR_MS_REFRESH_INTERVAL,            CONFIG_REFRESH_INTERVAL);
     deadbeef->conf_set_int (CONFSTR_MS_BAR_FALLOFF,                 CONFIG_BAR_FALLOFF);
     deadbeef->conf_set_int (CONFSTR_MS_BAR_DELAY,                   CONFIG_BAR_DELAY);
     deadbeef->conf_set_int (CONFSTR_MS_PEAK_FALLOFF,                CONFIG_PEAK_FALLOFF);
@@ -131,6 +134,7 @@ load_config (void)
 {
     deadbeef->conf_lock ();
     CONFIG_GRADIENT_ORIENTATION = deadbeef->conf_get_int (CONFSTR_MS_GRADIENT_ORIENTATION,          0);
+    CONFIG_REFRESH_INTERVAL = deadbeef->conf_get_int (CONFSTR_MS_REFRESH_INTERVAL,                 25);
     CONFIG_BAR_FALLOFF = deadbeef->conf_get_int (CONFSTR_MS_BAR_FALLOFF,                    -1);
     CONFIG_BAR_DELAY = deadbeef->conf_get_int (CONFSTR_MS_BAR_DELAY,                    0);
     CONFIG_PEAK_FALLOFF = deadbeef->conf_get_int (CONFSTR_MS_PEAK_FALLOFF,                  90);
@@ -696,10 +700,10 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     width = a.width;
     height = a.height;
 
-    float bar_falloff = CONFIG_BAR_FALLOFF/1000.0 * REFRESH_INTERVAL;
-    float peak_falloff = CONFIG_PEAK_FALLOFF/1000.0 * REFRESH_INTERVAL;
-    int bar_delay = ftoi (CONFIG_BAR_DELAY/REFRESH_INTERVAL);
-    int peak_delay = ftoi (CONFIG_PEAK_DELAY/REFRESH_INTERVAL);
+    float bar_falloff = CONFIG_BAR_FALLOFF/1000.0 * CONFIG_REFRESH_INTERVAL;
+    float peak_falloff = CONFIG_PEAK_FALLOFF/1000.0 * CONFIG_REFRESH_INTERVAL;
+    int bar_delay = ftoi (CONFIG_BAR_DELAY/CONFIG_REFRESH_INTERVAL);
+    int peak_delay = ftoi (CONFIG_PEAK_DELAY/CONFIG_REFRESH_INTERVAL);
 
     deadbeef->mutex_lock (w->mutex_keys);
     if (deadbeef->get_output ()->state () == OUTPUT_STATE_PLAYING) {
@@ -925,6 +929,11 @@ spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32
             break;
         case DB_EV_CONFIGCHANGED:
             on_config_changed (w, ctx);
+            if (w->drawtimer) {
+                g_source_remove (w->drawtimer);
+                w->drawtimer = 0;
+            }
+            w->drawtimer = g_timeout_add (CONFIG_REFRESH_INTERVAL, w_spectrum_draw_cb, w);
             break;
     }
     return 0;
@@ -933,15 +942,13 @@ spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32
 void
 w_spectrum_init (ddb_gtkui_widget_t *w) {
     w_spectrum_t *s = (w_spectrum_t *)w;
+    load_config ();
     deadbeef->mutex_lock (s->mutex);
     s->samples = malloc (sizeof (double) * FFT_SIZE);
     memset (s->samples, 0, sizeof (double) * FFT_SIZE);
     s->data = malloc (sizeof (double) * FFT_SIZE);
     memset (s->data, 0, sizeof (double) * FFT_SIZE);
-    if (s->drawtimer) {
-        g_source_remove (s->drawtimer);
-        s->drawtimer = 0;
-    }
+
     for (int i = 0; i < FFT_SIZE; i++) {
         // Hanning
         //s->window[i] = (0.5 * (1 - cos (2 * M_PI * i/(FFT_SIZE))));
@@ -961,7 +968,12 @@ w_spectrum_init (ddb_gtkui_widget_t *w) {
     s->out_complex = fftw_malloc (sizeof (fftw_complex) * FFT_SIZE);
     //s->p_r2r = fftw_plan_r2r_1d (FFT_SIZE, s->in, s->out_real, FFTW_R2HC, FFTW_ESTIMATE);
     s->p_r2c = fftw_plan_dft_r2c_1d (FFT_SIZE, s->in, s->out_complex, FFTW_ESTIMATE);
-    s->drawtimer = g_timeout_add (REFRESH_INTERVAL, w_spectrum_draw_cb, w);
+
+    if (s->drawtimer) {
+        g_source_remove (s->drawtimer);
+        s->drawtimer = 0;
+    }
+    s->drawtimer = g_timeout_add (CONFIG_REFRESH_INTERVAL, w_spectrum_draw_cb, w);
     deadbeef->mutex_unlock (s->mutex);
 }
 
@@ -1047,6 +1059,7 @@ musical_spectrum_disconnect (void)
 }
 
 static const char settings_dlg[] =
+    "property \"Refresh interval (ms): \"           spinbtn[10,1000,1] "      CONFSTR_MS_REFRESH_INTERVAL         " 25 ;\n"
     "property \"Bar falloff (dB/s): \"           spinbtn[-1,1000,1] "      CONFSTR_MS_BAR_FALLOFF         " -1 ;\n"
     "property \"Bar delay (ms): \"                spinbtn[0,10000,100] "      CONFSTR_MS_BAR_DELAY           " 0 ;\n"
     "property \"Peak falloff (dB/s): \"          spinbtn[-1,1000,1] "      CONFSTR_MS_PEAK_FALLOFF        " 90 ;\n"
