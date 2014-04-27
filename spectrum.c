@@ -73,7 +73,8 @@ typedef struct {
     double *data;
     double window[FFT_SIZE];
     // keys: index of frequencies of musical notes (c0;d0;...;f10) in data
-    int keys[MAX_BANDS];
+    int keys[MAX_BANDS + 1];
+    float freq[MAX_BANDS + 1];
     uint32_t colors[GRADIENT_TABLE_SIZE];
     double *samples;
     double *in;
@@ -102,6 +103,19 @@ static int CONFIG_GRADIENT_ORIENTATION = 0;
 static int CONFIG_NUM_COLORS = 6;
 static GdkColor CONFIG_COLOR_BG;
 static GdkColor CONFIG_GRADIENT_COLORS[6];
+
+static char *notes[] = {"C0","C#0","D0","D#0","E0","F0","F#0","G0","G#0","A0","A#0","B0",
+                        "C1","C#1","D1","D#1","E1","F1","F#1","G1","G#1","A1","A#1","B1",
+                        "C2","C#2","D2","D#2","E2","F2","F#2","G2","G#2","A2","A#2","B2",
+                        "C3","C#3","D3","D#3","E3","F3","F#3","G3","G#3","A3","A#3","B3",
+                        "C4","C#4","D4","D#4","E4","F4","F#4","G4","G#4","A4","A#4","B4",
+                        "C5","C#5","D5","D#5","E5","F5","F#5","G5","G#5","A5","A#5","B5",
+                        "C6","C#6","D6","D#6","E6","F6","F#6","G6","G#6","A6","A#6","B6",
+                        "C7","C#7","D7","D#7","E7","F7","F#7","G7","G#7","A7","A#7","B7",
+                        "C8","C#8","D8","D#8","E8","F8","F#8","G8","G#8","A8","A#8","B8",
+                        "C9","C#9","D9","D#9","E9","F9","F#9","G9","G#9","A9","A#9","B9",
+                        "C10","C#10","D10","D#10","E10","F10","F#10","G10","G#10","A10","A#10","B10"
+                       };
 
 static void
 save_config (void)
@@ -909,6 +923,24 @@ spectrum_button_release_event (GtkWidget *widget, GdkEventButton *event, gpointe
     return TRUE;
 }
 
+gboolean
+spectrum_motion_notify_event (GtkWidget *widget, GdkEventButton *event, gpointer user_data)
+{
+    w_spectrum_t *w = user_data;
+    GtkAllocation a;
+    gtk_widget_get_allocation (widget, &a);
+
+    int barw = CLAMP (a.width / MAX_BANDS, 2, 20);
+    if (event->x < barw * MAX_BANDS) {
+        int pos = CLAMP ((int)((event->x-1)/barw),0,MAX_BANDS-1);
+        char tooltip_text[20];
+        snprintf (tooltip_text, sizeof (tooltip_text), "%5.0f Hz (%s)", w->freq[pos], notes[pos]);
+        gtk_widget_set_tooltip_text (widget, tooltip_text);
+        return TRUE;
+    }
+    return FALSE;
+}
+
 static int
 spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2)
 {
@@ -921,7 +953,8 @@ spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32
             samplerate = deadbeef->get_output ()->fmt.samplerate;
             if (samplerate == 0) samplerate = 44100;
             for (int i = 0; i < MAX_BANDS; i++) {
-                w->keys[i] = ftoi (440.0 * (pow (2.0, (double)(i-57)/12.0) * FFT_SIZE/(float)samplerate));
+                w->freq[i] = 440.0 * pow (2.0, (double)(i-57)/12.0);
+                w->keys[i] = ftoi (w->freq[i] * FFT_SIZE/(float)samplerate);
                 if (i > 0 && w->keys[i-1] == w->keys[i])
                     w->low_res_end = i;
             }
@@ -957,7 +990,8 @@ w_spectrum_init (ddb_gtkui_widget_t *w) {
     }
     s->low_res_end = 0;
     for (int i = 0; i < MAX_BANDS; i++) {
-        s->keys[i] = ftoi (440.0 * (pow (2.0, (double)(i-57)/12.0) * FFT_SIZE/44100.0));
+        s->freq[i] = 440.0 * pow (2.0, (double)(i-57)/12.0);
+        s->keys[i] = ftoi (s->freq[i] * FFT_SIZE/44100.0);
         if (i > 0 && s->keys[i-1] == s->keys[i])
             s->low_res_end = i;
     }
@@ -1004,8 +1038,14 @@ w_musical_spectrum_create (void) {
 #endif
     g_signal_connect_after ((gpointer) w->base.widget, "button_press_event", G_CALLBACK (spectrum_button_press_event), w);
     g_signal_connect_after ((gpointer) w->base.widget, "button_release_event", G_CALLBACK (spectrum_button_release_event), w);
+    g_signal_connect_after ((gpointer) w->base.widget, "motion_notify_event", G_CALLBACK (spectrum_motion_notify_event), w);
     g_signal_connect_after ((gpointer) w->popup_item, "activate", G_CALLBACK (on_button_config), w);
     gtkui_plugin->w_override_signals (w->base.widget, w);
+    gtk_widget_set_events (w->base.widget, GDK_EXPOSURE_MASK
+                                         | GDK_LEAVE_NOTIFY_MASK
+                                         | GDK_BUTTON_PRESS_MASK
+                                         | GDK_POINTER_MOTION_MASK
+                                         | GDK_POINTER_MOTION_HINT_MASK);
     deadbeef->vis_waveform_listen (w, spectrum_wavedata_listener);
     return (ddb_gtkui_widget_t *)w;
 }
