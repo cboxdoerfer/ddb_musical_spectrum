@@ -948,7 +948,7 @@ spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32
     int samplerate = 44100;
 
     switch (id) {
-        case DB_EV_SONGCHANGED:
+        case DB_EV_SONGSTARTED:
             deadbeef->mutex_lock (w->mutex_keys);
             samplerate = deadbeef->get_output ()->fmt.samplerate;
             if (samplerate == 0) samplerate = 44100;
