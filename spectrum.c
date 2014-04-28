@@ -46,6 +46,8 @@
 #define     STR_GRADIENT_HORIZONTAL "Horizontal"
 
 #define     CONFSTR_MS_REFRESH_INTERVAL       "musical_spectrum.refresh_interval"
+#define     CONFSTR_MS_ENABLE_HGRID           "musical_spectrum.enable_hgrid"
+#define     CONFSTR_MS_ENABLE_VGRID           "musical_spectrum.enable_vgrid"
 #define     CONFSTR_MS_BAR_FALLOFF            "musical_spectrum.bar_falloff"
 #define     CONFSTR_MS_BAR_DELAY              "musical_spectrum.bar_delay"
 #define     CONFSTR_MS_PEAK_FALLOFF           "musical_spectrum.peak_falloff"
@@ -95,6 +97,8 @@ typedef struct {
 } w_spectrum_t;
 
 static int CONFIG_REFRESH_INTERVAL = 25;
+static int CONFIG_ENABLE_HGRID = 1;
+static int CONFIG_ENABLE_VGRID = 1;
 static int CONFIG_BAR_FALLOFF = -1;
 static int CONFIG_BAR_DELAY = 0;
 static int CONFIG_PEAK_FALLOFF = 90;
@@ -121,6 +125,8 @@ static void
 save_config (void)
 {
     deadbeef->conf_set_int (CONFSTR_MS_REFRESH_INTERVAL,            CONFIG_REFRESH_INTERVAL);
+    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_HGRID,                CONFIG_ENABLE_HGRID);
+    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_VGRID,                CONFIG_ENABLE_VGRID);
     deadbeef->conf_set_int (CONFSTR_MS_BAR_FALLOFF,                 CONFIG_BAR_FALLOFF);
     deadbeef->conf_set_int (CONFSTR_MS_BAR_DELAY,                   CONFIG_BAR_DELAY);
     deadbeef->conf_set_int (CONFSTR_MS_PEAK_FALLOFF,                CONFIG_PEAK_FALLOFF);
@@ -147,12 +153,14 @@ static void
 load_config (void)
 {
     deadbeef->conf_lock ();
-    CONFIG_GRADIENT_ORIENTATION = deadbeef->conf_get_int (CONFSTR_MS_GRADIENT_ORIENTATION,          0);
-    CONFIG_REFRESH_INTERVAL = deadbeef->conf_get_int (CONFSTR_MS_REFRESH_INTERVAL,                 25);
+    CONFIG_GRADIENT_ORIENTATION = deadbeef->conf_get_int (CONFSTR_MS_GRADIENT_ORIENTATION,   0);
+    CONFIG_ENABLE_HGRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_HGRID,                   1);
+    CONFIG_ENABLE_VGRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_VGRID,                   1);
+    CONFIG_REFRESH_INTERVAL = deadbeef->conf_get_int (CONFSTR_MS_REFRESH_INTERVAL,          25);
     CONFIG_BAR_FALLOFF = deadbeef->conf_get_int (CONFSTR_MS_BAR_FALLOFF,                    -1);
-    CONFIG_BAR_DELAY = deadbeef->conf_get_int (CONFSTR_MS_BAR_DELAY,                    0);
+    CONFIG_BAR_DELAY = deadbeef->conf_get_int (CONFSTR_MS_BAR_DELAY,                         0);
     CONFIG_PEAK_FALLOFF = deadbeef->conf_get_int (CONFSTR_MS_PEAK_FALLOFF,                  90);
-    CONFIG_PEAK_DELAY = deadbeef->conf_get_int (CONFSTR_MS_PEAK_DELAY,         500);
+    CONFIG_PEAK_DELAY = deadbeef->conf_get_int (CONFSTR_MS_PEAK_DELAY,                     500);
     const char *color;
     color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_BG,                            "0 0 0");
     sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_BG.red, &CONFIG_COLOR_BG.green, &CONFIG_COLOR_BG.blue);
@@ -365,6 +373,8 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     GtkWidget *color_gradient_05;
     GtkWidget *num_colors_label;
     GtkWidget *num_colors;
+    GtkWidget *hgrid;
+    GtkWidget *vgrid;
     GtkWidget *gradient_orientation;
     GtkWidget *dialog_action_area13;
     GtkWidget *applybutton1;
@@ -466,6 +476,14 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT(gradient_orientation), STR_GRADIENT_VERTICAL);
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(gradient_orientation), STR_GRADIENT_HORIZONTAL);
 
+    hgrid = gtk_check_button_new_with_label ("Horizontal grid");
+    gtk_widget_show (hgrid);
+    gtk_box_pack_start (GTK_BOX (vbox01), hgrid, FALSE, FALSE, 0);
+
+    vgrid = gtk_check_button_new_with_label ("Vertical grid");
+    gtk_widget_show (vgrid);
+    gtk_box_pack_start (GTK_BOX (vbox01), vgrid, FALSE, FALSE, 0);
+
     dialog_action_area13 = gtk_dialog_get_action_area (GTK_DIALOG (spectrum_properties));
     gtk_widget_show (dialog_action_area13);
     gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area13), GTK_BUTTONBOX_END);
@@ -485,6 +503,8 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_dialog_add_action_widget (GTK_DIALOG (spectrum_properties), okbutton1, GTK_RESPONSE_OK);
     gtk_widget_set_can_default (okbutton1, TRUE);
 
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (hgrid), CONFIG_ENABLE_HGRID);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (vgrid), CONFIG_ENABLE_VGRID);
     gtk_combo_box_set_active (GTK_COMBO_BOX (gradient_orientation), CONFIG_GRADIENT_ORIENTATION);
     gtk_spin_button_set_value (GTK_SPIN_BUTTON (num_colors), CONFIG_NUM_COLORS);
     //gtk_color_button_set_color (GTK_COLOR_BUTTON (color_bg), &CONFIG_COLOR_BG);
@@ -507,6 +527,8 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
             gtk_color_button_get_color (GTK_COLOR_BUTTON (color_gradient_04), &CONFIG_GRADIENT_COLORS[4]);
             gtk_color_button_get_color (GTK_COLOR_BUTTON (color_gradient_05), &CONFIG_GRADIENT_COLORS[5]);
 
+            CONFIG_ENABLE_HGRID = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (hgrid));
+            CONFIG_ENABLE_VGRID = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (vgrid));
             CONFIG_NUM_COLORS = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (num_colors));
             switch (CONFIG_NUM_COLORS) {
                 case 1:
@@ -838,20 +860,24 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
 
     //draw background
     _draw_bar (data, stride, 0, 0, a.width, a.height, 0xff222222);
-    for (int i = 0; i <= bands; i++) {
-        // draw vertical grid
-        int x = barw * i;
-        if (x < a.width) {
-            _draw_bar (data, stride, x, 0, 1, height-1, 0xff000000);
+    // draw vertical grid
+    if (CONFIG_ENABLE_VGRID) {
+        for (int i = 0; i <= bands; i++) {
+            int x = barw * i;
+            if (x < a.width) {
+                _draw_bar (data, stride, x, 0, 1, height-1, 0xff000000);
+            }
         }
     }
 
     // draw horizontal grid
-    for (int i = 1; i < 7; i++) {
-        if (a.height <= 10 || a.width <= 1) {
-            break;
+    if (CONFIG_ENABLE_HGRID) {
+        for (int i = 1; i < 7; i++) {
+            if (a.height <= 10 || a.width <= 1) {
+                break;
+            }
+            _draw_hline (data, stride, 0, ftoi (i/7.0 * (a.height)), a.width-1);
         }
-        _draw_hline (data, stride, 0, ftoi (i/7.0 * (a.height)), a.width-1);
     }
 
     for (gint i = 0; i <= bands; i++)
