@@ -391,7 +391,6 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     spectrum_properties = gtk_dialog_new ();
-    gtk_widget_set_size_request (spectrum_properties, -1, 450);
     gtk_window_set_title (GTK_WINDOW (spectrum_properties), "Spectrum Properties");
     gtk_window_set_type_hint (GTK_WINDOW (spectrum_properties), GDK_WINDOW_TYPE_HINT_DIALOG);
 
