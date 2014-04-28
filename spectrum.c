@@ -365,7 +365,6 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     GtkWidget *vbox01;
     GtkWidget *vbox02;
     GtkWidget *hbox01;
-    GtkWidget *hbox02;
     GtkWidget *color_label;
     GtkWidget *color_frame;
     //GtkWidget *color_bg;
@@ -474,11 +473,6 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_box_pack_start (GTK_BOX (hbox01), vbox01, FALSE, FALSE, 0);
     gtk_container_set_border_width (GTK_CONTAINER (vbox01), 12);
 
-    hbox02 = gtk_hbox_new (FALSE, 8);
-    gtk_widget_show (hbox02);
-    gtk_box_pack_start (GTK_BOX (vbox01), hbox02, FALSE, FALSE, 0);
-    gtk_container_set_border_width (GTK_CONTAINER (hbox01), 12);
-
     hbox03 = gtk_hbox_new (FALSE, 8);
     gtk_widget_show (hbox03);
     gtk_box_pack_start (GTK_BOX (vbox01), hbox03, FALSE, FALSE, 0);
@@ -486,11 +480,11 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     db_range_label0 = gtk_label_new (NULL);
     gtk_label_set_markup (GTK_LABEL (db_range_label0),"dB range:");
     gtk_widget_show (db_range_label0);
-    gtk_box_pack_start (GTK_BOX (hbox03), db_range_label0, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (hbox03), db_range_label0, FALSE, TRUE, 0);
 
     db_range = gtk_spin_button_new_with_range (50,120,10);
     gtk_widget_show (db_range);
-    gtk_box_pack_start (GTK_BOX (hbox03), db_range, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (hbox03), db_range, TRUE, TRUE, 0);
 
     hbox04 = gtk_hbox_new (FALSE, 8);
     gtk_widget_show (hbox04);
@@ -499,11 +493,11 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gradient_orientation_label = gtk_label_new (NULL);
     gtk_label_set_markup (GTK_LABEL (gradient_orientation_label),"Gradient orientation:");
     gtk_widget_show (gradient_orientation_label);
-    gtk_box_pack_start (GTK_BOX (hbox04), gradient_orientation_label, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (hbox04), gradient_orientation_label, FALSE, TRUE, 0);
 
     gradient_orientation = gtk_combo_box_text_new ();
     gtk_widget_show (gradient_orientation);
-    gtk_box_pack_start (GTK_BOX (hbox04), gradient_orientation, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (hbox04), gradient_orientation, TRUE, TRUE, 0);
     gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT(gradient_orientation), STR_GRADIENT_VERTICAL);
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(gradient_orientation), STR_GRADIENT_HORIZONTAL);
 
