@@ -109,6 +109,7 @@ static int CONFIG_GRADIENT_ORIENTATION = 0;
 static int CONFIG_NUM_COLORS = 6;
 static GdkColor CONFIG_COLOR_BG;
 static GdkColor CONFIG_GRADIENT_COLORS[6];
+static uint32_t CONFIG_COLOR_BG32 = 0xff222222;
 
 static char *notes[] = {"C0","C#0","D0","D#0","E0","F0","F#0","G0","G#0","A0","A#0","B0",
                         "C1","C#1","D1","D#1","E1","F1","F#1","G1","G#1","A1","A#1","B1",
@@ -180,6 +181,12 @@ load_config (void)
     sscanf (color, "%hd %hd %hd", &(CONFIG_GRADIENT_COLORS[4].red), &(CONFIG_GRADIENT_COLORS[4].green), &(CONFIG_GRADIENT_COLORS[4].blue));
     color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_05,       "0 8224 25700");
     sscanf (color, "%hd %hd %hd", &(CONFIG_GRADIENT_COLORS[5].red), &(CONFIG_GRADIENT_COLORS[5].green), &(CONFIG_GRADIENT_COLORS[5].blue));
+
+    float scale = 255/65535.f;
+    CONFIG_COLOR_BG32 = ((uint32_t)(CONFIG_COLOR_BG.red * scale) & 0xFF) << 16 |
+                        ((uint32_t)(CONFIG_COLOR_BG.green * scale) & 0xFF) << 8 |
+                        ((uint32_t)(CONFIG_COLOR_BG.blue * scale) & 0xFF) << 0;
+
     deadbeef->conf_unlock ();
 }
 
@@ -367,7 +374,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     GtkWidget *hbox01;
     GtkWidget *color_label;
     GtkWidget *color_frame;
-    //GtkWidget *color_bg;
+    GtkWidget *color_bg;
     GtkWidget *color_gradient_00;
     GtkWidget *color_gradient_01;
     GtkWidget *color_gradient_02;
@@ -417,10 +424,10 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_container_add (GTK_CONTAINER (color_frame), vbox02);
     gtk_container_set_border_width (GTK_CONTAINER (vbox02), 12);
 
-    //color_bg = gtk_color_button_new ();
-    //gtk_color_button_set_use_alpha ((GtkColorButton *)color_bg, TRUE);
-    //gtk_widget_show (color_bg);
-    //gtk_box_pack_start (GTK_BOX (vbox02), color_bg, TRUE, FALSE, 0);
+    color_bg = gtk_color_button_new ();
+    gtk_color_button_set_use_alpha ((GtkColorButton *)color_bg, TRUE);
+    gtk_widget_show (color_bg);
+    gtk_box_pack_start (GTK_BOX (vbox02), color_bg, TRUE, FALSE, 0);
 
     num_colors_label = gtk_label_new (NULL);
     gtk_label_set_markup (GTK_LABEL (num_colors_label),"Number of colors:");
@@ -532,7 +539,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_combo_box_set_active (GTK_COMBO_BOX (gradient_orientation), CONFIG_GRADIENT_ORIENTATION);
     gtk_spin_button_set_value (GTK_SPIN_BUTTON (num_colors), CONFIG_NUM_COLORS);
     gtk_spin_button_set_value (GTK_SPIN_BUTTON (db_range), CONFIG_DB_RANGE);
-    //gtk_color_button_set_color (GTK_COLOR_BUTTON (color_bg), &CONFIG_COLOR_BG);
+    gtk_color_button_set_color (GTK_COLOR_BUTTON (color_bg), &CONFIG_COLOR_BG);
     gtk_color_button_set_color (GTK_COLOR_BUTTON (color_gradient_00), &(CONFIG_GRADIENT_COLORS[0]));
     gtk_color_button_set_color (GTK_COLOR_BUTTON (color_gradient_01), &(CONFIG_GRADIENT_COLORS[1]));
     gtk_color_button_set_color (GTK_COLOR_BUTTON (color_gradient_02), &(CONFIG_GRADIENT_COLORS[2]));
@@ -544,7 +551,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     for (;;) {
         int response = gtk_dialog_run (GTK_DIALOG (spectrum_properties));
         if (response == GTK_RESPONSE_OK || response == GTK_RESPONSE_APPLY) {
-            //gtk_color_button_get_color (GTK_COLOR_BUTTON (color_bg), &CONFIG_COLOR_BG);
+            gtk_color_button_get_color (GTK_COLOR_BUTTON (color_bg), &CONFIG_COLOR_BG);
             gtk_color_button_get_color (GTK_COLOR_BUTTON (color_gradient_00), &CONFIG_GRADIENT_COLORS[0]);
             gtk_color_button_get_color (GTK_COLOR_BUTTON (color_gradient_01), &CONFIG_GRADIENT_COLORS[1]);
             gtk_color_button_get_color (GTK_COLOR_BUTTON (color_gradient_02), &CONFIG_GRADIENT_COLORS[2]);
@@ -711,26 +718,13 @@ linear_interpolate (float y1, float y2, float mu)
 }
 
 static inline float
-cosine_interpolate (float y1, float y2, float mu)
+lagrange_interpolate (float y0, float y1, float y2, float y3, float x)
 {
-    float mu2;
-
-    mu2 = (1 - cos (mu * M_PI))/2;
-    return (y1 * (1 - mu2) + y2 * mu2);
-}
-
-static inline float
-cubic_interpolate (float y0, float y1, float y2, float y3, float mu)
-{
-    float a0, a1, a2, a3, mu2;
-
-    mu2 = mu*mu;
-    a0 = y3 - y2 - y0 + y1;
-    a1 = y0 - y1 - a0;
-    a2 = y2 - y0;
-    a3 = y1;
-
-    return (a0 * mu * mu2 + a1 * mu2 + a2 * mu + a3);
+    float a0 = ((x - 1) * (x - 2) * (x - 3)) / -6 * y0;
+    float a1 = ((x - 0) * (x - 2) * (x - 3)) /  2 * y1;
+    float a2 = ((x - 0) * (x - 1) * (x - 3)) / -2 * y2;
+    float a3 = ((x - 0) * (x - 1) * (x - 2)) /  6 * y3;
+    return (a0 + a1 + a2 + a3);
 }
 
 static inline float
@@ -783,22 +777,21 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
                 }
                 float v2 = 10 * log10 (w->data[w->keys[i+j]]);
 
-                //int l = j;
-                //while (i+l < MAX_BANDS && w->keys[i+l] == w->keys[i+j]) {
-                //    l++;
-                //}
-                //float v3 = 10 * log10 (w->data[w->keys[i+l]]);
+                int l = j;
+                while (i+l < MAX_BANDS && w->keys[i+l] == w->keys[i+j]) {
+                    l++;
+                }
+                float v3 = 10 * log10 (w->data[w->keys[i+l]]);
 
                 int k = 0;
                 while ((k+i) >= 0 && w->keys[k+i] == w->keys[i]) {
                     j++;
                     k--;
                 }
-                //float v0 = 10 * log10 (w->data[CLAMP (w->keys[i+k+1],0,bands-1)]);
+                float v0 = 10 * log10 (w->data[CLAMP (w->keys[i+k+1],0,bands-1)]);
 
-                x = linear_interpolate (v1,v2,(1.0/(j-1)) * ((-1 * k) - 1));
-                //x = cosine_interpolate (v1,v2,(1.0/(j-1)) * ((-1 * k) - 1));
-                //x = cubic_interpolate (v0,v1,v2,v3,(1.0/(j-1)) * ((-1 * k) - 1));
+                //x = linear_interpolate (v1,v2,(1.0/(j-1)) * ((-1 * k) - 1));
+                x = lagrange_interpolate (v0,v1,v2,v3,1 + (1.0 / (j - 1)) * ((-1 * k) - 1));
             }
             else {
                 int start = 0;
@@ -887,7 +880,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     int barw = CLAMP (width / bands, 2, 20);
 
     //draw background
-    _draw_bar (data, stride, 0, 0, a.width, a.height, 0xff222222);
+    _draw_bar (data, stride, 0, 0, a.width, a.height, CONFIG_COLOR_BG32);
     // draw vertical grid
     if (CONFIG_ENABLE_VGRID) {
         for (int i = 0; i <= bands; i++) {
