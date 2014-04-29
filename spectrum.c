@@ -788,7 +788,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
                     j++;
                     k--;
                 }
-                float v0 = 10 * log10 (w->data[CLAMP (w->keys[i+k+1],0,bands-1)]);
+                float v0 = 10 * log10 (w->data[w->keys[CLAMP(i+k,0,bands-1)]]);
 
                 //x = linear_interpolate (v1,v2,(1.0/(j-1)) * ((-1 * k) - 1));
                 x = lagrange_interpolate (v0,v1,v2,v3,1 + (1.0 / (j - 1)) * ((-1 * k) - 1));
