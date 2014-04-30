@@ -14,14 +14,17 @@ See the [AUR](https://aur.archlinux.org/packages/deadbeef-plugin-musical-spectru
 See ebuilds [here](https://github.com/megabaks/stuff/tree/master/media-plugins/deadbeef-musical-spectrum)
 
 ### Binaries
+
+#### Dev
+[x86_64](https://drone.io/github.com/cboxdoerfer/ddb_musical_spectrum/files/deadbeef-plugin-builder/ddb_musical_spectrum_x86_64.tar.gz)
+
+[i686](https://drone.io/github.com/cboxdoerfer/ddb_musical_spectrum/files/deadbeef-plugin-builder/ddb_musical_spectrum_i686.tar.gz)
+
 Install them as follows:
 
 x86_64: ```tar -xvf ddb_musical_spectrum_x86_64.tar.gz -C ~/.local/lib/deadbeef```
 
 i686: ```tar -xvf ddb_musical_spectrum_i686.tar.gz -C ~/.local/lib/deadbeef```
-#### Dev
-[x86_64](https://drone.io/github.com/cboxdoerfer/ddb_musical_spectrum/files/deadbeef-plugin-builder/ddb_musical_spectrum_x86_64.tar.gz)
-[i686](https://drone.io/github.com/cboxdoerfer/ddb_musical_spectrum/files/deadbeef-plugin-builder/ddb_musical_spectrum_i686.tar.gz)
 
 ### Other distributions
 #### Build from sources
