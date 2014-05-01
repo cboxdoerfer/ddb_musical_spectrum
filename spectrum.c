@@ -391,6 +391,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     GtkWidget *color_vgrid;
     GtkWidget *color_hgrid_label;
     GtkWidget *color_hgrid;
+    GtkWidget *hseparator_01;
     GtkWidget *color_gradient_00;
     GtkWidget *color_gradient_01;
     GtkWidget *color_gradient_02;
@@ -452,7 +453,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_widget_show (vbox04);
     gtk_box_pack_start (GTK_BOX (hbox02), vbox04, TRUE, TRUE, 0);
 
-    valign_01 = gtk_alignment_new(1, 1, 0, 1);
+    valign_01 = gtk_alignment_new(0, 1, 0, 1);
     gtk_container_add(GTK_CONTAINER(vbox03), valign_01);
     gtk_widget_show (valign_01);
 
@@ -466,7 +467,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_widget_show (color_bg);
     gtk_box_pack_start (GTK_BOX (vbox04), color_bg, TRUE, TRUE, 0);
 
-    valign_02 = gtk_alignment_new(1, 1, 0, 1);
+    valign_02 = gtk_alignment_new(0, 1, 0, 1);
     gtk_container_add(GTK_CONTAINER(vbox03), valign_02);
     gtk_widget_show (valign_02);
 
@@ -480,7 +481,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_widget_show (color_vgrid);
     gtk_box_pack_start (GTK_BOX (vbox04), color_vgrid, TRUE, TRUE, 0);
 
-    valign_03 = gtk_alignment_new(1, 1, 0, 1);
+    valign_03 = gtk_alignment_new(0, 1, 0, 1);
     gtk_container_add(GTK_CONTAINER(vbox03), valign_03);
     gtk_widget_show (valign_03);
 
@@ -493,6 +494,10 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_color_button_set_use_alpha ((GtkColorButton *)color_hgrid, TRUE);
     gtk_widget_show (color_hgrid);
     gtk_box_pack_start (GTK_BOX (vbox04), color_hgrid, TRUE, TRUE, 0);
+
+    hseparator_01 = gtk_hseparator_new ();
+    gtk_widget_show (hseparator_01);
+    gtk_box_pack_start (GTK_BOX (vbox01), hseparator_01, TRUE, TRUE, 0);
 
     num_colors_label = gtk_label_new (NULL);
     gtk_label_set_markup (GTK_LABEL (num_colors_label),"Number of colors:");
