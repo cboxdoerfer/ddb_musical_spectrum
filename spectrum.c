@@ -380,6 +380,9 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     GtkWidget *vbox04;
     GtkWidget *hbox01;
     GtkWidget *hbox02;
+    GtkWidget *valign_01;
+    GtkWidget *valign_02;
+    GtkWidget *valign_03;
     GtkWidget *color_label;
     GtkWidget *color_frame;
     GtkWidget *color_bg_label;
@@ -449,30 +452,42 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_widget_show (vbox04);
     gtk_box_pack_start (GTK_BOX (hbox02), vbox04, TRUE, TRUE, 0);
 
+    valign_01 = gtk_alignment_new(1, 1, 0, 1);
+    gtk_container_add(GTK_CONTAINER(vbox03), valign_01);
+    gtk_widget_show (valign_01);
+
     color_bg_label = gtk_label_new (NULL);
     gtk_label_set_markup (GTK_LABEL (color_bg_label),"Background:");
     gtk_widget_show (color_bg_label);
-    gtk_box_pack_start (GTK_BOX (vbox03), color_bg_label, TRUE, FALSE, 0);
+    gtk_container_add(GTK_CONTAINER(valign_01), color_bg_label);
 
     color_bg = gtk_color_button_new ();
     gtk_color_button_set_use_alpha ((GtkColorButton *)color_bg, TRUE);
     gtk_widget_show (color_bg);
     gtk_box_pack_start (GTK_BOX (vbox04), color_bg, TRUE, TRUE, 0);
 
+    valign_02 = gtk_alignment_new(1, 1, 0, 1);
+    gtk_container_add(GTK_CONTAINER(vbox03), valign_02);
+    gtk_widget_show (valign_02);
+
     color_vgrid_label = gtk_label_new (NULL);
     gtk_label_set_markup (GTK_LABEL (color_vgrid_label),"Vertical grid:");
     gtk_widget_show (color_vgrid_label);
-    gtk_box_pack_start (GTK_BOX (vbox03), color_vgrid_label, TRUE, FALSE, 0);
+    gtk_container_add(GTK_CONTAINER(valign_02), color_vgrid_label);
 
     color_vgrid = gtk_color_button_new ();
     gtk_color_button_set_use_alpha ((GtkColorButton *)color_vgrid, TRUE);
     gtk_widget_show (color_vgrid);
     gtk_box_pack_start (GTK_BOX (vbox04), color_vgrid, TRUE, TRUE, 0);
 
+    valign_03 = gtk_alignment_new(1, 1, 0, 1);
+    gtk_container_add(GTK_CONTAINER(vbox03), valign_03);
+    gtk_widget_show (valign_03);
+
     color_hgrid_label = gtk_label_new (NULL);
     gtk_label_set_markup (GTK_LABEL (color_hgrid_label),"Horizontal grid:");
     gtk_widget_show (color_hgrid_label);
-    gtk_box_pack_start (GTK_BOX (vbox03), color_hgrid_label, TRUE, FALSE, 0);
+    gtk_container_add(GTK_CONTAINER(valign_03), color_hgrid_label);
 
     color_hgrid = gtk_color_button_new ();
     gtk_color_button_set_use_alpha ((GtkColorButton *)color_hgrid, TRUE);
