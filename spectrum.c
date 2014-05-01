@@ -56,6 +56,8 @@
 #define     CONFSTR_MS_PEAK_DELAY             "musical_spectrum.peak_delay"
 #define     CONFSTR_MS_GRADIENT_ORIENTATION   "musical_spectrum.gradient_orientation"
 #define     CONFSTR_MS_COLOR_BG               "musical_spectrum.color.background"
+#define     CONFSTR_MS_COLOR_VGRID            "musical_spectrum.color.vgrid"
+#define     CONFSTR_MS_COLOR_HGRID            "musical_spectrum.color.hgrid"
 #define     CONFSTR_MS_COLOR_GRADIENT_00      "musical_spectrum.color.gradient_00"
 #define     CONFSTR_MS_COLOR_GRADIENT_01      "musical_spectrum.color.gradient_01"
 #define     CONFSTR_MS_COLOR_GRADIENT_02      "musical_spectrum.color.gradient_02"
@@ -109,8 +111,12 @@ static int CONFIG_PEAK_DELAY = 500;
 static int CONFIG_GRADIENT_ORIENTATION = 0;
 static int CONFIG_NUM_COLORS = 6;
 static GdkColor CONFIG_COLOR_BG;
+static GdkColor CONFIG_COLOR_VGRID;
+static GdkColor CONFIG_COLOR_HGRID;
 static GdkColor CONFIG_GRADIENT_COLORS[6];
 static uint32_t CONFIG_COLOR_BG32 = 0xff222222;
+static uint32_t CONFIG_COLOR_VGRID32 = 0xff000000;
+static uint32_t CONFIG_COLOR_HGRID32 = 0xff666666;
 
 static char *notes[] = {"C0","C#0","D0","D#0","E0","F0","F#0","G0","G#0","A0","A#0","B0",
                         "C1","C#1","D1","D#1","E1","F1","F#1","G1","G#1","A1","A#1","B1",
@@ -140,6 +146,10 @@ save_config (void)
     char color[100];
     snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_BG.red, CONFIG_COLOR_BG.green, CONFIG_COLOR_BG.blue);
     deadbeef->conf_set_str (CONFSTR_MS_COLOR_BG, color);
+    snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_VGRID.red, CONFIG_COLOR_VGRID.green, CONFIG_COLOR_VGRID.blue);
+    deadbeef->conf_set_str (CONFSTR_MS_COLOR_VGRID, color);
+    snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_HGRID.red, CONFIG_COLOR_HGRID.green, CONFIG_COLOR_HGRID.blue);
+    deadbeef->conf_set_str (CONFSTR_MS_COLOR_HGRID, color);
     snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[0].red, CONFIG_GRADIENT_COLORS[0].green, CONFIG_GRADIENT_COLORS[0].blue);
     deadbeef->conf_set_str (CONFSTR_MS_COLOR_GRADIENT_00, color);
     snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[1].red, CONFIG_GRADIENT_COLORS[1].green, CONFIG_GRADIENT_COLORS[1].blue);
@@ -168,8 +178,12 @@ load_config (void)
     CONFIG_PEAK_FALLOFF = deadbeef->conf_get_int (CONFSTR_MS_PEAK_FALLOFF,                  90);
     CONFIG_PEAK_DELAY = deadbeef->conf_get_int (CONFSTR_MS_PEAK_DELAY,                     500);
     const char *color;
-    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_BG,                            "8738 8738 8738");
+    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_BG,                   "8738 8738 8738");
     sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_BG.red, &CONFIG_COLOR_BG.green, &CONFIG_COLOR_BG.blue);
+    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_VGRID,                         "0 0 0");
+    sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_VGRID.red, &CONFIG_COLOR_VGRID.green, &CONFIG_COLOR_VGRID.blue);
+    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_HGRID,             "26214 26214 26214");
+    sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_HGRID.red, &CONFIG_COLOR_HGRID.green, &CONFIG_COLOR_HGRID.blue);
     color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_00,        "65535 0 0");
     sscanf (color, "%hd %hd %hd", &(CONFIG_GRADIENT_COLORS[0].red), &(CONFIG_GRADIENT_COLORS[0].green), &(CONFIG_GRADIENT_COLORS[0].blue));
     color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_01,      "65535 32896 0");
@@ -188,6 +202,13 @@ load_config (void)
                         ((uint32_t)(CONFIG_COLOR_BG.green * scale) & 0xFF) << 8 |
                         ((uint32_t)(CONFIG_COLOR_BG.blue * scale) & 0xFF) << 0;
 
+    CONFIG_COLOR_VGRID32 = ((uint32_t)(CONFIG_COLOR_VGRID.red * scale) & 0xFF) << 16 |
+                        ((uint32_t)(CONFIG_COLOR_VGRID.green * scale) & 0xFF) << 8 |
+                        ((uint32_t)(CONFIG_COLOR_VGRID.blue * scale) & 0xFF) << 0;
+
+    CONFIG_COLOR_HGRID32 = ((uint32_t)(CONFIG_COLOR_HGRID.red * scale) & 0xFF) << 16 |
+                        ((uint32_t)(CONFIG_COLOR_HGRID.green * scale) & 0xFF) << 8 |
+                        ((uint32_t)(CONFIG_COLOR_HGRID.blue * scale) & 0xFF) << 0;
     deadbeef->conf_unlock ();
 }
 
@@ -234,10 +255,10 @@ _draw_vline (uint8_t *data, int stride, int x0, int y0, int y1) {
 }
 
 static inline void
-_draw_hline (uint8_t *data, int stride, int x0, int y0, int x1) {
+_draw_hline (uint8_t *data, int stride, int x0, int y0, int x1, uint32_t color) {
     uint32_t *ptr = (uint32_t*)&data[y0*stride+x0*4];
     while (x0 <= x1) {
-        *ptr++ = 0xff666666;
+        *ptr++ = color;
         x0++;
     }
 }
@@ -355,10 +376,18 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     GtkWidget *config_dialog;
     GtkWidget *vbox01;
     GtkWidget *vbox02;
+    GtkWidget *vbox03;
+    GtkWidget *vbox04;
     GtkWidget *hbox01;
+    GtkWidget *hbox02;
     GtkWidget *color_label;
     GtkWidget *color_frame;
+    GtkWidget *color_bg_label;
     GtkWidget *color_bg;
+    GtkWidget *color_vgrid_label;
+    GtkWidget *color_vgrid;
+    GtkWidget *color_hgrid_label;
+    GtkWidget *color_hgrid;
     GtkWidget *color_gradient_00;
     GtkWidget *color_gradient_01;
     GtkWidget *color_gradient_02;
@@ -403,69 +432,106 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_widget_show (color_frame);
     gtk_box_pack_start (GTK_BOX (hbox01), color_frame, TRUE, FALSE, 0);
 
-    vbox02 = gtk_vbox_new (FALSE, 8);
-    gtk_widget_show (vbox02);
-    gtk_container_add (GTK_CONTAINER (color_frame), vbox02);
-    gtk_container_set_border_width (GTK_CONTAINER (vbox02), 12);
+    vbox01 = gtk_vbox_new (FALSE, 8);
+    gtk_widget_show (vbox01);
+    gtk_container_add (GTK_CONTAINER (color_frame), vbox01);
+    gtk_container_set_border_width (GTK_CONTAINER (vbox01), 12);
+
+    hbox02 = gtk_hbox_new (FALSE, 8);
+    gtk_widget_show (hbox02);
+    gtk_box_pack_start (GTK_BOX (vbox01), hbox02, TRUE, TRUE, 0);
+
+    vbox03 = gtk_vbox_new (FALSE, 8);
+    gtk_widget_show (vbox03);
+    gtk_box_pack_start (GTK_BOX (hbox02), vbox03, TRUE, TRUE, 0);
+
+    vbox04 = gtk_vbox_new (FALSE, 8);
+    gtk_widget_show (vbox04);
+    gtk_box_pack_start (GTK_BOX (hbox02), vbox04, TRUE, TRUE, 0);
+
+    color_bg_label = gtk_label_new (NULL);
+    gtk_label_set_markup (GTK_LABEL (color_bg_label),"Background:");
+    gtk_widget_show (color_bg_label);
+    gtk_box_pack_start (GTK_BOX (vbox03), color_bg_label, TRUE, FALSE, 0);
 
     color_bg = gtk_color_button_new ();
     gtk_color_button_set_use_alpha ((GtkColorButton *)color_bg, TRUE);
     gtk_widget_show (color_bg);
-    gtk_box_pack_start (GTK_BOX (vbox02), color_bg, TRUE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox04), color_bg, TRUE, TRUE, 0);
+
+    color_vgrid_label = gtk_label_new (NULL);
+    gtk_label_set_markup (GTK_LABEL (color_vgrid_label),"Vertical grid:");
+    gtk_widget_show (color_vgrid_label);
+    gtk_box_pack_start (GTK_BOX (vbox03), color_vgrid_label, TRUE, FALSE, 0);
+
+    color_vgrid = gtk_color_button_new ();
+    gtk_color_button_set_use_alpha ((GtkColorButton *)color_vgrid, TRUE);
+    gtk_widget_show (color_vgrid);
+    gtk_box_pack_start (GTK_BOX (vbox04), color_vgrid, TRUE, TRUE, 0);
+
+    color_hgrid_label = gtk_label_new (NULL);
+    gtk_label_set_markup (GTK_LABEL (color_hgrid_label),"Horizontal grid:");
+    gtk_widget_show (color_hgrid_label);
+    gtk_box_pack_start (GTK_BOX (vbox03), color_hgrid_label, TRUE, FALSE, 0);
+
+    color_hgrid = gtk_color_button_new ();
+    gtk_color_button_set_use_alpha ((GtkColorButton *)color_hgrid, TRUE);
+    gtk_widget_show (color_hgrid);
+    gtk_box_pack_start (GTK_BOX (vbox04), color_hgrid, TRUE, TRUE, 0);
 
     num_colors_label = gtk_label_new (NULL);
     gtk_label_set_markup (GTK_LABEL (num_colors_label),"Number of colors:");
     gtk_widget_show (num_colors_label);
-    gtk_box_pack_start (GTK_BOX (vbox02), num_colors_label, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox01), num_colors_label, FALSE, FALSE, 0);
 
     num_colors = gtk_spin_button_new_with_range (1,6,1);
     gtk_widget_show (num_colors);
-    gtk_box_pack_start (GTK_BOX (vbox02), num_colors, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox01), num_colors, FALSE, FALSE, 0);
 
     color_gradient_00 = gtk_color_button_new ();
     gtk_color_button_set_use_alpha ((GtkColorButton *)color_gradient_00, TRUE);
     gtk_widget_show (color_gradient_00);
-    gtk_box_pack_start (GTK_BOX (vbox02), color_gradient_00, TRUE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox01), color_gradient_00, TRUE, FALSE, 0);
     gtk_widget_set_size_request (color_gradient_00, -1, 30);
 
     color_gradient_01 = gtk_color_button_new ();
     gtk_color_button_set_use_alpha ((GtkColorButton *)color_gradient_01, TRUE);
     gtk_widget_show (color_gradient_01);
-    gtk_box_pack_start (GTK_BOX (vbox02), color_gradient_01, TRUE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox01), color_gradient_01, TRUE, FALSE, 0);
     gtk_widget_set_size_request (color_gradient_01, -1, 30);
 
     color_gradient_02 = gtk_color_button_new ();
     gtk_color_button_set_use_alpha ((GtkColorButton *)color_gradient_02, TRUE);
     gtk_widget_show (color_gradient_02);
-    gtk_box_pack_start (GTK_BOX (vbox02), color_gradient_02, TRUE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox01), color_gradient_02, TRUE, FALSE, 0);
     gtk_widget_set_size_request (color_gradient_02, -1, 30);
 
     color_gradient_03 = gtk_color_button_new ();
     gtk_color_button_set_use_alpha ((GtkColorButton *)color_gradient_03, TRUE);
     gtk_widget_show (color_gradient_03);
-    gtk_box_pack_start (GTK_BOX (vbox02), color_gradient_03, TRUE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox01), color_gradient_03, TRUE, FALSE, 0);
     gtk_widget_set_size_request (color_gradient_03, -1, 30);
 
     color_gradient_04 = gtk_color_button_new ();
     gtk_color_button_set_use_alpha ((GtkColorButton *)color_gradient_04, TRUE);
     gtk_widget_show (color_gradient_04);
-    gtk_box_pack_start (GTK_BOX (vbox02), color_gradient_04, TRUE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox01), color_gradient_04, TRUE, FALSE, 0);
     gtk_widget_set_size_request (color_gradient_04, -1, 30);
 
     color_gradient_05 = gtk_color_button_new ();
     gtk_color_button_set_use_alpha ((GtkColorButton *)color_gradient_05, TRUE);
     gtk_widget_show (color_gradient_05);
-    gtk_box_pack_start (GTK_BOX (vbox02), color_gradient_05, TRUE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox01), color_gradient_05, TRUE, FALSE, 0);
     gtk_widget_set_size_request (color_gradient_05, -1, 30);
 
-    vbox01 = gtk_vbox_new (FALSE, 8);
-    gtk_widget_show (vbox01);
-    gtk_box_pack_start (GTK_BOX (hbox01), vbox01, FALSE, FALSE, 0);
-    gtk_container_set_border_width (GTK_CONTAINER (vbox01), 12);
+    vbox02 = gtk_vbox_new (FALSE, 8);
+    gtk_widget_show (vbox02);
+    gtk_box_pack_start (GTK_BOX (hbox01), vbox02, FALSE, FALSE, 0);
+    gtk_container_set_border_width (GTK_CONTAINER (vbox02), 12);
 
     hbox03 = gtk_hbox_new (FALSE, 8);
     gtk_widget_show (hbox03);
-    gtk_box_pack_start (GTK_BOX (vbox01), hbox03, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox02), hbox03, FALSE, FALSE, 0);
 
     db_range_label0 = gtk_label_new (NULL);
     gtk_label_set_markup (GTK_LABEL (db_range_label0),"dB range:");
@@ -478,7 +544,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
 
     hbox04 = gtk_hbox_new (FALSE, 8);
     gtk_widget_show (hbox04);
-    gtk_box_pack_start (GTK_BOX (vbox01), hbox04, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox02), hbox04, FALSE, FALSE, 0);
 
     gradient_orientation_label = gtk_label_new (NULL);
     gtk_label_set_markup (GTK_LABEL (gradient_orientation_label),"Gradient orientation:");
@@ -493,11 +559,11 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
 
     hgrid = gtk_check_button_new_with_label ("Horizontal grid");
     gtk_widget_show (hgrid);
-    gtk_box_pack_start (GTK_BOX (vbox01), hgrid, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox02), hgrid, FALSE, FALSE, 0);
 
     vgrid = gtk_check_button_new_with_label ("Vertical grid");
     gtk_widget_show (vgrid);
-    gtk_box_pack_start (GTK_BOX (vbox01), vgrid, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox02), vgrid, FALSE, FALSE, 0);
 
     dialog_action_area13 = gtk_dialog_get_action_area (GTK_DIALOG (spectrum_properties));
     gtk_widget_show (dialog_action_area13);
@@ -524,6 +590,8 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_spin_button_set_value (GTK_SPIN_BUTTON (num_colors), CONFIG_NUM_COLORS);
     gtk_spin_button_set_value (GTK_SPIN_BUTTON (db_range), CONFIG_DB_RANGE);
     gtk_color_button_set_color (GTK_COLOR_BUTTON (color_bg), &CONFIG_COLOR_BG);
+    gtk_color_button_set_color (GTK_COLOR_BUTTON (color_vgrid), &CONFIG_COLOR_VGRID);
+    gtk_color_button_set_color (GTK_COLOR_BUTTON (color_hgrid), &CONFIG_COLOR_HGRID);
     gtk_color_button_set_color (GTK_COLOR_BUTTON (color_gradient_00), &(CONFIG_GRADIENT_COLORS[0]));
     gtk_color_button_set_color (GTK_COLOR_BUTTON (color_gradient_01), &(CONFIG_GRADIENT_COLORS[1]));
     gtk_color_button_set_color (GTK_COLOR_BUTTON (color_gradient_02), &(CONFIG_GRADIENT_COLORS[2]));
@@ -536,6 +604,8 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
         int response = gtk_dialog_run (GTK_DIALOG (spectrum_properties));
         if (response == GTK_RESPONSE_OK || response == GTK_RESPONSE_APPLY) {
             gtk_color_button_get_color (GTK_COLOR_BUTTON (color_bg), &CONFIG_COLOR_BG);
+            gtk_color_button_get_color (GTK_COLOR_BUTTON (color_vgrid), &CONFIG_COLOR_VGRID);
+            gtk_color_button_get_color (GTK_COLOR_BUTTON (color_hgrid), &CONFIG_COLOR_HGRID);
             gtk_color_button_get_color (GTK_COLOR_BUTTON (color_gradient_00), &CONFIG_GRADIENT_COLORS[0]);
             gtk_color_button_get_color (GTK_COLOR_BUTTON (color_gradient_01), &CONFIG_GRADIENT_COLORS[1]);
             gtk_color_button_get_color (GTK_COLOR_BUTTON (color_gradient_02), &CONFIG_GRADIENT_COLORS[2]);
@@ -870,7 +940,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         for (int i = 0; i <= bands; i++) {
             int x = barw * i;
             if (x < a.width) {
-                _draw_bar (data, stride, x, 0, 1, height-1, 0xff000000);
+                _draw_bar (data, stride, x, 0, 1, height-1, CONFIG_COLOR_VGRID32);
             }
         }
     }
@@ -879,7 +949,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     // draw horizontal grid
     if (CONFIG_ENABLE_HGRID && a.height > 2*hgrid_num && a.width > 1) {
         for (int i = 1; i < hgrid_num; i++) {
-            _draw_hline (data, stride, 0, ftoi (i/(float)hgrid_num * (a.height)), a.width-1);
+            _draw_hline (data, stride, 0, ftoi (i/(float)hgrid_num * (a.height)), a.width-1, CONFIG_COLOR_HGRID32);
         }
     }
 
