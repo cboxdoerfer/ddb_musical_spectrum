@@ -75,20 +75,20 @@ typedef struct {
     GtkWidget *drawarea;
     GtkWidget *popup;
     GtkWidget *popup_item;
+    cairo_surface_t *surf;
     guint drawtimer;
+    // data: holds amplitude of frequency bins (result of fft)
     double *data;
     double window[FFT_SIZE];
     // keys: index of frequencies of musical notes (c0;d0;...;f10) in data
     int keys[MAX_BANDS + 1];
+    // freq: holds frequency values
     float freq[MAX_BANDS + 1];
     uint32_t colors[GRADIENT_TABLE_SIZE];
     double *samples;
     double *in;
-    //double *out_real;
     fftw_complex *out_complex;
-    //fftw_plan p_r2r;
     fftw_plan p_r2c;
-    int resized;
     int buffered;
     int low_res_end;
     float bars[MAX_BANDS + 1];
@@ -97,7 +97,6 @@ typedef struct {
     int delay_peak[MAX_BANDS + 1];
     intptr_t mutex;
     intptr_t mutex_keys;
-    cairo_surface_t *surf;
 } w_spectrum_t;
 
 static int CONFIG_REFRESH_INTERVAL = 25;
@@ -225,14 +224,13 @@ do_fft (w_spectrum_t *w)
         w->in[i] = (double)w->samples[i] * w->window[i];
     }
     deadbeef->mutex_unlock (w->mutex);
-    //fftw_execute (p_r2r);
+
     fftw_execute (w->p_r2c);
     for (int i = 0; i < FFT_SIZE/2; i++)
     {
         real = w->out_complex[i][0];
         imag = w->out_complex[i][1];
         w->data[i] = (real*real + imag*imag);
-        //w->data[i] = out_real[i]*out_real[i] + out_real[FFT_SIZE-i-1]*out_real[FFT_SIZE-i-1];
     }
 }
 
@@ -717,9 +715,6 @@ w_spectrum_destroy (ddb_gtkui_widget_t *w) {
         free (s->samples);
         s->samples = NULL;
     }
-    //if (s->p_r2r) {
-    //    fftw_destroy_plan (s->p_r2r);
-    //}
     if (s->p_r2c) {
         fftw_destroy_plan (s->p_r2c);
     }
@@ -727,10 +722,6 @@ w_spectrum_destroy (ddb_gtkui_widget_t *w) {
         fftw_free (s->in);
         s->in = NULL;
     }
-    //if (s->out_real) {
-    //    fftw_free (s->out_real);
-    //    s->out_real = NULL;
-    //}
     if (s->out_complex) {
         fftw_free (s->out_complex);
         s->out_complex = NULL;
@@ -1117,9 +1108,7 @@ w_spectrum_init (ddb_gtkui_widget_t *w) {
     create_gradient_table (s, CONFIG_GRADIENT_COLORS, CONFIG_NUM_COLORS);
     s->in = fftw_malloc (sizeof (double) * FFT_SIZE);
     memset (s->in, 0, sizeof (double) * FFT_SIZE);
-    //s->out_real = fftw_malloc (sizeof (double) * FFT_SIZE);
     s->out_complex = fftw_malloc (sizeof (fftw_complex) * FFT_SIZE);
-    //s->p_r2r = fftw_plan_r2r_1d (FFT_SIZE, s->in, s->out_real, FFTW_R2HC, FFTW_ESTIMATE);
     s->p_r2c = fftw_plan_dft_r2c_1d (FFT_SIZE, s->in, s->out_complex, FFTW_ESTIMATE);
 
     if (s->drawtimer) {
@@ -1144,12 +1133,13 @@ w_musical_spectrum_create (void) {
     w->popup_item = gtk_menu_item_new_with_mnemonic ("Configure");
     w->mutex = deadbeef->mutex_create ();
     w->mutex_keys = deadbeef->mutex_create ();
-    gtk_widget_show (w->drawarea);
+
     gtk_container_add (GTK_CONTAINER (w->base.widget), w->drawarea);
-    gtk_widget_show (w->popup);
-    //gtk_container_add (GTK_CONTAINER (w->drawarea), w->popup);
-    gtk_widget_show (w->popup_item);
     gtk_container_add (GTK_CONTAINER (w->popup), w->popup_item);
+    gtk_widget_show (w->drawarea);
+    gtk_widget_show (w->popup);
+    gtk_widget_show (w->popup_item);
+
 #if !GTK_CHECK_VERSION(3,0,0)
     g_signal_connect_after ((gpointer) w->drawarea, "expose_event", G_CALLBACK (spectrum_expose_event), w);
 #else
