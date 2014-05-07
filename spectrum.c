@@ -41,12 +41,13 @@
 #define MAX_BANDS 126
 #define REFRESH_INTERVAL 25
 #define GRADIENT_TABLE_SIZE 1024
-#define FFT_SIZE 8192
+#define MAX_FFT_SIZE 65536
 
 #define     STR_GRADIENT_VERTICAL "Vertical"
 #define     STR_GRADIENT_HORIZONTAL "Horizontal"
 
 #define     CONFSTR_MS_REFRESH_INTERVAL       "musical_spectrum.refresh_interval"
+#define     CONFSTR_MS_FFT_SIZE       "musical_spectrum.fft_size"
 #define     CONFSTR_MS_DB_RANGE               "musical_spectrum.db_range"
 #define     CONFSTR_MS_ENABLE_HGRID           "musical_spectrum.enable_hgrid"
 #define     CONFSTR_MS_ENABLE_VGRID           "musical_spectrum.enable_vgrid"
@@ -79,10 +80,10 @@ typedef struct {
     guint drawtimer;
     // data: holds amplitude of frequency bins (result of fft)
     double *data;
-    double window[FFT_SIZE];
+    double window[MAX_FFT_SIZE];
     // keys: index of frequencies of musical notes (c0;d0;...;f10) in data
     int keys[MAX_BANDS + 1];
-    // freq: holds frequency values
+    // freq: hold frequency values
     float freq[MAX_BANDS + 1];
     uint32_t colors[GRADIENT_TABLE_SIZE];
     double *samples;
@@ -109,6 +110,7 @@ static int CONFIG_PEAK_FALLOFF = 90;
 static int CONFIG_PEAK_DELAY = 500;
 static int CONFIG_GRADIENT_ORIENTATION = 0;
 static int CONFIG_NUM_COLORS = 6;
+static int CONFIG_FFT_SIZE = 8192;
 static GdkColor CONFIG_COLOR_BG;
 static GdkColor CONFIG_COLOR_VGRID;
 static GdkColor CONFIG_COLOR_HGRID;
@@ -134,6 +136,7 @@ static void
 save_config (void)
 {
     deadbeef->conf_set_int (CONFSTR_MS_REFRESH_INTERVAL,            CONFIG_REFRESH_INTERVAL);
+    deadbeef->conf_set_int (CONFSTR_MS_FFT_SIZE,            CONFIG_FFT_SIZE);
     deadbeef->conf_set_int (CONFSTR_MS_DB_RANGE,                    CONFIG_DB_RANGE);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_HGRID,                CONFIG_ENABLE_HGRID);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_VGRID,                CONFIG_ENABLE_VGRID);
@@ -168,6 +171,7 @@ load_config (void)
 {
     deadbeef->conf_lock ();
     CONFIG_GRADIENT_ORIENTATION = deadbeef->conf_get_int (CONFSTR_MS_GRADIENT_ORIENTATION,   0);
+    CONFIG_FFT_SIZE = deadbeef->conf_get_int (CONFSTR_MS_FFT_SIZE,   8192);
     CONFIG_DB_RANGE = deadbeef->conf_get_int (CONFSTR_MS_DB_RANGE,                          70);
     CONFIG_ENABLE_HGRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_HGRID,                   1);
     CONFIG_ENABLE_VGRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_VGRID,                   1);
@@ -214,19 +218,19 @@ load_config (void)
 void
 do_fft (w_spectrum_t *w)
 {
-    if (!w->samples || w->buffered < FFT_SIZE) {
+    if (!w->samples || w->buffered < CONFIG_FFT_SIZE) {
         return;
     }
     deadbeef->mutex_lock (w->mutex);
     double real,imag;
 
-    for (int i = 0; i < FFT_SIZE; i++) {
+    for (int i = 0; i < CONFIG_FFT_SIZE; i++) {
         w->in[i] = (double)w->samples[i] * w->window[i];
     }
     deadbeef->mutex_unlock (w->mutex);
 
     fftw_execute (w->p_r2c);
-    for (int i = 0; i < FFT_SIZE/2; i++)
+    for (int i = 0; i < CONFIG_FFT_SIZE/2; i++)
     {
         real = w->out_complex[i][0];
         imag = w->out_complex[i][1];
@@ -362,8 +366,30 @@ create_gradient_table (gpointer user_data, GdkColor *colors, int num_colors)
 static int
 on_config_changed (gpointer user_data, uintptr_t ctx)
 {
-    create_gradient_table (user_data, CONFIG_GRADIENT_COLORS, CONFIG_NUM_COLORS);
+    w_spectrum_t *w = user_data;
     load_config ();
+    deadbeef->mutex_lock (w->mutex);
+    if (w->p_r2c) {
+        fftw_destroy_plan (w->p_r2c);
+    }
+
+    for (int i = 0; i < CONFIG_FFT_SIZE; i++) {
+        // Hanning
+        //s->window[i] = (0.5 * (1 - cos (2 * M_PI * i/(CONFIG_FFT_SIZE))));
+        // Blackman-Harris
+        w->window[i] = 0.35875 - 0.48829 * cos(2 * M_PI * i /(CONFIG_FFT_SIZE)) + 0.14128 * cos(4 * M_PI * i/(CONFIG_FFT_SIZE)) - 0.01168 * cos(6 * M_PI * i/(CONFIG_FFT_SIZE));;
+    }
+    w->low_res_end = 0;
+    for (int i = 0; i < MAX_BANDS; i++) {
+        w->freq[i] = 440.0 * pow (2.0, (double)(i-57)/12.0);
+        w->keys[i] = ftoi (w->freq[i] * CONFIG_FFT_SIZE/44100.0);
+        if (i > 0 && w->keys[i-1] == w->keys[i])
+            w->low_res_end = i;
+    }
+    w->p_r2c = fftw_plan_dft_r2c_1d (CONFIG_FFT_SIZE, w->in, w->out_complex, FFTW_ESTIMATE);
+    memset (w->data, 0, sizeof (double) * MAX_FFT_SIZE);
+    create_gradient_table (w, CONFIG_GRADIENT_COLORS, CONFIG_NUM_COLORS);
+    deadbeef->mutex_unlock (w->mutex);
     return 0;
 }
 
@@ -759,8 +785,8 @@ spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
     }
     deadbeef->mutex_lock (w->mutex);
     int nsamples = data->nframes;
-    int sz = MIN (FFT_SIZE, nsamples);
-    int n = FFT_SIZE - sz;
+    int sz = MIN (CONFIG_FFT_SIZE, nsamples);
+    int n = CONFIG_FFT_SIZE - sz;
     memmove (w->samples, w->samples + sz, n * sizeof (double));
 
     int pos = 0;
@@ -771,7 +797,7 @@ spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
         }
     }
     deadbeef->mutex_unlock (w->mutex);
-    if (w->buffered < FFT_SIZE) {
+    if (w->buffered < CONFIG_FFT_SIZE) {
         w->buffered += sz;
     }
 }
@@ -1064,7 +1090,7 @@ spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32
             if (samplerate == 0) samplerate = 44100;
             for (int i = 0; i < MAX_BANDS; i++) {
                 w->freq[i] = 440.0 * pow (2.0, (double)(i-57)/12.0);
-                w->keys[i] = ftoi (w->freq[i] * FFT_SIZE/(float)samplerate);
+                w->keys[i] = ftoi (w->freq[i] * CONFIG_FFT_SIZE/(float)samplerate);
                 if (i > 0 && w->keys[i-1] == w->keys[i])
                     w->low_res_end = i;
             }
@@ -1087,29 +1113,29 @@ w_spectrum_init (ddb_gtkui_widget_t *w) {
     w_spectrum_t *s = (w_spectrum_t *)w;
     load_config ();
     deadbeef->mutex_lock (s->mutex);
-    s->samples = malloc (sizeof (double) * FFT_SIZE);
-    memset (s->samples, 0, sizeof (double) * FFT_SIZE);
-    s->data = malloc (sizeof (double) * FFT_SIZE);
-    memset (s->data, 0, sizeof (double) * FFT_SIZE);
+    s->samples = malloc (sizeof (double) * MAX_FFT_SIZE);
+    memset (s->samples, 0, sizeof (double) * MAX_FFT_SIZE);
+    s->data = malloc (sizeof (double) * MAX_FFT_SIZE);
+    memset (s->data, 0, sizeof (double) * MAX_FFT_SIZE);
 
-    for (int i = 0; i < FFT_SIZE; i++) {
+    for (int i = 0; i < MAX_FFT_SIZE; i++) {
         // Hanning
-        //s->window[i] = (0.5 * (1 - cos (2 * M_PI * i/(FFT_SIZE))));
+        //s->window[i] = (0.5 * (1 - cos (2 * M_PI * i/(MAX_FFT_SIZE))));
         // Blackman-Harris
-        s->window[i] = 0.35875 - 0.48829 * cos(2 * M_PI * i /(FFT_SIZE)) + 0.14128 * cos(4 * M_PI * i/(FFT_SIZE)) - 0.01168 * cos(6 * M_PI * i/(FFT_SIZE));;
+        s->window[i] = 0.35875 - 0.48829 * cos(2 * M_PI * i /(MAX_FFT_SIZE)) + 0.14128 * cos(4 * M_PI * i/(MAX_FFT_SIZE)) - 0.01168 * cos(6 * M_PI * i/(MAX_FFT_SIZE));;
     }
     s->low_res_end = 0;
     for (int i = 0; i < MAX_BANDS; i++) {
         s->freq[i] = 440.0 * pow (2.0, (double)(i-57)/12.0);
-        s->keys[i] = ftoi (s->freq[i] * FFT_SIZE/44100.0);
+        s->keys[i] = ftoi (s->freq[i] * MAX_FFT_SIZE/44100.0);
         if (i > 0 && s->keys[i-1] == s->keys[i])
             s->low_res_end = i;
     }
     create_gradient_table (s, CONFIG_GRADIENT_COLORS, CONFIG_NUM_COLORS);
-    s->in = fftw_malloc (sizeof (double) * FFT_SIZE);
-    memset (s->in, 0, sizeof (double) * FFT_SIZE);
-    s->out_complex = fftw_malloc (sizeof (fftw_complex) * FFT_SIZE);
-    s->p_r2c = fftw_plan_dft_r2c_1d (FFT_SIZE, s->in, s->out_complex, FFTW_ESTIMATE);
+    s->in = fftw_malloc (sizeof (double) * MAX_FFT_SIZE);
+    memset (s->in, 0, sizeof (double) * MAX_FFT_SIZE);
+    s->out_complex = fftw_malloc (sizeof (fftw_complex) * MAX_FFT_SIZE);
+    s->p_r2c = fftw_plan_dft_r2c_1d (MAX_FFT_SIZE, s->in, s->out_complex, FFTW_ESTIMATE);
 
     if (s->drawtimer) {
         g_source_remove (s->drawtimer);
@@ -1208,6 +1234,7 @@ musical_spectrum_disconnect (void)
 }
 
 static const char settings_dlg[] =
+    "property \"FFT size: \"           spinbtn[1024,65536,1] "      CONFSTR_MS_FFT_SIZE         " 8192 ;\n"
     "property \"Refresh interval (ms): \"           spinbtn[10,1000,1] "      CONFSTR_MS_REFRESH_INTERVAL         " 25 ;\n"
     "property \"Bar falloff (dB/s): \"           spinbtn[-1,1000,1] "      CONFSTR_MS_BAR_FALLOFF         " -1 ;\n"
     "property \"Bar delay (ms): \"                spinbtn[0,10000,100] "      CONFSTR_MS_BAR_DELAY           " 0 ;\n"
