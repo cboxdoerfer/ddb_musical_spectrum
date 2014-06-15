@@ -41,16 +41,17 @@
 #define MAX_BANDS 126
 #define REFRESH_INTERVAL 25
 #define GRADIENT_TABLE_SIZE 1024
-#define MAX_FFT_SIZE 65536
+#define MAX_FFT_SIZE 32768
 
 #define     STR_GRADIENT_VERTICAL "Vertical"
 #define     STR_GRADIENT_HORIZONTAL "Horizontal"
 
 #define     CONFSTR_MS_REFRESH_INTERVAL       "musical_spectrum.refresh_interval"
-#define     CONFSTR_MS_FFT_SIZE       "musical_spectrum.fft_size"
+#define     CONFSTR_MS_FFT_SIZE               "musical_spectrum.fft_size"
 #define     CONFSTR_MS_DB_RANGE               "musical_spectrum.db_range"
 #define     CONFSTR_MS_ENABLE_HGRID           "musical_spectrum.enable_hgrid"
 #define     CONFSTR_MS_ENABLE_VGRID           "musical_spectrum.enable_vgrid"
+#define     CONFSTR_MS_ENABLE_BAR_MODE        "musical_spectrum.enable_bar_mode"
 #define     CONFSTR_MS_BAR_FALLOFF            "musical_spectrum.bar_falloff"
 #define     CONFSTR_MS_BAR_DELAY              "musical_spectrum.bar_delay"
 #define     CONFSTR_MS_PEAK_FALLOFF           "musical_spectrum.peak_falloff"
@@ -104,6 +105,7 @@ static int CONFIG_REFRESH_INTERVAL = 25;
 static int CONFIG_DB_RANGE = 70;
 static int CONFIG_ENABLE_HGRID = 1;
 static int CONFIG_ENABLE_VGRID = 1;
+static int CONFIG_ENABLE_BAR_MODE = 0;
 static int CONFIG_BAR_FALLOFF = -1;
 static int CONFIG_BAR_DELAY = 0;
 static int CONFIG_PEAK_FALLOFF = 90;
@@ -136,10 +138,11 @@ static void
 save_config (void)
 {
     deadbeef->conf_set_int (CONFSTR_MS_REFRESH_INTERVAL,            CONFIG_REFRESH_INTERVAL);
-    deadbeef->conf_set_int (CONFSTR_MS_FFT_SIZE,            CONFIG_FFT_SIZE);
+    deadbeef->conf_set_int (CONFSTR_MS_FFT_SIZE,                    CONFIG_FFT_SIZE);
     deadbeef->conf_set_int (CONFSTR_MS_DB_RANGE,                    CONFIG_DB_RANGE);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_HGRID,                CONFIG_ENABLE_HGRID);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_VGRID,                CONFIG_ENABLE_VGRID);
+    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_BAR_MODE,             CONFIG_ENABLE_BAR_MODE);
     deadbeef->conf_set_int (CONFSTR_MS_BAR_FALLOFF,                 CONFIG_BAR_FALLOFF);
     deadbeef->conf_set_int (CONFSTR_MS_BAR_DELAY,                   CONFIG_BAR_DELAY);
     deadbeef->conf_set_int (CONFSTR_MS_PEAK_FALLOFF,                CONFIG_PEAK_FALLOFF);
@@ -171,10 +174,11 @@ load_config (void)
 {
     deadbeef->conf_lock ();
     CONFIG_GRADIENT_ORIENTATION = deadbeef->conf_get_int (CONFSTR_MS_GRADIENT_ORIENTATION,   0);
-    CONFIG_FFT_SIZE = deadbeef->conf_get_int (CONFSTR_MS_FFT_SIZE,   8192);
+    CONFIG_FFT_SIZE = deadbeef->conf_get_int (CONFSTR_MS_FFT_SIZE,                        8192);
     CONFIG_DB_RANGE = deadbeef->conf_get_int (CONFSTR_MS_DB_RANGE,                          70);
     CONFIG_ENABLE_HGRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_HGRID,                   1);
     CONFIG_ENABLE_VGRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_VGRID,                   1);
+    CONFIG_ENABLE_BAR_MODE = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_BAR_MODE,             0);
     CONFIG_REFRESH_INTERVAL = deadbeef->conf_get_int (CONFSTR_MS_REFRESH_INTERVAL,          25);
     CONFIG_BAR_FALLOFF = deadbeef->conf_get_int (CONFSTR_MS_BAR_FALLOFF,                    -1);
     CONFIG_BAR_DELAY = deadbeef->conf_get_int (CONFSTR_MS_BAR_DELAY,                         0);
@@ -227,7 +231,6 @@ do_fft (w_spectrum_t *w)
     for (int i = 0; i < CONFIG_FFT_SIZE; i++) {
         w->in[i] = (double)w->samples[i] * w->window[i];
     }
-    deadbeef->mutex_unlock (w->mutex);
 
     fftw_execute (w->p_r2c);
     for (int i = 0; i < CONFIG_FFT_SIZE/2; i++)
@@ -236,6 +239,7 @@ do_fft (w_spectrum_t *w)
         imag = w->out_complex[i][1];
         w->data[i] = (real*real + imag*imag);
     }
+    deadbeef->mutex_unlock (w->mutex);
 }
 
 static inline void
@@ -429,6 +433,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     GtkWidget *db_range;
     GtkWidget *hgrid;
     GtkWidget *vgrid;
+    GtkWidget *bar_mode;
     GtkWidget *hbox04;
     GtkWidget *gradient_orientation_label;
     GtkWidget *gradient_orientation;
@@ -609,6 +614,10 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_widget_show (vgrid);
     gtk_box_pack_start (GTK_BOX (vbox02), vgrid, FALSE, FALSE, 0);
 
+    bar_mode = gtk_check_button_new_with_label ("Bar mode");
+    gtk_widget_show (bar_mode);
+    gtk_box_pack_start (GTK_BOX (vbox02), bar_mode, FALSE, FALSE, 0);
+
     dialog_action_area13 = gtk_dialog_get_action_area (GTK_DIALOG (spectrum_properties));
     gtk_widget_show (dialog_action_area13);
     gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area13), GTK_BUTTONBOX_END);
@@ -630,6 +639,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
 
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (hgrid), CONFIG_ENABLE_HGRID);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (vgrid), CONFIG_ENABLE_VGRID);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (bar_mode), CONFIG_ENABLE_BAR_MODE);
     gtk_combo_box_set_active (GTK_COMBO_BOX (gradient_orientation), CONFIG_GRADIENT_ORIENTATION);
     gtk_spin_button_set_value (GTK_SPIN_BUTTON (num_colors), CONFIG_NUM_COLORS);
     gtk_spin_button_set_value (GTK_SPIN_BUTTON (db_range), CONFIG_DB_RANGE);
@@ -659,6 +669,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
 
             CONFIG_ENABLE_HGRID = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (hgrid));
             CONFIG_ENABLE_VGRID = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (vgrid));
+            CONFIG_ENABLE_BAR_MODE = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (bar_mode));
             CONFIG_DB_RANGE = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (db_range));
             CONFIG_NUM_COLORS = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (num_colors));
             switch (CONFIG_NUM_COLORS) {
@@ -1017,6 +1028,24 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
             }
         }
     }
+
+    // draw bar mode
+    if (CONFIG_ENABLE_BAR_MODE) {
+        for (int i = 1; i < a.height; i += 2) {
+            _draw_hline (data, stride, 0, i, a.width-1, CONFIG_COLOR_BG32);
+        }
+    }
+    // draw vertical grid
+    if (CONFIG_ENABLE_VGRID) {
+        for (int i = 0; i <= bands; i++) {
+            int x = barw * i;
+            if (x < a.width) {
+                _draw_bar (data, stride, x, 0, 1, height-1, CONFIG_COLOR_VGRID32);
+            }
+        }
+    }
+
+
     cairo_surface_mark_dirty (w->surf);
 
     cairo_save (cr);
@@ -1118,24 +1147,27 @@ w_spectrum_init (ddb_gtkui_widget_t *w) {
     s->data = malloc (sizeof (double) * MAX_FFT_SIZE);
     memset (s->data, 0, sizeof (double) * MAX_FFT_SIZE);
 
-    for (int i = 0; i < MAX_FFT_SIZE; i++) {
+    s->in = fftw_malloc (sizeof (double) * MAX_FFT_SIZE);
+    memset (s->in, 0, sizeof (double) * MAX_FFT_SIZE);
+    s->out_complex = fftw_malloc (sizeof (fftw_complex) * MAX_FFT_SIZE);
+    memset (s->out_complex, 0, sizeof (double) * MAX_FFT_SIZE);
+
+    s->p_r2c = fftw_plan_dft_r2c_1d (CONFIG_FFT_SIZE, s->in, s->out_complex, FFTW_ESTIMATE);
+
+    for (int i = 0; i < CONFIG_FFT_SIZE; i++) {
         // Hanning
-        //s->window[i] = (0.5 * (1 - cos (2 * M_PI * i/(MAX_FFT_SIZE))));
+        //s->window[i] = (0.5 * (1 - cos (2 * M_PI * i/(CONFIG_FFT_SIZE))));
         // Blackman-Harris
-        s->window[i] = 0.35875 - 0.48829 * cos(2 * M_PI * i /(MAX_FFT_SIZE)) + 0.14128 * cos(4 * M_PI * i/(MAX_FFT_SIZE)) - 0.01168 * cos(6 * M_PI * i/(MAX_FFT_SIZE));;
+        s->window[i] = 0.35875 - 0.48829 * cos(2 * M_PI * i /(CONFIG_FFT_SIZE)) + 0.14128 * cos(4 * M_PI * i/(CONFIG_FFT_SIZE)) - 0.01168 * cos(6 * M_PI * i/(CONFIG_FFT_SIZE));;
     }
     s->low_res_end = 0;
     for (int i = 0; i < MAX_BANDS; i++) {
         s->freq[i] = 440.0 * pow (2.0, (double)(i-57)/12.0);
-        s->keys[i] = ftoi (s->freq[i] * MAX_FFT_SIZE/44100.0);
+        s->keys[i] = ftoi (s->freq[i] * CONFIG_FFT_SIZE/44100.0);
         if (i > 0 && s->keys[i-1] == s->keys[i])
             s->low_res_end = i;
     }
     create_gradient_table (s, CONFIG_GRADIENT_COLORS, CONFIG_NUM_COLORS);
-    s->in = fftw_malloc (sizeof (double) * MAX_FFT_SIZE);
-    memset (s->in, 0, sizeof (double) * MAX_FFT_SIZE);
-    s->out_complex = fftw_malloc (sizeof (fftw_complex) * MAX_FFT_SIZE);
-    s->p_r2c = fftw_plan_dft_r2c_1d (MAX_FFT_SIZE, s->in, s->out_complex, FFTW_ESTIMATE);
 
     if (s->drawtimer) {
         g_source_remove (s->drawtimer);
