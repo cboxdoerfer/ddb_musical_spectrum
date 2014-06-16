@@ -320,6 +320,44 @@ _draw_bar_gradient_h (gpointer user_data, uint8_t *data, int stride, int x0, int
     }
 }
 
+static inline void
+_draw_bar_gradient_bar_mode_v (gpointer user_data, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_h) {
+    w_spectrum_t *s = user_data;
+    int y1 = y0+h-1;
+    int x1 = x0+w-1;
+    uint32_t *ptr = (uint32_t*)&data[y0*stride+x0*4];
+    while (y0 <= y1) {
+        int x = x0;
+        int index = ftoi(((double)y0/(double)total_h) * (GRADIENT_TABLE_SIZE - 1));
+        index = CLAMP (index, 0, GRADIENT_TABLE_SIZE - 1);
+        uint32_t color = y0 % 2 ? s->colors[index] : CONFIG_COLOR_BG32;
+        while (x++ <= x1) {
+            *ptr++ = color;
+        }
+        y0++;
+        ptr += stride/4-w;
+    }
+}
+
+static inline void
+_draw_bar_gradient_bar_mode_h (gpointer user_data, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_w) {
+    w_spectrum_t *s = user_data;
+    int y1 = y0+h-1;
+    int x1 = x0+w-1;
+    uint32_t *ptr = (uint32_t*)&data[y0*stride+x0*4];
+    while (y0 <= y1) {
+        int x = x0;
+        while (x++ <= x1) {
+            int index = ftoi(((double)x/(double)total_w) * (GRADIENT_TABLE_SIZE - 1));
+            index = CLAMP (index, 0, GRADIENT_TABLE_SIZE - 1);
+            uint32_t color = y0 % 2 ? s->colors[index] : CONFIG_COLOR_BG32;
+            *ptr++ = color;
+        }
+        y0++;
+        ptr += stride/4-w;
+    }
+}
+
 /* based on Delphi function by Witold J.Janik */
 void
 create_gradient_table (gpointer user_data, GdkColor *colors, int num_colors)
@@ -1013,10 +1051,20 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
             bw = a.width-x-1;
         }
         if (CONFIG_GRADIENT_ORIENTATION == 0) {
-            _draw_bar_gradient_v (user_data, data, stride, x+1, y, bw, a.height-y, a.height);
+            if (CONFIG_ENABLE_BAR_MODE == 0) {
+                _draw_bar_gradient_v (user_data, data, stride, x+1, y, bw, a.height-y, a.height);
+            }
+            else {
+                _draw_bar_gradient_bar_mode_v (user_data, data, stride, x+1, y, bw, a.height-y, a.height);
+            }
         }
         else {
-            _draw_bar_gradient_h (user_data, data, stride, x+1, y, bw, a.height-y, a.width);
+            if (CONFIG_ENABLE_BAR_MODE == 0) {
+                _draw_bar_gradient_h (user_data, data, stride, x+1, y, bw, a.height-y, a.width);
+            }
+            else {
+                _draw_bar_gradient_bar_mode_h (user_data, data, stride, x+1, y, bw, a.height-y, a.width);
+            }
         }
         y = a.height - w->peaks[i] * base_s;
         if (y < a.height-1) {
@@ -1030,21 +1078,11 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     }
 
     // draw bar mode
-    if (CONFIG_ENABLE_BAR_MODE) {
-        for (int i = 1; i < a.height; i += 2) {
-            _draw_hline (data, stride, 0, i, a.width-1, CONFIG_COLOR_BG32);
-        }
-    }
-    // draw vertical grid
-    if (CONFIG_ENABLE_VGRID) {
-        for (int i = 0; i <= bands; i++) {
-            int x = barw * i;
-            if (x < a.width) {
-                _draw_bar (data, stride, x, 0, 1, height-1, CONFIG_COLOR_VGRID32);
-            }
-        }
-    }
-
+    //if (CONFIG_ENABLE_BAR_MODE) {
+    //    for (int i = 1; i < a.height; i += 2) {
+    //        _draw_hline (data, stride, 0, i, a.width-1, CONFIG_COLOR_BG32);
+    //    }
+    //}
 
     cairo_surface_mark_dirty (w->surf);
 
