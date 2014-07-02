@@ -1034,7 +1034,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     _draw_background (data, a.width, a.height, CONFIG_COLOR_BG32);
     // draw vertical grid
     if (CONFIG_ENABLE_VGRID) {
-        int num_lines = MIN (a.width/barw, bands);
+        int num_lines = MIN (a.width/barw, bands) - 1;
         for (int i = 0; i <= num_lines; i++) {
             _draw_vline (data, stride, barw * i, 0, height-1, CONFIG_COLOR_VGRID32);
         }
@@ -1048,7 +1048,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         }
     }
 
-    for (gint i = 0; i <= bands; i++)
+    for (gint i = 0; i < bands; i++)
     {
         int x = barw * i;
         int y = a.height - ftoi (w->bars[i] * base_s);
