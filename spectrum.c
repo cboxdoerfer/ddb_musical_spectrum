@@ -243,6 +243,21 @@ do_fft (w_spectrum_t *w)
 }
 
 static inline void
+_memset_pattern (char *data, const void* pattern, size_t data_len, size_t pattern_len)
+{
+    memmove ((char *)data, pattern, pattern_len);
+    char *start = (char *)data;
+    char *current = (char *)data + pattern_len;
+    char *end = start + data_len;
+    while(current + pattern_len < end) {
+        memmove (current, start, pattern_len);
+        current += pattern_len;
+        pattern_len *= 2;
+    }
+    memmove (current, start, end-current);
+}
+
+static inline void
 _draw_vline (uint8_t *data, int stride, int x0, int y0, int y1, uint32_t color) {
     if (y0 > y1) {
         int tmp = y0;
@@ -273,13 +288,10 @@ _draw_hline (uint8_t *data, int stride, int x0, int y0, int x1, uint32_t color) 
 static inline void
 _draw_background (uint8_t *data, int w, int h, uint32_t color)
 {
-    uint32_t *ptr = (uint32_t*)&data[0];
-    int i = 0;
-    int size = w * h;
-    while (i++ < size) {
-        *ptr++ = color;
-    }
+    size_t fillLen = w * h * sizeof (uint32_t);
+    _memset_pattern ((char *)data, &color, fillLen, sizeof (uint32_t));
 }
+
 static inline void
 _draw_bar (uint8_t *data, int stride, int x0, int y0, int w, int h, uint32_t color) {
     int y1 = y0+h-1;
@@ -1034,8 +1046,8 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     _draw_background (data, a.width, a.height, CONFIG_COLOR_BG32);
     // draw vertical grid
     if (CONFIG_ENABLE_VGRID) {
-        int num_lines = MIN (a.width/barw, bands) - 1;
-        for (int i = 0; i <= num_lines; i++) {
+        int num_lines = MIN (a.width/barw, bands);
+        for (int i = 1; i < num_lines; i++) {
             _draw_vline (data, stride, barw * i, 0, height-1, CONFIG_COLOR_VGRID32);
         }
     }
