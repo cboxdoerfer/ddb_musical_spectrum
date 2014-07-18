@@ -408,19 +408,19 @@ create_gradient_table (gpointer user_data, GdkColor *colors, int num_colors)
         w->colors[i] = 0xFF000000;
         float scale = 255/65535.f;
         if (num_colors == 0) {
-            w->colors[i] = ((uint32_t)(colors[0].red*scale) & 0xFF) << 16 |
-                ((uint32_t)(colors[0].green*scale) & 0xFF) << 8 |
-                ((uint32_t)(colors[0].blue*scale) & 0xFF) << 0;
+            w->colors[i] = (uint32_t)(colors[0].red*scale) << 16 |
+                (uint32_t)(colors[0].green*scale) << 8 |
+                (uint32_t)(colors[0].blue*scale) << 0;
         }
         else if (n < num_colors) {
-            w->colors[i] = ((uint32_t)((colors[n].red*scale) + f * ((colors[n+1].red*scale)-(colors[n].red*scale))) & 0xFF) << 16 |
-                ((uint32_t)((colors[n].green*scale) + f * ((colors[n+1].green*scale)-(colors[n].green*scale))) & 0xFF) << 8 |
-                ((uint32_t)((colors[n].blue*scale) + f * ((colors[n+1].blue*scale)-(colors[n].blue*scale))) & 0xFF) << 0;
+            w->colors[i] = (uint32_t)((colors[n].red*scale) + f * ((colors[n+1].red*scale)-(colors[n].red*scale))) << 16 |
+                (uint32_t)((colors[n].green*scale) + f * ((colors[n+1].green*scale)-(colors[n].green*scale))) << 8 |
+                (uint32_t)((colors[n].blue*scale) + f * ((colors[n+1].blue*scale)-(colors[n].blue*scale))) << 0;
         }
         else if (n == num_colors) {
-            w->colors[i] = ((uint32_t)(colors[n].red*scale) & 0xFF) << 16 |
-                ((uint32_t)(colors[n].green*scale) & 0xFF) << 8 |
-                ((uint32_t)(colors[n].blue*scale) & 0xFF) << 0;
+            w->colors[i] = (uint32_t)(colors[n].red*scale) << 16 |
+                (uint32_t)(colors[n].green*scale) << 8 |
+                (uint32_t)(colors[n].blue*scale) << 0;
         }
         else {
             w->colors[i] = 0xFFFFFFFF;
