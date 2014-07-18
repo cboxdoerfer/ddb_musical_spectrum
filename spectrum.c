@@ -45,6 +45,8 @@
 
 #define     STR_GRADIENT_VERTICAL "Vertical"
 #define     STR_GRADIENT_HORIZONTAL "Horizontal"
+#define     STR_WINDOW_BLACKMANN_HARRIS "Blackmann-Harris"
+#define     STR_WINDOW_HANNING "Hanning"
 
 #define     CONFSTR_MS_REFRESH_INTERVAL       "musical_spectrum.refresh_interval"
 #define     CONFSTR_MS_FFT_SIZE               "musical_spectrum.fft_size"
@@ -57,6 +59,7 @@
 #define     CONFSTR_MS_PEAK_FALLOFF           "musical_spectrum.peak_falloff"
 #define     CONFSTR_MS_PEAK_DELAY             "musical_spectrum.peak_delay"
 #define     CONFSTR_MS_GRADIENT_ORIENTATION   "musical_spectrum.gradient_orientation"
+#define     CONFSTR_MS_WINDOW                 "musical_spectrum.window"
 #define     CONFSTR_MS_COLOR_BG               "musical_spectrum.color.background"
 #define     CONFSTR_MS_COLOR_VGRID            "musical_spectrum.color.vgrid"
 #define     CONFSTR_MS_COLOR_HGRID            "musical_spectrum.color.hgrid"
@@ -87,6 +90,7 @@ typedef struct {
     // freq: hold frequency values
     float freq[MAX_BANDS + 1];
     uint32_t colors[GRADIENT_TABLE_SIZE];
+    int samplerate;
     double *samples;
     double *in;
     fftw_complex *out_complex;
@@ -101,6 +105,8 @@ typedef struct {
     intptr_t mutex_keys;
 } w_spectrum_t;
 
+enum WINDOW { BLACKMAN_HARRIS = 0, HANNING = 1 };
+
 static int CONFIG_REFRESH_INTERVAL = 25;
 static int CONFIG_DB_RANGE = 70;
 static int CONFIG_ENABLE_HGRID = 1;
@@ -113,6 +119,7 @@ static int CONFIG_PEAK_DELAY = 500;
 static int CONFIG_GRADIENT_ORIENTATION = 0;
 static int CONFIG_NUM_COLORS = 6;
 static int CONFIG_FFT_SIZE = 8192;
+static int CONFIG_WINDOW = BLACKMAN_HARRIS;
 static GdkColor CONFIG_COLOR_BG;
 static GdkColor CONFIG_COLOR_VGRID;
 static GdkColor CONFIG_COLOR_HGRID;
@@ -148,6 +155,7 @@ save_config (void)
     deadbeef->conf_set_int (CONFSTR_MS_PEAK_FALLOFF,                CONFIG_PEAK_FALLOFF);
     deadbeef->conf_set_int (CONFSTR_MS_PEAK_DELAY,                  CONFIG_PEAK_DELAY);
     deadbeef->conf_set_int (CONFSTR_MS_GRADIENT_ORIENTATION,        CONFIG_GRADIENT_ORIENTATION);
+    deadbeef->conf_set_int (CONFSTR_MS_WINDOW,                      CONFIG_WINDOW);
     char color[100];
     snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_BG.red, CONFIG_COLOR_BG.green, CONFIG_COLOR_BG.blue);
     deadbeef->conf_set_str (CONFSTR_MS_COLOR_BG, color);
@@ -174,6 +182,7 @@ load_config (void)
 {
     deadbeef->conf_lock ();
     CONFIG_GRADIENT_ORIENTATION = deadbeef->conf_get_int (CONFSTR_MS_GRADIENT_ORIENTATION,   0);
+    CONFIG_WINDOW = deadbeef->conf_get_int (CONFSTR_MS_WINDOW,                 BLACKMAN_HARRIS);
     CONFIG_FFT_SIZE = deadbeef->conf_get_int (CONFSTR_MS_FFT_SIZE,                        8192);
     CONFIG_DB_RANGE = deadbeef->conf_get_int (CONFSTR_MS_DB_RANGE,                          70);
     CONFIG_ENABLE_HGRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_HGRID,                   1);
@@ -428,6 +437,43 @@ create_gradient_table (gpointer user_data, GdkColor *colors, int num_colors)
     }
 }
 
+void
+create_window_table (gpointer user_data)
+{
+    w_spectrum_t *w = user_data;
+
+    switch (CONFIG_WINDOW) {
+        case BLACKMAN_HARRIS:
+            for (int i = 0; i < CONFIG_FFT_SIZE; i++) {
+                // Blackman-Harris
+                w->window[i] = 0.35875 - 0.48829 * cos(2 * M_PI * i /(CONFIG_FFT_SIZE)) + 0.14128 * cos(4 * M_PI * i/(CONFIG_FFT_SIZE)) - 0.01168 * cos(6 * M_PI * i/(CONFIG_FFT_SIZE));;
+            }
+            break;
+        case HANNING:
+            for (int i = 0; i < CONFIG_FFT_SIZE; i++) {
+                // Hanning
+                w->window[i] = (0.5 * (1 - cos (2 * M_PI * i/(CONFIG_FFT_SIZE))));
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+void
+create_frequency_table (gpointer user_data)
+{
+    w_spectrum_t *w = user_data;
+
+    w->low_res_end = 0;
+    for (int i = 0; i < MAX_BANDS; i++) {
+        w->freq[i] = 440.0 * pow (2.0, (double)(i-57)/12.0);
+        w->keys[i] = ftoi (w->freq[i] * CONFIG_FFT_SIZE/(float)w->samplerate);
+        if (i > 0 && w->keys[i-1] == w->keys[i])
+            w->low_res_end = i;
+    }
+}
+
 static int
 on_config_changed (gpointer user_data, uintptr_t ctx)
 {
@@ -437,23 +483,12 @@ on_config_changed (gpointer user_data, uintptr_t ctx)
     if (w->p_r2c) {
         fftw_destroy_plan (w->p_r2c);
     }
+    create_window_table (w);
+    create_frequency_table (w);
+    create_gradient_table (w, CONFIG_GRADIENT_COLORS, CONFIG_NUM_COLORS);
 
-    for (int i = 0; i < CONFIG_FFT_SIZE; i++) {
-        // Hanning
-        //s->window[i] = (0.5 * (1 - cos (2 * M_PI * i/(CONFIG_FFT_SIZE))));
-        // Blackman-Harris
-        w->window[i] = 0.35875 - 0.48829 * cos(2 * M_PI * i /(CONFIG_FFT_SIZE)) + 0.14128 * cos(4 * M_PI * i/(CONFIG_FFT_SIZE)) - 0.01168 * cos(6 * M_PI * i/(CONFIG_FFT_SIZE));;
-    }
-    w->low_res_end = 0;
-    for (int i = 0; i < MAX_BANDS; i++) {
-        w->freq[i] = 440.0 * pow (2.0, (double)(i-57)/12.0);
-        w->keys[i] = ftoi (w->freq[i] * CONFIG_FFT_SIZE/44100.0);
-        if (i > 0 && w->keys[i-1] == w->keys[i])
-            w->low_res_end = i;
-    }
     w->p_r2c = fftw_plan_dft_r2c_1d (CONFIG_FFT_SIZE, w->in, w->out_complex, FFTW_ESTIMATE);
     memset (w->data, 0, sizeof (double) * MAX_FFT_SIZE);
-    create_gradient_table (w, CONFIG_GRADIENT_COLORS, CONFIG_NUM_COLORS);
     deadbeef->mutex_unlock (w->mutex);
     return 0;
 }
@@ -496,6 +531,9 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     GtkWidget *vgrid;
     GtkWidget *bar_mode;
     GtkWidget *hbox04;
+    GtkWidget *window_label;
+    GtkWidget *window;
+    GtkWidget *hbox05;
     GtkWidget *gradient_orientation_label;
     GtkWidget *gradient_orientation;
     GtkWidget *dialog_action_area13;
@@ -656,14 +694,29 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_widget_show (hbox04);
     gtk_box_pack_start (GTK_BOX (vbox02), hbox04, FALSE, FALSE, 0);
 
+    window_label = gtk_label_new (NULL);
+    gtk_label_set_markup (GTK_LABEL (window_label),"Window function:");
+    gtk_widget_show (window_label);
+    gtk_box_pack_start (GTK_BOX (hbox04), window_label, FALSE, TRUE, 0);
+
+    window = gtk_combo_box_text_new ();
+    gtk_widget_show (window);
+    gtk_box_pack_start (GTK_BOX (hbox04), window, TRUE, TRUE, 0);
+    gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT(window), STR_WINDOW_BLACKMANN_HARRIS);
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(window), STR_WINDOW_HANNING);
+
+    hbox05 = gtk_hbox_new (FALSE, 8);
+    gtk_widget_show (hbox05);
+    gtk_box_pack_start (GTK_BOX (vbox02), hbox05, FALSE, FALSE, 0);
+
     gradient_orientation_label = gtk_label_new (NULL);
     gtk_label_set_markup (GTK_LABEL (gradient_orientation_label),"Gradient orientation:");
     gtk_widget_show (gradient_orientation_label);
-    gtk_box_pack_start (GTK_BOX (hbox04), gradient_orientation_label, FALSE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX (hbox05), gradient_orientation_label, FALSE, TRUE, 0);
 
     gradient_orientation = gtk_combo_box_text_new ();
     gtk_widget_show (gradient_orientation);
-    gtk_box_pack_start (GTK_BOX (hbox04), gradient_orientation, TRUE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX (hbox05), gradient_orientation, TRUE, TRUE, 0);
     gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT(gradient_orientation), STR_GRADIENT_VERTICAL);
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(gradient_orientation), STR_GRADIENT_HORIZONTAL);
 
@@ -701,6 +754,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (hgrid), CONFIG_ENABLE_HGRID);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (vgrid), CONFIG_ENABLE_VGRID);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (bar_mode), CONFIG_ENABLE_BAR_MODE);
+    gtk_combo_box_set_active (GTK_COMBO_BOX (window), CONFIG_WINDOW);
     gtk_combo_box_set_active (GTK_COMBO_BOX (gradient_orientation), CONFIG_GRADIENT_ORIENTATION);
     gtk_spin_button_set_value (GTK_SPIN_BUTTON (num_colors), CONFIG_NUM_COLORS);
     gtk_spin_button_set_value (GTK_SPIN_BUTTON (db_range), CONFIG_DB_RANGE);
@@ -714,7 +768,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_color_button_set_color (GTK_COLOR_BUTTON (color_gradient_04), &(CONFIG_GRADIENT_COLORS[4]));
     gtk_color_button_set_color (GTK_COLOR_BUTTON (color_gradient_05), &(CONFIG_GRADIENT_COLORS[5]));
 
-    char *text;
+    char text[100];
     for (;;) {
         int response = gtk_dialog_run (GTK_DIALOG (spectrum_properties));
         if (response == GTK_RESPONSE_OK || response == GTK_RESPONSE_APPLY) {
@@ -777,7 +831,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
                     gtk_widget_show (color_gradient_05);
                     break;
             }
-            text = gtk_combo_box_text_get_active_text (GTK_COMBO_BOX_TEXT (gradient_orientation));
+            snprintf (text, sizeof (text), "%s", gtk_combo_box_text_get_active_text (GTK_COMBO_BOX_TEXT (gradient_orientation)));
             if (strcmp (text, STR_GRADIENT_VERTICAL) == 0) {
                 CONFIG_GRADIENT_ORIENTATION = 0;
             }
@@ -787,6 +841,18 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
             else {
                 CONFIG_GRADIENT_ORIENTATION = -1;
             }
+
+            snprintf (text, sizeof (text), "%s", gtk_combo_box_text_get_active_text (GTK_COMBO_BOX_TEXT (window)));
+            if (strcmp (text, STR_WINDOW_BLACKMANN_HARRIS) == 0) {
+                CONFIG_WINDOW = BLACKMAN_HARRIS;
+            }
+            else if (strcmp (text, STR_WINDOW_HANNING) == 0) {
+                CONFIG_WINDOW = HANNING;
+            }
+            else {
+                CONFIG_GRADIENT_ORIENTATION = -1;
+            }
+
             save_config ();
             deadbeef->sendmessage (DB_EV_CONFIGCHANGED, 0, 0, 0);
         }
@@ -1162,18 +1228,15 @@ static int
 spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2)
 {
     w_spectrum_t *w = (w_spectrum_t *)widget;
-    int samplerate = 44100;
 
     switch (id) {
         case DB_EV_SONGSTARTED:
             deadbeef->mutex_lock (w->mutex_keys);
-            samplerate = deadbeef->get_output ()->fmt.samplerate;
-            if (samplerate == 0) samplerate = 44100;
-            for (int i = 0; i < MAX_BANDS; i++) {
-                w->freq[i] = 440.0 * pow (2.0, (double)(i-57)/12.0);
-                w->keys[i] = ftoi (w->freq[i] * CONFIG_FFT_SIZE/(float)samplerate);
-                if (i > 0 && w->keys[i-1] == w->keys[i])
-                    w->low_res_end = i;
+            int samplerate_temp = w->samplerate;
+            w->samplerate = deadbeef->get_output ()->fmt.samplerate;
+            if (w->samplerate == 0) w->samplerate = 44100;
+            if (samplerate_temp != w->samplerate) {
+                create_frequency_table (w);
             }
             deadbeef->mutex_unlock (w->mutex_keys);
             break;
@@ -1206,19 +1269,12 @@ w_spectrum_init (ddb_gtkui_widget_t *w) {
 
     s->p_r2c = fftw_plan_dft_r2c_1d (CONFIG_FFT_SIZE, s->in, s->out_complex, FFTW_ESTIMATE);
 
-    for (int i = 0; i < CONFIG_FFT_SIZE; i++) {
-        // Hanning
-        //s->window[i] = (0.5 * (1 - cos (2 * M_PI * i/(CONFIG_FFT_SIZE))));
-        // Blackman-Harris
-        s->window[i] = 0.35875 - 0.48829 * cos(2 * M_PI * i /(CONFIG_FFT_SIZE)) + 0.14128 * cos(4 * M_PI * i/(CONFIG_FFT_SIZE)) - 0.01168 * cos(6 * M_PI * i/(CONFIG_FFT_SIZE));;
-    }
-    s->low_res_end = 0;
-    for (int i = 0; i < MAX_BANDS; i++) {
-        s->freq[i] = 440.0 * pow (2.0, (double)(i-57)/12.0);
-        s->keys[i] = ftoi (s->freq[i] * CONFIG_FFT_SIZE/44100.0);
-        if (i > 0 && s->keys[i-1] == s->keys[i])
-            s->low_res_end = i;
-    }
+    s->buffered = 0;
+    s->samplerate = deadbeef->get_output ()->fmt.samplerate;
+    if (s->samplerate == 0) s->samplerate = 44100;
+
+    create_window_table (s);
+    create_frequency_table (s);
     create_gradient_table (s, CONFIG_GRADIENT_COLORS, CONFIG_NUM_COLORS);
 
     if (s->drawtimer) {
