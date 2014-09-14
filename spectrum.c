@@ -278,9 +278,10 @@ _draw_vline (uint8_t *data, int stride, int x0, int y0, int y1, uint32_t color) 
         y0++;
     }
     uint32_t *ptr = (uint32_t*)&data[y0*stride+x0*4];
+    int line_size = stride/4;
     while (y0 <= y1) {
         *ptr = color;
-        ptr += stride/4;
+        ptr += line_size;
         y0++;
     }
 }
