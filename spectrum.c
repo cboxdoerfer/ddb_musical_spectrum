@@ -45,6 +45,9 @@
 
 #define     STR_GRADIENT_VERTICAL "Vertical"
 #define     STR_GRADIENT_HORIZONTAL "Horizontal"
+#define     STR_ALIGNMENT_LEFT "Left"
+#define     STR_ALIGNMENT_RIGHT "Right"
+#define     STR_ALIGNMENT_CENTER "Center"
 #define     STR_WINDOW_BLACKMANN_HARRIS "Blackmann-Harris"
 #define     STR_WINDOW_HANNING "Hanning"
 
@@ -59,6 +62,7 @@
 #define     CONFSTR_MS_PEAK_FALLOFF           "musical_spectrum.peak_falloff"
 #define     CONFSTR_MS_PEAK_DELAY             "musical_spectrum.peak_delay"
 #define     CONFSTR_MS_GRADIENT_ORIENTATION   "musical_spectrum.gradient_orientation"
+#define     CONFSTR_MS_ALIGNMENT              "musical_spectrum.alignment"
 #define     CONFSTR_MS_WINDOW                 "musical_spectrum.window"
 #define     CONFSTR_MS_COLOR_BG               "musical_spectrum.color.background"
 #define     CONFSTR_MS_COLOR_VGRID            "musical_spectrum.color.vgrid"
@@ -106,11 +110,13 @@ typedef struct {
 } w_spectrum_t;
 
 enum WINDOW { BLACKMAN_HARRIS = 0, HANNING = 1 };
+enum ALIGNMENT { LEFT = 0, RIGHT = 1, CENTER = 2 };
 
 static int CONFIG_REFRESH_INTERVAL = 25;
 static int CONFIG_DB_RANGE = 70;
 static int CONFIG_ENABLE_HGRID = 1;
 static int CONFIG_ENABLE_VGRID = 1;
+static int CONFIG_ALIGNMENT = LEFT;
 static int CONFIG_ENABLE_BAR_MODE = 0;
 static int CONFIG_BAR_FALLOFF = -1;
 static int CONFIG_BAR_DELAY = 0;
@@ -149,6 +155,7 @@ save_config (void)
     deadbeef->conf_set_int (CONFSTR_MS_DB_RANGE,                    CONFIG_DB_RANGE);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_HGRID,                CONFIG_ENABLE_HGRID);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_VGRID,                CONFIG_ENABLE_VGRID);
+    deadbeef->conf_set_int (CONFSTR_MS_ALIGNMENT,                   CONFIG_ALIGNMENT);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_BAR_MODE,             CONFIG_ENABLE_BAR_MODE);
     deadbeef->conf_set_int (CONFSTR_MS_BAR_FALLOFF,                 CONFIG_BAR_FALLOFF);
     deadbeef->conf_set_int (CONFSTR_MS_BAR_DELAY,                   CONFIG_BAR_DELAY);
@@ -187,6 +194,7 @@ load_config (void)
     CONFIG_DB_RANGE = deadbeef->conf_get_int (CONFSTR_MS_DB_RANGE,                          70);
     CONFIG_ENABLE_HGRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_HGRID,                   1);
     CONFIG_ENABLE_VGRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_VGRID,                   1);
+    CONFIG_ALIGNMENT = deadbeef->conf_get_int (CONFSTR_MS_ALIGNMENT,                      LEFT);
     CONFIG_ENABLE_BAR_MODE = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_BAR_MODE,             0);
     CONFIG_REFRESH_INTERVAL = deadbeef->conf_get_int (CONFSTR_MS_REFRESH_INTERVAL,          25);
     CONFIG_BAR_FALLOFF = deadbeef->conf_get_int (CONFSTR_MS_BAR_FALLOFF,                    -1);
@@ -298,6 +306,12 @@ _draw_hline (uint8_t *data, int stride, int x0, int y0, int x1, uint32_t color) 
 static inline void
 _draw_background (uint8_t *data, int w, int h, uint32_t color)
 {
+    //uint32_t *ptr = (uint32_t*)&data[0];
+    //int i = 0;
+    //int size = w * h;
+    //while (i++ < size) {
+    //    *ptr++ = color;
+    //}
     size_t fillLen = w * h * sizeof (uint32_t);
     _memset_pattern ((char *)data, &color, fillLen, sizeof (uint32_t));
 }
@@ -447,13 +461,13 @@ create_window_table (gpointer user_data)
         case BLACKMAN_HARRIS:
             for (int i = 0; i < CONFIG_FFT_SIZE; i++) {
                 // Blackman-Harris
-                w->window[i] = 0.35875 - 0.48829 * cos(2 * M_PI * i /(CONFIG_FFT_SIZE)) + 0.14128 * cos(4 * M_PI * i/(CONFIG_FFT_SIZE)) - 0.01168 * cos(6 * M_PI * i/(CONFIG_FFT_SIZE));;
+                w->window[i] = 0.35875 - 0.48829 * cos(2 * M_PI * i / CONFIG_FFT_SIZE) + 0.14128 * cos(4 * M_PI * i / CONFIG_FFT_SIZE) - 0.01168 * cos(6 * M_PI * i / CONFIG_FFT_SIZE);
             }
             break;
         case HANNING:
             for (int i = 0; i < CONFIG_FFT_SIZE; i++) {
                 // Hanning
-                w->window[i] = (0.5 * (1 - cos (2 * M_PI * i/(CONFIG_FFT_SIZE))));
+                w->window[i] = (0.5 * (1 - cos (2 * M_PI * i / CONFIG_FFT_SIZE)));
             }
             break;
         default:
@@ -537,6 +551,9 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     GtkWidget *hbox05;
     GtkWidget *gradient_orientation_label;
     GtkWidget *gradient_orientation;
+    GtkWidget *hbox06;
+    GtkWidget *alignment_label;
+    GtkWidget *alignment;
     GtkWidget *dialog_action_area13;
     GtkWidget *applybutton1;
     GtkWidget *cancelbutton1;
@@ -721,6 +738,22 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT(gradient_orientation), STR_GRADIENT_VERTICAL);
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(gradient_orientation), STR_GRADIENT_HORIZONTAL);
 
+    hbox06 = gtk_hbox_new (FALSE, 8);
+    gtk_widget_show (hbox06);
+    gtk_box_pack_start (GTK_BOX (vbox02), hbox06, FALSE, FALSE, 0);
+
+    alignment_label = gtk_label_new (NULL);
+    gtk_label_set_markup (GTK_LABEL (alignment_label),"Alignment:");
+    gtk_widget_show (alignment_label);
+    gtk_box_pack_start (GTK_BOX (hbox06), alignment_label, FALSE, TRUE, 0);
+
+    alignment = gtk_combo_box_text_new ();
+    gtk_widget_show (alignment);
+    gtk_box_pack_start (GTK_BOX (hbox06), alignment, TRUE, TRUE, 0);
+    gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT(alignment), STR_ALIGNMENT_LEFT);
+    gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT(alignment), STR_ALIGNMENT_RIGHT);
+    gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT(alignment), STR_ALIGNMENT_CENTER);
+
     hgrid = gtk_check_button_new_with_label ("Horizontal grid");
     gtk_widget_show (hgrid);
     gtk_box_pack_start (GTK_BOX (vbox02), hgrid, FALSE, FALSE, 0);
@@ -757,6 +790,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (bar_mode), CONFIG_ENABLE_BAR_MODE);
     gtk_combo_box_set_active (GTK_COMBO_BOX (window), CONFIG_WINDOW);
     gtk_combo_box_set_active (GTK_COMBO_BOX (gradient_orientation), CONFIG_GRADIENT_ORIENTATION);
+    gtk_combo_box_set_active (GTK_COMBO_BOX (alignment), CONFIG_ALIGNMENT);
     gtk_spin_button_set_value (GTK_SPIN_BUTTON (num_colors), CONFIG_NUM_COLORS);
     gtk_spin_button_set_value (GTK_SPIN_BUTTON (db_range), CONFIG_DB_RANGE);
     gtk_color_button_set_color (GTK_COLOR_BUTTON (color_bg), &CONFIG_COLOR_BG);
@@ -841,6 +875,20 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
             }
             else {
                 CONFIG_GRADIENT_ORIENTATION = -1;
+            }
+
+            snprintf (text, sizeof (text), "%s", gtk_combo_box_text_get_active_text (GTK_COMBO_BOX_TEXT (alignment)));
+            if (strcmp (text, STR_ALIGNMENT_LEFT) == 0) {
+                CONFIG_ALIGNMENT = LEFT;
+            }
+            else if (strcmp (text, STR_ALIGNMENT_RIGHT) == 0) {
+                CONFIG_ALIGNMENT = RIGHT;
+            }
+            else if (strcmp (text, STR_ALIGNMENT_CENTER) == 0) {
+                CONFIG_ALIGNMENT = CENTER;
+            }
+            else {
+                CONFIG_ALIGNMENT = -1;
             }
 
             snprintf (text, sizeof (text), "%s", gtk_combo_box_text_get_active_text (GTK_COMBO_BOX_TEXT (window)));
@@ -1108,14 +1156,29 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     memset (data, 0, a.height * stride);
 
     int barw = CLAMP (width / bands, 2, 20);
+    int left = 0;
+    switch (CONFIG_ALIGNMENT) {
+        case LEFT:
+            left = 0;
+            break;
+        case RIGHT:
+            left = MIN (width, width - (barw * bands));
+            break;
+        case CENTER:
+            left = MAX (0, (width - (barw * bands))/2);
+            break;
+        default:
+            left = 0;
+            break;
+    }
 
     //draw background
     _draw_background (data, a.width, a.height, CONFIG_COLOR_BG32);
     // draw vertical grid
     if (CONFIG_ENABLE_VGRID) {
         int num_lines = MIN (a.width/barw, bands);
-        for (int i = 1; i < num_lines; i++) {
-            _draw_vline (data, stride, barw * i, 0, height-1, CONFIG_COLOR_VGRID32);
+        for (int i = 0; i < num_lines; i++) {
+            _draw_vline (data, stride, left + barw * i, 0, a.height-1, CONFIG_COLOR_VGRID32);
         }
     }
 
@@ -1129,7 +1192,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
 
     for (gint i = 0; i < bands; i++)
     {
-        int x = barw * i;
+        int x = left + barw * i;
         int y = a.height - ftoi (w->bars[i] * base_s);
         if (y < 0) {
             y = 0;
@@ -1316,12 +1379,12 @@ w_musical_spectrum_create (void) {
     g_signal_connect_after ((gpointer) w->base.widget, "button_release_event", G_CALLBACK (spectrum_button_release_event), w);
     g_signal_connect_after ((gpointer) w->base.widget, "motion_notify_event", G_CALLBACK (spectrum_motion_notify_event), w);
     g_signal_connect_after ((gpointer) w->popup_item, "activate", G_CALLBACK (on_button_config), w);
-    gtkui_plugin->w_override_signals (w->base.widget, w);
-    gtk_widget_set_events (w->base.widget, GDK_EXPOSURE_MASK
-                                         | GDK_LEAVE_NOTIFY_MASK
-                                         | GDK_BUTTON_PRESS_MASK
-                                         | GDK_POINTER_MOTION_MASK
-                                         | GDK_POINTER_MOTION_HINT_MASK);
+//    gtkui_plugin->w_override_signals (w->base.widget, w);
+//    gtk_widget_set_events (w->base.widget, GDK_EXPOSURE_MASK
+//                                         | GDK_LEAVE_NOTIFY_MASK
+//                                         | GDK_BUTTON_PRESS_MASK
+//                                         | GDK_POINTER_MOTION_MASK
+//                                         | GDK_POINTER_MOTION_HINT_MASK);
     deadbeef->vis_waveform_listen (w, spectrum_wavedata_listener);
     return (ddb_gtkui_widget_t *)w;
 }
