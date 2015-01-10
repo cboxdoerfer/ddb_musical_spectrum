@@ -1382,7 +1382,7 @@ w_musical_spectrum_create (void) {
     g_signal_connect_after ((gpointer) w->drawarea, "button_release_event", G_CALLBACK (spectrum_button_release_event), w);
     g_signal_connect_after ((gpointer) w->drawarea, "motion_notify_event", G_CALLBACK (spectrum_motion_notify_event), w);
     g_signal_connect_after ((gpointer) w->popup_item, "activate", G_CALLBACK (on_button_config), w);
-    //gtkui_plugin->w_override_signals (w->base.widget, w);
+    gtkui_plugin->w_override_signals (w->base.widget, w);
     deadbeef->vis_waveform_listen (w, spectrum_wavedata_listener);
     return (ddb_gtkui_widget_t *)w;
 }
