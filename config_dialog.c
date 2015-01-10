@@ -66,12 +66,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     GtkWidget *color_hgrid_label;
     GtkWidget *color_hgrid;
     GtkWidget *hseparator_01;
-    GtkWidget *color_gradient_00;
-    GtkWidget *color_gradient_01;
-    GtkWidget *color_gradient_02;
-    GtkWidget *color_gradient_03;
-    GtkWidget *color_gradient_04;
-    GtkWidget *color_gradient_05;
+    GtkWidget *color_gradients[MAX_NUM_COLORS];
     GtkWidget *num_colors_label;
     GtkWidget *num_colors;
     GtkWidget *hbox03;
@@ -98,6 +93,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     spectrum_properties = gtk_dialog_new ();
     gtk_window_set_title (GTK_WINDOW (spectrum_properties), "Spectrum Properties");
     gtk_window_set_type_hint (GTK_WINDOW (spectrum_properties), GDK_WINDOW_TYPE_HINT_DIALOG);
+    gtk_window_set_resizable (GTK_WINDOW (spectrum_properties), FALSE);
 
     config_dialog = gtk_dialog_get_content_area (GTK_DIALOG (spectrum_properties));
     gtk_widget_show (config_dialog);
@@ -185,45 +181,23 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_widget_show (num_colors_label);
     gtk_box_pack_start (GTK_BOX (vbox01), num_colors_label, FALSE, FALSE, 0);
 
-    num_colors = gtk_spin_button_new_with_range (1,6,1);
+    num_colors = gtk_spin_button_new_with_range (1,MAX_NUM_COLORS,1);
     gtk_widget_show (num_colors);
     gtk_box_pack_start (GTK_BOX (vbox01), num_colors, FALSE, FALSE, 0);
 
-    color_gradient_00 = gtk_color_button_new ();
-    gtk_color_button_set_use_alpha ((GtkColorButton *)color_gradient_00, TRUE);
-    gtk_widget_show (color_gradient_00);
-    gtk_box_pack_start (GTK_BOX (vbox01), color_gradient_00, TRUE, FALSE, 0);
-    gtk_widget_set_size_request (color_gradient_00, -1, 30);
-
-    color_gradient_01 = gtk_color_button_new ();
-    gtk_color_button_set_use_alpha ((GtkColorButton *)color_gradient_01, TRUE);
-    gtk_widget_show (color_gradient_01);
-    gtk_box_pack_start (GTK_BOX (vbox01), color_gradient_01, TRUE, FALSE, 0);
-    gtk_widget_set_size_request (color_gradient_01, -1, 30);
-
-    color_gradient_02 = gtk_color_button_new ();
-    gtk_color_button_set_use_alpha ((GtkColorButton *)color_gradient_02, TRUE);
-    gtk_widget_show (color_gradient_02);
-    gtk_box_pack_start (GTK_BOX (vbox01), color_gradient_02, TRUE, FALSE, 0);
-    gtk_widget_set_size_request (color_gradient_02, -1, 30);
-
-    color_gradient_03 = gtk_color_button_new ();
-    gtk_color_button_set_use_alpha ((GtkColorButton *)color_gradient_03, TRUE);
-    gtk_widget_show (color_gradient_03);
-    gtk_box_pack_start (GTK_BOX (vbox01), color_gradient_03, TRUE, FALSE, 0);
-    gtk_widget_set_size_request (color_gradient_03, -1, 30);
-
-    color_gradient_04 = gtk_color_button_new ();
-    gtk_color_button_set_use_alpha ((GtkColorButton *)color_gradient_04, TRUE);
-    gtk_widget_show (color_gradient_04);
-    gtk_box_pack_start (GTK_BOX (vbox01), color_gradient_04, TRUE, FALSE, 0);
-    gtk_widget_set_size_request (color_gradient_04, -1, 30);
-
-    color_gradient_05 = gtk_color_button_new ();
-    gtk_color_button_set_use_alpha ((GtkColorButton *)color_gradient_05, TRUE);
-    gtk_widget_show (color_gradient_05);
-    gtk_box_pack_start (GTK_BOX (vbox01), color_gradient_05, TRUE, FALSE, 0);
-    gtk_widget_set_size_request (color_gradient_05, -1, 30);
+    for (int i = 0; i < MAX_NUM_COLORS; i++) {
+        color_gradients[i] = gtk_color_button_new ();
+        gtk_color_button_set_use_alpha ((GtkColorButton *)color_gradients[i], TRUE);
+        if (i < CONFIG_NUM_COLORS) {
+            gtk_widget_show (color_gradients[i]);
+        }
+        else {
+            gtk_widget_hide (color_gradients[i]);
+        }
+        gtk_box_pack_start (GTK_BOX (vbox01), color_gradients[i], TRUE, FALSE, 0);
+        gtk_widget_set_size_request (color_gradients[i], -1, 30);
+        gtk_color_button_set_color (GTK_COLOR_BUTTON (color_gradients[i]), &(CONFIG_GRADIENT_COLORS[i]));
+    }
 
     vbox02 = gtk_vbox_new (FALSE, 8);
     gtk_widget_show (vbox02);
@@ -331,12 +305,6 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_color_button_set_color (GTK_COLOR_BUTTON (color_bg), &CONFIG_COLOR_BG);
     gtk_color_button_set_color (GTK_COLOR_BUTTON (color_vgrid), &CONFIG_COLOR_VGRID);
     gtk_color_button_set_color (GTK_COLOR_BUTTON (color_hgrid), &CONFIG_COLOR_HGRID);
-    gtk_color_button_set_color (GTK_COLOR_BUTTON (color_gradient_00), &(CONFIG_GRADIENT_COLORS[0]));
-    gtk_color_button_set_color (GTK_COLOR_BUTTON (color_gradient_01), &(CONFIG_GRADIENT_COLORS[1]));
-    gtk_color_button_set_color (GTK_COLOR_BUTTON (color_gradient_02), &(CONFIG_GRADIENT_COLORS[2]));
-    gtk_color_button_set_color (GTK_COLOR_BUTTON (color_gradient_03), &(CONFIG_GRADIENT_COLORS[3]));
-    gtk_color_button_set_color (GTK_COLOR_BUTTON (color_gradient_04), &(CONFIG_GRADIENT_COLORS[4]));
-    gtk_color_button_set_color (GTK_COLOR_BUTTON (color_gradient_05), &(CONFIG_GRADIENT_COLORS[5]));
 
     char text[100];
     for (;;) {
@@ -345,62 +313,23 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
             gtk_color_button_get_color (GTK_COLOR_BUTTON (color_bg), &CONFIG_COLOR_BG);
             gtk_color_button_get_color (GTK_COLOR_BUTTON (color_vgrid), &CONFIG_COLOR_VGRID);
             gtk_color_button_get_color (GTK_COLOR_BUTTON (color_hgrid), &CONFIG_COLOR_HGRID);
-            gtk_color_button_get_color (GTK_COLOR_BUTTON (color_gradient_00), &CONFIG_GRADIENT_COLORS[0]);
-            gtk_color_button_get_color (GTK_COLOR_BUTTON (color_gradient_01), &CONFIG_GRADIENT_COLORS[1]);
-            gtk_color_button_get_color (GTK_COLOR_BUTTON (color_gradient_02), &CONFIG_GRADIENT_COLORS[2]);
-            gtk_color_button_get_color (GTK_COLOR_BUTTON (color_gradient_03), &CONFIG_GRADIENT_COLORS[3]);
-            gtk_color_button_get_color (GTK_COLOR_BUTTON (color_gradient_04), &CONFIG_GRADIENT_COLORS[4]);
-            gtk_color_button_get_color (GTK_COLOR_BUTTON (color_gradient_05), &CONFIG_GRADIENT_COLORS[5]);
-
+            for (int i = 0; i < CONFIG_NUM_COLORS; i++) {
+                gtk_color_button_get_color (GTK_COLOR_BUTTON (color_gradients[i]), &CONFIG_GRADIENT_COLORS[i]);
+            }
             CONFIG_ENABLE_HGRID = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (hgrid));
             CONFIG_ENABLE_VGRID = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (vgrid));
             CONFIG_ENABLE_BAR_MODE = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (bar_mode));
             CONFIG_DB_RANGE = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (db_range));
             CONFIG_NUM_COLORS = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (num_colors));
-            switch (CONFIG_NUM_COLORS) {
-                case 1:
-                    gtk_widget_hide (color_gradient_01);
-                    gtk_widget_hide (color_gradient_02);
-                    gtk_widget_hide (color_gradient_03);
-                    gtk_widget_hide (color_gradient_04);
-                    gtk_widget_hide (color_gradient_05);
-                    break;
-                case 2:
-                    gtk_widget_show (color_gradient_01);
-                    gtk_widget_hide (color_gradient_02);
-                    gtk_widget_hide (color_gradient_03);
-                    gtk_widget_hide (color_gradient_04);
-                    gtk_widget_hide (color_gradient_05);
-                    break;
-                case 3:
-                    gtk_widget_show (color_gradient_01);
-                    gtk_widget_show (color_gradient_02);
-                    gtk_widget_hide (color_gradient_03);
-                    gtk_widget_hide (color_gradient_04);
-                    gtk_widget_hide (color_gradient_05);
-                    break;
-                case 4:
-                    gtk_widget_show (color_gradient_01);
-                    gtk_widget_show (color_gradient_02);
-                    gtk_widget_show (color_gradient_03);
-                    gtk_widget_hide (color_gradient_04);
-                    gtk_widget_hide (color_gradient_05);
-                    break;
-                case 5:
-                    gtk_widget_show (color_gradient_01);
-                    gtk_widget_show (color_gradient_02);
-                    gtk_widget_show (color_gradient_03);
-                    gtk_widget_show (color_gradient_04);
-                    gtk_widget_hide (color_gradient_05);
-                    break;
-                case 6:
-                    gtk_widget_show (color_gradient_01);
-                    gtk_widget_show (color_gradient_02);
-                    gtk_widget_show (color_gradient_03);
-                    gtk_widget_show (color_gradient_04);
-                    gtk_widget_show (color_gradient_05);
-                    break;
+            for (int i = 0; i < MAX_NUM_COLORS && color_gradients[i]; i++) {
+                if (i < CONFIG_NUM_COLORS) {
+                    gtk_widget_show (color_gradients[i]);
+                }
+                else if (color_gradients[i]) {
+                    gtk_widget_hide (color_gradients[i]);
+                }
             }
+
             snprintf (text, sizeof (text), "%s", gtk_combo_box_text_get_active_text (GTK_COMBO_BOX_TEXT (gradient_orientation)));
             if (strcmp (text, STR_GRADIENT_VERTICAL) == 0) {
                 CONFIG_GRADIENT_ORIENTATION = 0;

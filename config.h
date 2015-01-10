@@ -53,12 +53,11 @@
 #define     CONFSTR_MS_COLOR_BG               "musical_spectrum.color.background"
 #define     CONFSTR_MS_COLOR_VGRID            "musical_spectrum.color.vgrid"
 #define     CONFSTR_MS_COLOR_HGRID            "musical_spectrum.color.hgrid"
-#define     CONFSTR_MS_COLOR_GRADIENT_00      "musical_spectrum.color.gradient_00"
-#define     CONFSTR_MS_COLOR_GRADIENT_01      "musical_spectrum.color.gradient_01"
-#define     CONFSTR_MS_COLOR_GRADIENT_02      "musical_spectrum.color.gradient_02"
-#define     CONFSTR_MS_COLOR_GRADIENT_03      "musical_spectrum.color.gradient_03"
-#define     CONFSTR_MS_COLOR_GRADIENT_04      "musical_spectrum.color.gradient_04"
-#define     CONFSTR_MS_COLOR_GRADIENT_05      "musical_spectrum.color.gradient_05"
+#define     CONFSTR_MS_NUM_COLORS             "musical_spectrum.num_colors"
+#define     CONFSTR_MS_COLOR_GRADIENT         "musical_spectrum.color.gradient_"
+
+#define MAX_NUM_COLORS 16
+#define NUM_DEFAULT_COLORS 6
 
 extern int CONFIG_REFRESH_INTERVAL;
 extern int CONFIG_DB_RANGE;
@@ -77,7 +76,7 @@ extern int CONFIG_WINDOW;
 extern GdkColor CONFIG_COLOR_BG;
 extern GdkColor CONFIG_COLOR_VGRID;
 extern GdkColor CONFIG_COLOR_HGRID;
-extern GdkColor CONFIG_GRADIENT_COLORS[6];
+extern GdkColor CONFIG_GRADIENT_COLORS[];
 extern uint32_t CONFIG_COLOR_BG32;
 extern uint32_t CONFIG_COLOR_VGRID32;
 extern uint32_t CONFIG_COLOR_HGRID32;

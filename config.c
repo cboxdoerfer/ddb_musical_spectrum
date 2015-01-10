@@ -41,10 +41,17 @@ int CONFIG_WINDOW = 0;
 GdkColor CONFIG_COLOR_BG;
 GdkColor CONFIG_COLOR_VGRID;
 GdkColor CONFIG_COLOR_HGRID;
-GdkColor CONFIG_GRADIENT_COLORS[6];
+GdkColor CONFIG_GRADIENT_COLORS[MAX_NUM_COLORS];
 uint32_t CONFIG_COLOR_BG32 = 0xff222222;
 uint32_t CONFIG_COLOR_VGRID32 = 0xff000000;
 uint32_t CONFIG_COLOR_HGRID32 = 0xff666666;
+
+static char *default_colors[] = {"65535 0 0",
+                                 "65535 32896 0",
+                                 "65535 65535 0",
+                                 "32896 65535 30840",
+                                 "0 38036 41120",
+                                 "0 8224 25700" };
 
 void
 save_config (void)
@@ -62,30 +69,26 @@ save_config (void)
     deadbeef->conf_set_int (CONFSTR_MS_PEAK_DELAY,                  CONFIG_PEAK_DELAY);
     deadbeef->conf_set_int (CONFSTR_MS_GRADIENT_ORIENTATION,        CONFIG_GRADIENT_ORIENTATION);
     deadbeef->conf_set_int (CONFSTR_MS_WINDOW,                      CONFIG_WINDOW);
+    deadbeef->conf_set_int (CONFSTR_MS_NUM_COLORS,                  CONFIG_NUM_COLORS);
     char color[100];
+    char conf_str[100];
+    for (int i = 0; i < CONFIG_NUM_COLORS; i++) {
+        snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[i].red, CONFIG_GRADIENT_COLORS[i].green, CONFIG_GRADIENT_COLORS[i].blue);
+        snprintf (conf_str, sizeof (conf_str), "%s%02d", CONFSTR_MS_COLOR_GRADIENT, i);
+        deadbeef->conf_set_str (conf_str, color);
+    }
     snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_BG.red, CONFIG_COLOR_BG.green, CONFIG_COLOR_BG.blue);
     deadbeef->conf_set_str (CONFSTR_MS_COLOR_BG, color);
     snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_VGRID.red, CONFIG_COLOR_VGRID.green, CONFIG_COLOR_VGRID.blue);
     deadbeef->conf_set_str (CONFSTR_MS_COLOR_VGRID, color);
     snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_HGRID.red, CONFIG_COLOR_HGRID.green, CONFIG_COLOR_HGRID.blue);
     deadbeef->conf_set_str (CONFSTR_MS_COLOR_HGRID, color);
-    snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[0].red, CONFIG_GRADIENT_COLORS[0].green, CONFIG_GRADIENT_COLORS[0].blue);
-    deadbeef->conf_set_str (CONFSTR_MS_COLOR_GRADIENT_00, color);
-    snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[1].red, CONFIG_GRADIENT_COLORS[1].green, CONFIG_GRADIENT_COLORS[1].blue);
-    deadbeef->conf_set_str (CONFSTR_MS_COLOR_GRADIENT_01, color);
-    snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[2].red, CONFIG_GRADIENT_COLORS[2].green, CONFIG_GRADIENT_COLORS[2].blue);
-    deadbeef->conf_set_str (CONFSTR_MS_COLOR_GRADIENT_02, color);
-    snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[3].red, CONFIG_GRADIENT_COLORS[3].green, CONFIG_GRADIENT_COLORS[3].blue);
-    deadbeef->conf_set_str (CONFSTR_MS_COLOR_GRADIENT_03, color);
-    snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[4].red, CONFIG_GRADIENT_COLORS[4].green, CONFIG_GRADIENT_COLORS[4].blue);
-    deadbeef->conf_set_str (CONFSTR_MS_COLOR_GRADIENT_04, color);
-    snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[5].red, CONFIG_GRADIENT_COLORS[5].green, CONFIG_GRADIENT_COLORS[5].blue);
-    deadbeef->conf_set_str (CONFSTR_MS_COLOR_GRADIENT_05, color);
 }
 
 void
 load_config (void)
 {
+    printf ("%d\n", (int)sizeof(default_colors));
     deadbeef->conf_lock ();
     CONFIG_GRADIENT_ORIENTATION = deadbeef->conf_get_int (CONFSTR_MS_GRADIENT_ORIENTATION,   0);
     CONFIG_WINDOW = deadbeef->conf_get_int (CONFSTR_MS_WINDOW,                 BLACKMAN_HARRIS);
@@ -100,25 +103,25 @@ load_config (void)
     CONFIG_BAR_DELAY = deadbeef->conf_get_int (CONFSTR_MS_BAR_DELAY,                         0);
     CONFIG_PEAK_FALLOFF = deadbeef->conf_get_int (CONFSTR_MS_PEAK_FALLOFF,                  90);
     CONFIG_PEAK_DELAY = deadbeef->conf_get_int (CONFSTR_MS_PEAK_DELAY,                     500);
+    CONFIG_NUM_COLORS = deadbeef->conf_get_int (CONFSTR_MS_NUM_COLORS,                       6);
     const char *color;
+    char conf_str[100];
     color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_BG,                   "8738 8738 8738");
     sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_BG.red, &CONFIG_COLOR_BG.green, &CONFIG_COLOR_BG.blue);
     color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_VGRID,                         "0 0 0");
     sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_VGRID.red, &CONFIG_COLOR_VGRID.green, &CONFIG_COLOR_VGRID.blue);
     color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_HGRID,             "26214 26214 26214");
     sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_HGRID.red, &CONFIG_COLOR_HGRID.green, &CONFIG_COLOR_HGRID.blue);
-    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_00,        "65535 0 0");
-    sscanf (color, "%hd %hd %hd", &(CONFIG_GRADIENT_COLORS[0].red), &(CONFIG_GRADIENT_COLORS[0].green), &(CONFIG_GRADIENT_COLORS[0].blue));
-    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_01,      "65535 32896 0");
-    sscanf (color, "%hd %hd %hd", &(CONFIG_GRADIENT_COLORS[1].red), &(CONFIG_GRADIENT_COLORS[1].green), &(CONFIG_GRADIENT_COLORS[1].blue));
-    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_02,      "65535 65535 0");
-    sscanf (color, "%hd %hd %hd", &(CONFIG_GRADIENT_COLORS[2].red), &(CONFIG_GRADIENT_COLORS[2].green), &(CONFIG_GRADIENT_COLORS[2].blue));
-    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_03,    "32896 65535 30840");
-    sscanf (color, "%hd %hd %hd", &(CONFIG_GRADIENT_COLORS[3].red), &(CONFIG_GRADIENT_COLORS[3].green), &(CONFIG_GRADIENT_COLORS[3].blue));
-    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_04,      "0 38036 41120");
-    sscanf (color, "%hd %hd %hd", &(CONFIG_GRADIENT_COLORS[4].red), &(CONFIG_GRADIENT_COLORS[4].green), &(CONFIG_GRADIENT_COLORS[4].blue));
-    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_GRADIENT_05,       "0 8224 25700");
-    sscanf (color, "%hd %hd %hd", &(CONFIG_GRADIENT_COLORS[5].red), &(CONFIG_GRADIENT_COLORS[5].green), &(CONFIG_GRADIENT_COLORS[5].blue));
+    for (int i = 0; i < CONFIG_NUM_COLORS; i++) {
+        snprintf (conf_str, sizeof (conf_str), "%s%02d", CONFSTR_MS_COLOR_GRADIENT, i);
+        if (i < NUM_DEFAULT_COLORS) {
+            color = deadbeef->conf_get_str_fast (conf_str, default_colors[i]);
+        }
+        else {
+            color = deadbeef->conf_get_str_fast (conf_str, "0 0 0");
+        }
+        sscanf (color, "%hd %hd %hd", &(CONFIG_GRADIENT_COLORS[i].red), &(CONFIG_GRADIENT_COLORS[i].green), &(CONFIG_GRADIENT_COLORS[i].blue));
+    }
 
     float scale = 255/65535.f;
     CONFIG_COLOR_BG32 = ((uint32_t)(CONFIG_COLOR_BG.red * scale) & 0xFF) << 16 |
