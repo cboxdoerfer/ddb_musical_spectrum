@@ -1304,8 +1304,24 @@ spectrum_motion_notify_event (GtkWidget *widget, GdkEventButton *event, gpointer
     gtk_widget_get_allocation (widget, &a);
 
     int barw = CLAMP (a.width / MAX_BANDS, 2, 20);
-    if (event->x < barw * MAX_BANDS) {
-        int pos = CLAMP ((int)((event->x-1)/barw),0,MAX_BANDS-1);
+    int left = 0;
+    switch (CONFIG_ALIGNMENT) {
+        case LEFT:
+            left = 0;
+            break;
+        case RIGHT:
+            left = MIN (a.width, a.width - (barw * MAX_BANDS));
+            break;
+        case CENTER:
+            left = MAX (0, (a.width - (barw * MAX_BANDS))/2);
+            break;
+        default:
+            left = 0;
+            break;
+    }
+
+    if (event->x > left && event->x < left + barw * MAX_BANDS) {
+        int pos = CLAMP ((int)((event->x-1-left)/barw),0,MAX_BANDS-1);
         char tooltip_text[20];
         snprintf (tooltip_text, sizeof (tooltip_text), "%5.0f Hz (%s)", w->freq[pos], notes[pos]);
         gtk_widget_set_tooltip_text (widget, tooltip_text);
