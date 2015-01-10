@@ -1038,8 +1038,10 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     int bar_delay = ftoi (CONFIG_BAR_DELAY/CONFIG_REFRESH_INTERVAL);
     int peak_delay = ftoi (CONFIG_PEAK_DELAY/CONFIG_REFRESH_INTERVAL);
 
+    int output_state = deadbeef->get_output ()->state ();
+
     deadbeef->mutex_lock (w->mutex_keys);
-    if (deadbeef->get_output ()->state () == OUTPUT_STATE_PLAYING) {
+    if (output_state == OUTPUT_STATE_PLAYING) {
         do_fft (w);
 
         for (int i = 0; i < bands; i++) {
@@ -1134,7 +1136,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
             }
         }
     }
-    else if (deadbeef->get_output ()->state () == OUTPUT_STATE_STOPPED) {
+    else if (output_state == OUTPUT_STATE_STOPPED) {
         for (int i = 0; i < bands; i++) {
                 w->bars[i] = 0;
                 w->delay[i] = 0;
@@ -1248,9 +1250,24 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     return FALSE;
 }
 
+gboolean
+spectrum_set_refresh_interval (gpointer user_data, int interval)
+{
+    w_spectrum_t *w = user_data;
+    if (!w || interval <= 0) {
+        return FALSE;
+    }
+    if (w->drawtimer) {
+        g_source_remove (w->drawtimer);
+        w->drawtimer = 0;
+    }
+    w->drawtimer = g_timeout_add (interval, w_spectrum_draw_cb, w);
+    return TRUE;
+}
 
 gboolean
-spectrum_expose_event (GtkWidget *widget, GdkEventExpose *event, gpointer user_data) {
+spectrum_expose_event (GtkWidget *widget, GdkEventExpose *event, gpointer user_data)
+{
     cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
     gboolean res = spectrum_draw (widget, cr, user_data);
     cairo_destroy (cr);
@@ -1312,14 +1329,30 @@ spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32
                 create_frequency_table (w);
             }
             deadbeef->mutex_unlock (w->mutex_keys);
+            spectrum_set_refresh_interval (w, CONFIG_REFRESH_INTERVAL);
             break;
         case DB_EV_CONFIGCHANGED:
             on_config_changed (w, ctx);
+            if (deadbeef->get_output ()->state () == OUTPUT_STATE_PLAYING) {
+                spectrum_set_refresh_interval (w, CONFIG_REFRESH_INTERVAL);
+            }
+            break;
+        case DB_EV_PAUSED:
+            if (deadbeef->get_output ()->state () == OUTPUT_STATE_PLAYING) {
+                spectrum_set_refresh_interval (w, CONFIG_REFRESH_INTERVAL);
+            }
+            else {
+                if (w->drawtimer) {
+                    g_source_remove (w->drawtimer);
+                    w->drawtimer = 0;
+                }
+            }
+            break;
+        case DB_EV_STOP:
             if (w->drawtimer) {
                 g_source_remove (w->drawtimer);
                 w->drawtimer = 0;
             }
-            w->drawtimer = g_timeout_add (CONFIG_REFRESH_INTERVAL, w_spectrum_draw_cb, w);
             break;
     }
     return 0;
@@ -1350,11 +1383,7 @@ w_spectrum_init (ddb_gtkui_widget_t *w) {
     create_frequency_table (s);
     create_gradient_table (s, CONFIG_GRADIENT_COLORS, CONFIG_NUM_COLORS);
 
-    if (s->drawtimer) {
-        g_source_remove (s->drawtimer);
-        s->drawtimer = 0;
-    }
-    s->drawtimer = g_timeout_add (CONFIG_REFRESH_INTERVAL, w_spectrum_draw_cb, w);
+    spectrum_set_refresh_interval (w, CONFIG_REFRESH_INTERVAL);
     deadbeef->mutex_unlock (s->mutex);
 }
 
