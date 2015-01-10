@@ -957,8 +957,8 @@ w_spectrum_destroy (ddb_gtkui_widget_t *w) {
     }
 }
 
-gboolean
-w_spectrum_draw_cb (void *data) {
+static gboolean
+spectrum_draw_cb (void *data) {
     w_spectrum_t *s = data;
     gtk_widget_queue_draw (s->drawarea);
     return TRUE;
@@ -1261,7 +1261,7 @@ spectrum_set_refresh_interval (gpointer user_data, int interval)
         g_source_remove (w->drawtimer);
         w->drawtimer = 0;
     }
-    w->drawtimer = g_timeout_add (interval, w_spectrum_draw_cb, w);
+    w->drawtimer = g_timeout_add (interval, spectrum_draw_cb, w);
     return TRUE;
 }
 
@@ -1349,10 +1349,11 @@ spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32
             }
             break;
         case DB_EV_STOP:
-            if (w->drawtimer) {
-                g_source_remove (w->drawtimer);
-                w->drawtimer = 0;
-            }
+            spectrum_set_refresh_interval (w, 100);
+            //if (w->drawtimer) {
+            //    g_source_remove (w->drawtimer);
+            //    w->drawtimer = 0;
+            //}
             break;
     }
     return 0;
