@@ -46,6 +46,8 @@ uint32_t CONFIG_COLOR_BG32 = 0xff222222;
 uint32_t CONFIG_COLOR_VGRID32 = 0xff000000;
 uint32_t CONFIG_COLOR_HGRID32 = 0xff666666;
 
+int FFT_INDEX = 4;
+
 static char *default_colors[] = {"65535 0 0",
                                  "65535 32896 0",
                                  "65535 65535 0",
@@ -88,11 +90,11 @@ save_config (void)
 void
 load_config (void)
 {
-    printf ("%d\n", (int)sizeof(default_colors));
     deadbeef->conf_lock ();
     CONFIG_GRADIENT_ORIENTATION = deadbeef->conf_get_int (CONFSTR_MS_GRADIENT_ORIENTATION,   0);
     CONFIG_WINDOW = deadbeef->conf_get_int (CONFSTR_MS_WINDOW,                 BLACKMAN_HARRIS);
     CONFIG_FFT_SIZE = deadbeef->conf_get_int (CONFSTR_MS_FFT_SIZE,                        8192);
+    FFT_INDEX = log2 (CONFIG_FFT_SIZE) - 9;
     CONFIG_DB_RANGE = deadbeef->conf_get_int (CONFSTR_MS_DB_RANGE,                          70);
     CONFIG_ENABLE_HGRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_HGRID,                   1);
     CONFIG_ENABLE_VGRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_VGRID,                   1);

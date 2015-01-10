@@ -43,6 +43,9 @@
 #define     STR_WINDOW_BLACKMANN_HARRIS "Blackmann-Harris"
 #define     STR_WINDOW_HANNING "Hanning"
 
+static char *fft_sizes[] = {"512", "1024", "2048", "4096", "8192", "16384", "32768"};
+static int fft_sizses_size = 7;
+
 void
 on_button_config (GtkMenuItem *menuitem, gpointer user_data)
 {
@@ -54,6 +57,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     GtkWidget *vbox04;
     GtkWidget *hbox01;
     GtkWidget *hbox02;
+    GtkWidget *hbox07;
     GtkWidget *valign_01;
     GtkWidget *valign_02;
     GtkWidget *valign_03;
@@ -75,6 +79,8 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     GtkWidget *hgrid;
     GtkWidget *vgrid;
     GtkWidget *bar_mode;
+    GtkWidget *fft_label;
+    GtkWidget *fft;
     GtkWidget *hbox04;
     GtkWidget *window_label;
     GtkWidget *window;
@@ -217,6 +223,22 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_widget_show (db_range);
     gtk_box_pack_start (GTK_BOX (hbox03), db_range, TRUE, TRUE, 0);
 
+    hbox07 = gtk_hbox_new (FALSE, 8);
+    gtk_widget_show (hbox07);
+    gtk_box_pack_start (GTK_BOX (vbox02), hbox07, FALSE, FALSE, 0);
+
+    fft_label = gtk_label_new (NULL);
+    gtk_label_set_markup (GTK_LABEL (fft_label),"FFT size:");
+    gtk_widget_show (fft_label);
+    gtk_box_pack_start (GTK_BOX (hbox07), fft_label, FALSE, TRUE, 0);
+
+    fft = gtk_combo_box_text_new ();
+    gtk_widget_show (fft);
+    gtk_box_pack_start (GTK_BOX (hbox07), fft, TRUE, TRUE, 0);
+    for (int i = 0; i < fft_sizses_size; i++) {
+        gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT(fft), fft_sizes[i]);
+    }
+
     hbox04 = gtk_hbox_new (FALSE, 8);
     gtk_widget_show (hbox04);
     gtk_box_pack_start (GTK_BOX (vbox02), hbox04, FALSE, FALSE, 0);
@@ -298,6 +320,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (vgrid), CONFIG_ENABLE_VGRID);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (bar_mode), CONFIG_ENABLE_BAR_MODE);
     gtk_combo_box_set_active (GTK_COMBO_BOX (window), CONFIG_WINDOW);
+    gtk_combo_box_set_active (GTK_COMBO_BOX (fft), FFT_INDEX);
     gtk_combo_box_set_active (GTK_COMBO_BOX (gradient_orientation), CONFIG_GRADIENT_ORIENTATION);
     gtk_combo_box_set_active (GTK_COMBO_BOX (alignment), CONFIG_ALIGNMENT);
     gtk_spin_button_set_value (GTK_SPIN_BUTTON (num_colors), CONFIG_NUM_COLORS);
@@ -364,6 +387,14 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
             }
             else {
                 CONFIG_GRADIENT_ORIENTATION = -1;
+            }
+
+            snprintf (text, sizeof (text), "%s", gtk_combo_box_text_get_active_text (GTK_COMBO_BOX_TEXT (fft)));
+            for (int i = 0; i < fft_sizses_size; i++) {
+                if (strcmp (text, fft_sizes[i]) == 0) {
+                    FFT_INDEX = i;
+                    CONFIG_FFT_SIZE = (int)exp2 (FFT_INDEX + 9);
+                }
             }
 
             save_config ();

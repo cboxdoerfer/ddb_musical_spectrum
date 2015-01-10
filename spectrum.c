@@ -578,7 +578,7 @@ w_musical_spectrum_create (void) {
     gtk_widget_show (w->popup);
     gtk_widget_show (w->popup_item);
 
-    gtk_widget_add_events (w->drawarea, 
+    gtk_widget_add_events (w->drawarea,
             GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK | GDK_LEAVE_NOTIFY_MASK );
 
 #if !GTK_CHECK_VERSION(3,0,0)
@@ -633,7 +633,6 @@ musical_spectrum_disconnect (void)
 }
 
 static const char settings_dlg[] =
-    "property \"FFT size: \"           spinbtn[1024,65536,1] "      CONFSTR_MS_FFT_SIZE         " 8192 ;\n"
     "property \"Refresh interval (ms): \"           spinbtn[10,1000,1] "      CONFSTR_MS_REFRESH_INTERVAL         " 25 ;\n"
     "property \"Bar falloff (dB/s): \"           spinbtn[-1,1000,1] "      CONFSTR_MS_BAR_FALLOFF         " -1 ;\n"
     "property \"Bar delay (ms): \"                spinbtn[0,10000,100] "      CONFSTR_MS_BAR_DELAY           " 0 ;\n"

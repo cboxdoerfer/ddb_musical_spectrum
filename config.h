@@ -81,6 +81,8 @@ extern uint32_t CONFIG_COLOR_BG32;
 extern uint32_t CONFIG_COLOR_VGRID32;
 extern uint32_t CONFIG_COLOR_HGRID32;
 
+extern int FFT_INDEX;
+
 enum WINDOW { BLACKMAN_HARRIS = 0, HANNING = 1 };
 enum ALIGNMENT { LEFT = 0, RIGHT = 1, CENTER = 2 };
 
