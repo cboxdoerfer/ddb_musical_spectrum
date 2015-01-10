@@ -1028,7 +1028,6 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     GtkAllocation a;
     gtk_widget_get_allocation (widget, &a);
 
-    do_fft (w);
     int width, height, bands;
     bands = MAX_BANDS;
     width = a.width;
@@ -1041,8 +1040,9 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
 
     deadbeef->mutex_lock (w->mutex_keys);
     if (deadbeef->get_output ()->state () == OUTPUT_STATE_PLAYING) {
-        for (int i = 0; i < bands; i++)
-        {
+        do_fft (w);
+
+        for (int i = 0; i < bands; i++) {
             float x;
             // interpolate
             if (i <= w->low_res_end+1) {
@@ -1134,6 +1134,15 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
             }
         }
     }
+    else if (deadbeef->get_output ()->state () == OUTPUT_STATE_STOPPED) {
+        for (int i = 0; i < bands; i++) {
+                w->bars[i] = 0;
+                w->delay[i] = 0;
+                w->peaks[i] = 0;
+                w->delay_peak[i] = 0;
+        }
+    }
+
     deadbeef->mutex_unlock (w->mutex_keys);
 
     // start drawing
