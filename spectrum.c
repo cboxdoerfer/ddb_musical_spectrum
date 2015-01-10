@@ -106,7 +106,6 @@ typedef struct {
     float peaks[MAX_BANDS + 1];
     int delay_peak[MAX_BANDS + 1];
     intptr_t mutex;
-    intptr_t mutex_keys;
 } w_spectrum_t;
 
 enum WINDOW { BLACKMAN_HARRIS = 0, HANNING = 1 };
@@ -236,7 +235,7 @@ load_config (void)
     deadbeef->conf_unlock ();
 }
 
-void
+static void
 do_fft (w_spectrum_t *w)
 {
     if (!w->samples || w->buffered < CONFIG_FFT_SIZE) {
@@ -406,7 +405,7 @@ _draw_bar_gradient_bar_mode_h (gpointer user_data, uint8_t *data, int stride, in
 }
 
 /* based on Delphi function by Witold J.Janik */
-void
+static void
 create_gradient_table (gpointer user_data, GdkColor *colors, int num_colors)
 {
     w_spectrum_t *w = user_data;
@@ -452,7 +451,7 @@ create_gradient_table (gpointer user_data, GdkColor *colors, int num_colors)
     }
 }
 
-void
+static void
 create_window_table (gpointer user_data)
 {
     w_spectrum_t *w = user_data;
@@ -475,7 +474,7 @@ create_window_table (gpointer user_data)
     }
 }
 
-void
+static void
 create_frequency_table (gpointer user_data)
 {
     w_spectrum_t *w = user_data;
@@ -916,7 +915,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
 }
 
 ///// spectrum vis
-void
+static void
 w_spectrum_destroy (ddb_gtkui_widget_t *w) {
     w_spectrum_t *s = (w_spectrum_t *)w;
     deadbeef->vis_waveform_unlisten (w);
@@ -951,10 +950,6 @@ w_spectrum_destroy (ddb_gtkui_widget_t *w) {
         deadbeef->mutex_free (s->mutex);
         s->mutex = 0;
     }
-    if (s->mutex_keys) {
-        deadbeef->mutex_free (s->mutex_keys);
-        s->mutex_keys = 0;
-    }
 }
 
 static gboolean
@@ -971,9 +966,9 @@ spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
         return;
     }
     deadbeef->mutex_lock (w->mutex);
-    int nsamples = data->nframes;
-    int sz = MIN (CONFIG_FFT_SIZE, nsamples);
-    int n = CONFIG_FFT_SIZE - sz;
+    const int nsamples = data->nframes;
+    const int sz = MIN (CONFIG_FFT_SIZE, nsamples);
+    const int n = CONFIG_FFT_SIZE - sz;
     memmove (w->samples, w->samples + sz, n * sizeof (double));
 
     int pos = 0;
@@ -998,10 +993,10 @@ linear_interpolate (float y1, float y2, float mu)
 static inline float
 lagrange_interpolate (float y0, float y1, float y2, float y3, float x)
 {
-    float a0 = ((x - 1) * (x - 2) * (x - 3)) / -6 * y0;
-    float a1 = ((x - 0) * (x - 2) * (x - 3)) /  2 * y1;
-    float a2 = ((x - 0) * (x - 1) * (x - 3)) / -2 * y2;
-    float a3 = ((x - 0) * (x - 1) * (x - 2)) /  6 * y3;
+    const float a0 = ((x - 1) * (x - 2) * (x - 3)) / -6 * y0;
+    const float a1 = ((x - 0) * (x - 2) * (x - 3)) /  2 * y1;
+    const float a2 = ((x - 0) * (x - 1) * (x - 3)) / -2 * y2;
+    const float a3 = ((x - 0) * (x - 1) * (x - 2)) /  6 * y3;
     return (a0 + a1 + a2 + a3);
 }
 
@@ -1019,6 +1014,59 @@ spectrum_get_value (gpointer user_data, int start, int end)
     return value;
 }
 
+static float
+spectrum_interpolate (gpointer user_data, int bands, int index)
+{
+    w_spectrum_t *w = user_data;
+    float x = 0.0;
+    if (index <= w->low_res_end+1) {
+        const float v1 = 10 * log10 (w->data[w->keys[index]]);
+
+        // find index of next value
+        int j = 0;
+        while (index+j < MAX_BANDS && w->keys[index+j] == w->keys[index]) {
+            j++;
+        }
+        const float v2 = 10 * log10 (w->data[w->keys[index+j]]);
+
+        int l = j;
+        while (index+l < MAX_BANDS && w->keys[index+l] == w->keys[index+j]) {
+            l++;
+        }
+        const float v3 = 10 * log10 (w->data[w->keys[index+l]]);
+
+        int k = 0;
+        while ((k+index) >= 0 && w->keys[k+index] == w->keys[index]) {
+            j++;
+            k--;
+        }
+        const float v0 = 10 * log10 (w->data[w->keys[CLAMP(index+k,0,bands-1)]]);
+
+        //x = linear_interpolate (v1,v2,(1.0/(j-1)) * ((-1 * k) - 1));
+        x = lagrange_interpolate (v0,v1,v2,v3,1 + (1.0 / (j - 1)) * ((-1 * k) - 1));
+    }
+    else {
+        int start = 0;
+        int end = 0;
+        if (index > 0) {
+            start = (w->keys[index] - w->keys[index-1])/2 + w->keys[index-1];
+            if (start == w->keys[index-1]) start = w->keys[index];
+        }
+        else {
+            start = w->keys[index];
+        }
+        if (index < bands-1) {
+            end = (w->keys[index+1] - w->keys[index])/2 + w->keys[index];
+            if (end == w->keys[index+1]) end = w->keys[index];
+        }
+        else {
+            end = w->keys[index];
+        }
+        x = 10 * log10 (spectrum_get_value (w, start, end));
+    }
+    return x;
+}
+
 static gboolean
 spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     w_spectrum_t *w = user_data;
@@ -1028,70 +1076,23 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     GtkAllocation a;
     gtk_widget_get_allocation (widget, &a);
 
-    int width, height, bands;
-    bands = MAX_BANDS;
-    width = a.width;
-    height = a.height;
+    const int bands = MAX_BANDS;
+    const int width = a.width;
+    const int height = a.height;
 
-    float bar_falloff = CONFIG_BAR_FALLOFF/1000.0 * CONFIG_REFRESH_INTERVAL;
-    float peak_falloff = CONFIG_PEAK_FALLOFF/1000.0 * CONFIG_REFRESH_INTERVAL;
-    int bar_delay = ftoi (CONFIG_BAR_DELAY/CONFIG_REFRESH_INTERVAL);
-    int peak_delay = ftoi (CONFIG_PEAK_DELAY/CONFIG_REFRESH_INTERVAL);
+    const int output_state = deadbeef->get_output ()->state ();
 
-    int output_state = deadbeef->get_output ()->state ();
-
-    deadbeef->mutex_lock (w->mutex_keys);
     if (output_state == OUTPUT_STATE_PLAYING) {
         do_fft (w);
 
+        const float bar_falloff = CONFIG_BAR_FALLOFF/1000.0 * CONFIG_REFRESH_INTERVAL;
+        const float peak_falloff = CONFIG_PEAK_FALLOFF/1000.0 * CONFIG_REFRESH_INTERVAL;
+        const int bar_delay = ftoi (CONFIG_BAR_DELAY/CONFIG_REFRESH_INTERVAL);
+        const int peak_delay = ftoi (CONFIG_PEAK_DELAY/CONFIG_REFRESH_INTERVAL);
+
         for (int i = 0; i < bands; i++) {
-            float x;
             // interpolate
-            if (i <= w->low_res_end+1) {
-                float v1 = 10 * log10 (w->data[w->keys[i]]);
-
-                // find index of next value
-                int j = 0;
-                while (i+j < MAX_BANDS && w->keys[i+j] == w->keys[i]) {
-                    j++;
-                }
-                float v2 = 10 * log10 (w->data[w->keys[i+j]]);
-
-                int l = j;
-                while (i+l < MAX_BANDS && w->keys[i+l] == w->keys[i+j]) {
-                    l++;
-                }
-                float v3 = 10 * log10 (w->data[w->keys[i+l]]);
-
-                int k = 0;
-                while ((k+i) >= 0 && w->keys[k+i] == w->keys[i]) {
-                    j++;
-                    k--;
-                }
-                float v0 = 10 * log10 (w->data[w->keys[CLAMP(i+k,0,bands-1)]]);
-
-                //x = linear_interpolate (v1,v2,(1.0/(j-1)) * ((-1 * k) - 1));
-                x = lagrange_interpolate (v0,v1,v2,v3,1 + (1.0 / (j - 1)) * ((-1 * k) - 1));
-            }
-            else {
-                int start = 0;
-                int end = 0;
-                if (i > 0) {
-                    start = (w->keys[i] - w->keys[i-1])/2 + w->keys[i-1];
-                    if (start == w->keys[i-1]) start = w->keys[i];
-                }
-                else {
-                    start = w->keys[i];
-                }
-                if (i < bands-1) {
-                    end = (w->keys[i+1] - w->keys[i])/2 + w->keys[i];
-                    if (end == w->keys[i+1]) end = w->keys[i];
-                }
-                else {
-                    end = w->keys[i];
-                }
-                x = 10 * log10 (spectrum_get_value (w, start, end));
-            }
+            float x = spectrum_interpolate (w, bands, i);
 
             // TODO: get rid of hardcoding
             x += CONFIG_DB_RANGE - 63;
@@ -1145,8 +1146,6 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         }
     }
 
-    deadbeef->mutex_unlock (w->mutex_keys);
-
     // start drawing
     if (!w->surf || cairo_image_surface_get_width (w->surf) != a.width || cairo_image_surface_get_height (w->surf) != a.height) {
         if (w->surf) {
@@ -1155,7 +1154,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         }
         w->surf = cairo_image_surface_create (CAIRO_FORMAT_RGB24, a.width, a.height);
     }
-    float base_s = (height / (float)CONFIG_DB_RANGE);
+    const float base_s = (height / (float)CONFIG_DB_RANGE);
 
     cairo_surface_flush (w->surf);
 
@@ -1163,10 +1162,10 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     if (!data) {
         return FALSE;
     }
-    int stride = cairo_image_surface_get_stride (w->surf);
+    const int stride = cairo_image_surface_get_stride (w->surf);
     memset (data, 0, a.height * stride);
 
-    int barw = CLAMP (width / bands, 2, 20);
+    const int barw = CLAMP (width / bands, 2, 20);
     int left = 0;
     switch (CONFIG_ALIGNMENT) {
         case LEFT:
@@ -1250,7 +1249,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     return FALSE;
 }
 
-gboolean
+static gboolean
 spectrum_set_refresh_interval (gpointer user_data, int interval)
 {
     w_spectrum_t *w = user_data;
@@ -1265,7 +1264,7 @@ spectrum_set_refresh_interval (gpointer user_data, int interval)
     return TRUE;
 }
 
-gboolean
+static gboolean
 spectrum_expose_event (GtkWidget *widget, GdkEventExpose *event, gpointer user_data)
 {
     cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
@@ -1275,7 +1274,7 @@ spectrum_expose_event (GtkWidget *widget, GdkEventExpose *event, gpointer user_d
 }
 
 
-gboolean
+static gboolean
 spectrum_button_press_event (GtkWidget *widget, GdkEventButton *event, gpointer user_data)
 {
     //w_spectrum_t *w = user_data;
@@ -1285,7 +1284,7 @@ spectrum_button_press_event (GtkWidget *widget, GdkEventButton *event, gpointer 
     return TRUE;
 }
 
-gboolean
+static gboolean
 spectrum_button_release_event (GtkWidget *widget, GdkEventButton *event, gpointer user_data)
 {
     w_spectrum_t *w = user_data;
@@ -1296,14 +1295,14 @@ spectrum_button_release_event (GtkWidget *widget, GdkEventButton *event, gpointe
     return TRUE;
 }
 
-gboolean
+static gboolean
 spectrum_motion_notify_event (GtkWidget *widget, GdkEventButton *event, gpointer user_data)
 {
     w_spectrum_t *w = user_data;
     GtkAllocation a;
     gtk_widget_get_allocation (widget, &a);
 
-    int barw = CLAMP (a.width / MAX_BANDS, 2, 20);
+    const int barw = CLAMP (a.width / MAX_BANDS, 2, 20);
     int left = 0;
     switch (CONFIG_ALIGNMENT) {
         case LEFT:
@@ -1335,16 +1334,14 @@ spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32
 {
     w_spectrum_t *w = (w_spectrum_t *)widget;
 
+    int samplerate_temp = w->samplerate;
     switch (id) {
         case DB_EV_SONGSTARTED:
-            deadbeef->mutex_lock (w->mutex_keys);
-            int samplerate_temp = w->samplerate;
             w->samplerate = deadbeef->get_output ()->fmt.samplerate;
             if (w->samplerate == 0) w->samplerate = 44100;
             if (samplerate_temp != w->samplerate) {
                 create_frequency_table (w);
             }
-            deadbeef->mutex_unlock (w->mutex_keys);
             spectrum_set_refresh_interval (w, CONFIG_REFRESH_INTERVAL);
             break;
         case DB_EV_CONFIGCHANGED:
@@ -1375,7 +1372,7 @@ spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32
     return 0;
 }
 
-void
+static void
 w_spectrum_init (ddb_gtkui_widget_t *w) {
     w_spectrum_t *s = (w_spectrum_t *)w;
     load_config ();
@@ -1404,7 +1401,7 @@ w_spectrum_init (ddb_gtkui_widget_t *w) {
     deadbeef->mutex_unlock (s->mutex);
 }
 
-ddb_gtkui_widget_t *
+static ddb_gtkui_widget_t *
 w_musical_spectrum_create (void) {
     w_spectrum_t *w = malloc (sizeof (w_spectrum_t));
     memset (w, 0, sizeof (w_spectrum_t));
@@ -1417,7 +1414,6 @@ w_musical_spectrum_create (void) {
     w->popup = gtk_menu_new ();
     w->popup_item = gtk_menu_item_new_with_mnemonic ("Configure");
     w->mutex = deadbeef->mutex_create ();
-    w->mutex_keys = deadbeef->mutex_create ();
 
     gtk_container_add (GTK_CONTAINER (w->base.widget), w->drawarea);
     gtk_container_add (GTK_CONTAINER (w->popup), w->popup_item);
@@ -1431,7 +1427,7 @@ w_musical_spectrum_create (void) {
 #if !GTK_CHECK_VERSION(3,0,0)
     g_signal_connect_after ((gpointer) w->drawarea, "expose_event", G_CALLBACK (spectrum_expose_event), w);
 #else
-    g_signal_connect_after ((gpointer) w->drawarea, "draw", G_CALLBACK (spectrum_draw), w);
+    g_signal_connect_after ((gpointer) w->drawarea, "draw", G_CALLBACK (spectrum_expose_event), w);
 #endif
     g_signal_connect_after ((gpointer) w->drawarea, "button_press_event", G_CALLBACK (spectrum_button_press_event), w);
     g_signal_connect_after ((gpointer) w->drawarea, "button_release_event", G_CALLBACK (spectrum_button_release_event), w);
@@ -1442,7 +1438,7 @@ w_musical_spectrum_create (void) {
     return (ddb_gtkui_widget_t *)w;
 }
 
-int
+static int
 musical_spectrum_connect (void)
 {
     gtkui_plugin = (ddb_gtkui_t *) deadbeef->plug_get_for_id (DDB_GTKUI_PLUGIN_ID);
@@ -1458,32 +1454,21 @@ musical_spectrum_connect (void)
     return -1;
 }
 
-int
+static int
 musical_spectrum_start (void)
 {
     load_config ();
     return 0;
 }
 
-int
+static int
 musical_spectrum_stop (void)
 {
     save_config ();
     return 0;
 }
 
-int
-musical_spectrum_startup (GtkWidget *cont)
-{
-    return 0;
-}
-
-int
-musical_spectrum_shutdown (GtkWidget *cont)
-{
-    return 0;
-}
-int
+static int
 musical_spectrum_disconnect (void)
 {
     gtkui_plugin = NULL;
