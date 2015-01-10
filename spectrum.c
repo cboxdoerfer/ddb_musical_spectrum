@@ -1370,21 +1370,19 @@ w_musical_spectrum_create (void) {
     gtk_widget_show (w->popup);
     gtk_widget_show (w->popup_item);
 
+    gtk_widget_add_events (w->drawarea, 
+            GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK | GDK_LEAVE_NOTIFY_MASK );
+
 #if !GTK_CHECK_VERSION(3,0,0)
     g_signal_connect_after ((gpointer) w->drawarea, "expose_event", G_CALLBACK (spectrum_expose_event), w);
 #else
     g_signal_connect_after ((gpointer) w->drawarea, "draw", G_CALLBACK (spectrum_draw), w);
 #endif
-    g_signal_connect_after ((gpointer) w->base.widget, "button_press_event", G_CALLBACK (spectrum_button_press_event), w);
-    g_signal_connect_after ((gpointer) w->base.widget, "button_release_event", G_CALLBACK (spectrum_button_release_event), w);
-    g_signal_connect_after ((gpointer) w->base.widget, "motion_notify_event", G_CALLBACK (spectrum_motion_notify_event), w);
+    g_signal_connect_after ((gpointer) w->drawarea, "button_press_event", G_CALLBACK (spectrum_button_press_event), w);
+    g_signal_connect_after ((gpointer) w->drawarea, "button_release_event", G_CALLBACK (spectrum_button_release_event), w);
+    g_signal_connect_after ((gpointer) w->drawarea, "motion_notify_event", G_CALLBACK (spectrum_motion_notify_event), w);
     g_signal_connect_after ((gpointer) w->popup_item, "activate", G_CALLBACK (on_button_config), w);
-//    gtkui_plugin->w_override_signals (w->base.widget, w);
-//    gtk_widget_set_events (w->base.widget, GDK_EXPOSURE_MASK
-//                                         | GDK_LEAVE_NOTIFY_MASK
-//                                         | GDK_BUTTON_PRESS_MASK
-//                                         | GDK_POINTER_MOTION_MASK
-//                                         | GDK_POINTER_MOTION_HINT_MASK);
+    //gtkui_plugin->w_override_signals (w->base.widget, w);
     deadbeef->vis_waveform_listen (w, spectrum_wavedata_listener);
     return (ddb_gtkui_widget_t *)w;
 }
@@ -1398,7 +1396,7 @@ musical_spectrum_connect (void)
         if (gtkui_plugin->gui.plugin.version_major == 2) {
             //printf ("fb api2\n");
             // 0.6+, use the new widget API
-            gtkui_plugin->w_reg_widget ("Musical Spectrum", 0, w_musical_spectrum_create, "musical_spectrum", NULL);
+            gtkui_plugin->w_reg_widget ("Musical Spectrum", DDB_WF_SINGLE_INSTANCE, w_musical_spectrum_create, "musical_spectrum", NULL);
             return 0;
         }
     }
