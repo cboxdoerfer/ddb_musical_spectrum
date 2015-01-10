@@ -39,6 +39,7 @@
 #include "config.h"
 #include "config_dialog.h"
 #include "utils.h"
+#include "draw_utils.h"
 #include "spectrum.h"
 
 DB_functions_t *deadbeef = NULL;
@@ -65,137 +66,6 @@ do_fft (w_spectrum_t *w)
         w->data[i] = (real*real + imag*imag);
     }
     deadbeef->mutex_unlock (w->mutex);
-}
-
-static inline void
-_draw_vline (uint8_t *data, int stride, int x0, int y0, int y1, uint32_t color) {
-    if (y0 > y1) {
-        int tmp = y0;
-        y0 = y1;
-        y1 = tmp;
-        y1--;
-    }
-    else if (y0 < y1) {
-        y0++;
-    }
-    uint32_t *ptr = (uint32_t*)&data[y0*stride+x0*4];
-    int line_size = stride/4;
-    while (y0 <= y1) {
-        *ptr = color;
-        ptr += line_size;
-        y0++;
-    }
-}
-
-static inline void
-_draw_hline (uint8_t *data, int stride, int x0, int y0, int x1, uint32_t color) {
-    uint32_t *ptr = (uint32_t*)&data[y0*stride+x0*4];
-    while (x0 <= x1) {
-        *ptr++ = color;
-        x0++;
-    }
-}
-
-static inline void
-_draw_background (uint8_t *data, int w, int h, uint32_t color)
-{
-    //uint32_t *ptr = (uint32_t*)&data[0];
-    //int i = 0;
-    //int size = w * h;
-    //while (i++ < size) {
-    //    *ptr++ = color;
-    //}
-    size_t fillLen = w * h * sizeof (uint32_t);
-    _memset_pattern ((char *)data, &color, fillLen, sizeof (uint32_t));
-}
-
-static inline void
-_draw_bar (uint8_t *data, int stride, int x0, int y0, int w, int h, uint32_t color) {
-    int y1 = y0+h-1;
-    int x1 = x0+w-1;
-    uint32_t *ptr = (uint32_t*)&data[y0*stride+x0*4];
-    while (y0 <= y1) {
-        int x = x0;
-        while (x++ <= x1) {
-            *ptr++ = color;
-        }
-        y0++;
-        ptr += stride/4-w;
-    }
-}
-
-static inline void
-_draw_bar_gradient_v (gpointer user_data, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_h) {
-    w_spectrum_t *s = user_data;
-    int y1 = y0+h-1;
-    int x1 = x0+w-1;
-    uint32_t *ptr = (uint32_t*)&data[y0*stride+x0*4];
-    while (y0 <= y1) {
-        int x = x0;
-        int index = ftoi(((double)y0/(double)total_h) * (GRADIENT_TABLE_SIZE - 1));
-        index = CLAMP (index, 0, GRADIENT_TABLE_SIZE - 1);
-        while (x++ <= x1) {
-            *ptr++ = s->colors[index];
-        }
-        y0++;
-        ptr += stride/4-w;
-    }
-}
-
-static inline void
-_draw_bar_gradient_h (gpointer user_data, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_w) {
-    w_spectrum_t *s = user_data;
-    int y1 = y0+h-1;
-    int x1 = x0+w-1;
-    uint32_t *ptr = (uint32_t*)&data[y0*stride+x0*4];
-    while (y0 <= y1) {
-        int x = x0;
-        while (x++ <= x1) {
-            int index = ftoi(((double)x/(double)total_w) * (GRADIENT_TABLE_SIZE - 1));
-            index = CLAMP (index, 0, GRADIENT_TABLE_SIZE - 1);
-            *ptr++ = s->colors[index];
-        }
-        y0++;
-        ptr += stride/4-w;
-    }
-}
-
-static inline void
-_draw_bar_gradient_bar_mode_v (gpointer user_data, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_h) {
-    w_spectrum_t *s = user_data;
-    int y1 = y0+h-1;
-    int x1 = x0+w-1;
-    y0 -= y0 % 2;
-    uint32_t *ptr = (uint32_t*)&data[y0*stride+x0*4];
-    while (y0 <= y1) {
-        int x = x0;
-        int index = ftoi(((double)y0/(double)total_h) * (GRADIENT_TABLE_SIZE - 1));
-        index = CLAMP (index, 0, GRADIENT_TABLE_SIZE - 1);
-        while (x++ <= x1) {
-            *ptr++ = s->colors[index];
-        }
-        y0 += 2;
-        ptr += stride/2-w;
-    }
-}
-
-static inline void
-_draw_bar_gradient_bar_mode_h (gpointer user_data, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_w) {
-    w_spectrum_t *s = user_data;
-    int y1 = y0+h-1;
-    int x1 = x0+w-1;
-    y0 -= y0 % 2;
-    uint32_t *ptr = (uint32_t*)&data[y0*stride+x0*4];
-    while (y0 <= y1) {
-        int x = x0;
-        while (x++ <= x1) {
-            int index = ftoi(((double)x/(double)total_w) * (GRADIENT_TABLE_SIZE - 1));
-            index = CLAMP (index, 0, GRADIENT_TABLE_SIZE - 1);
-            *ptr++ = s->colors[index];
-        }
-        y0 += 2;
-        ptr += stride/2-w;
-    }
 }
 
 static int
@@ -285,22 +155,6 @@ spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
     if (w->buffered < CONFIG_FFT_SIZE) {
         w->buffered += sz;
     }
-}
-
-static inline float
-linear_interpolate (float y1, float y2, float mu)
-{
-       return (y1 * (1 - mu) + y2 * mu);
-}
-
-static inline float
-lagrange_interpolate (float y0, float y1, float y2, float y3, float x)
-{
-    const float a0 = ((x - 1) * (x - 2) * (x - 3)) / -6 * y0;
-    const float a1 = ((x - 0) * (x - 2) * (x - 3)) /  2 * y1;
-    const float a2 = ((x - 0) * (x - 1) * (x - 3)) / -2 * y2;
-    const float a3 = ((x - 0) * (x - 1) * (x - 2)) /  6 * y3;
-    return (a0 + a1 + a2 + a3);
 }
 
 static inline float

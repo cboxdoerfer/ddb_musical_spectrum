@@ -22,28 +22,36 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef UTILS_HEADER
-#define UTILS_HEADER
+#ifndef DRAW_UTILS_HEADER
+#define DRAW_UTILS_HEADER
 
-#include <gtk/gtk.h>
-
-extern char *notes[];
-
-void
-_memset_pattern (char *data, const void* pattern, size_t data_len, size_t pattern_len);
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdint.h>
+#include <stdlib.h>
 
 void
-create_gradient_table (gpointer user_data, GdkColor *colors, int num_colors);
+_draw_vline (uint8_t *data, int stride, int x0, int y0, int y1, uint32_t color);
 
 void
-create_window_table (gpointer user_data);
+_draw_hline (uint8_t *data, int stride, int x0, int y0, int x1, uint32_t color);
 
 void
-create_frequency_table (gpointer user_data);
+_draw_background (uint8_t *data, int w, int h, uint32_t color);
 
-float
-linear_interpolate (float y1, float y2, float mu);
+void
+_draw_bar (uint8_t *data, int stride, int x0, int y0, int w, int h, uint32_t color);
 
-float
-lagrange_interpolate (float y0, float y1, float y2, float y3, float x);
+void
+_draw_bar_gradient_v (gpointer user_data, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_h);
+
+void
+_draw_bar_gradient_h (gpointer user_data, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_w);
+
+void
+_draw_bar_gradient_bar_mode_v (gpointer user_data, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_h);
+
+void
+_draw_bar_gradient_bar_mode_h (gpointer user_data, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_w);
+
 #endif
