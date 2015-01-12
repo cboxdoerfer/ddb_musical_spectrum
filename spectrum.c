@@ -56,6 +56,27 @@ static char *notes[] = {"C0","C#0","D0","D#0","E0","F0","F#0","G0","G#0","A0","A
                  "C10","C#10","D10","D#10","E10","F10","F#10","G10","G#10","A10","A#10","B10"
                 };
 
+static int
+get_align_pos (int width, int bands, int bar_width)
+{
+    int left = 0;
+    switch (CONFIG_ALIGNMENT) {
+        case LEFT:
+            left = 0;
+            break;
+        case RIGHT:
+            left = MIN (width, width - (bar_width * bands));
+            break;
+        case CENTER:
+            left = MAX (0, (width - (bar_width * bands))/2);
+            break;
+        default:
+            left = 0;
+            break;
+    }
+    return left;
+}
+
 static void
 do_fft (w_spectrum_t *w)
 {
@@ -334,22 +355,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     memset (data, 0, a.height * stride);
 
     const int barw = CLAMP (width / bands, 2, 20);
-    int left = 0;
-    switch (CONFIG_ALIGNMENT) {
-        case LEFT:
-            left = 0;
-            break;
-        case RIGHT:
-            left = MIN (width, width - (barw * bands));
-            break;
-        case CENTER:
-            left = MAX (0, (width - (barw * bands))/2);
-            break;
-        default:
-            left = 0;
-            break;
-    }
-
+    const int left = get_align_pos (a.width, bands, barw);
     //draw background
     _draw_background (data, a.width, a.height, CONFIG_COLOR_BG32);
     // draw vertical grid
@@ -360,7 +366,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         }
     }
 
-    int hgrid_num = CONFIG_DB_RANGE/10;
+    const int hgrid_num = CONFIG_DB_RANGE/10;
     // draw horizontal grid
     if (CONFIG_ENABLE_HGRID && a.height > 2*hgrid_num && a.width > 1) {
         for (int i = 1; i < hgrid_num; i++) {
@@ -370,7 +376,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
 
     for (gint i = 0; i < bands; i++)
     {
-        int x = left + barw * i;
+        const int x = left + barw * i;
         int y = a.height - ftoi (w->bars[i] * base_s);
         if (y < 0) {
             y = 0;
@@ -471,21 +477,7 @@ spectrum_motion_notify_event (GtkWidget *widget, GdkEventButton *event, gpointer
     gtk_widget_get_allocation (widget, &a);
 
     const int barw = CLAMP (a.width / MAX_BANDS, 2, 20);
-    int left = 0;
-    switch (CONFIG_ALIGNMENT) {
-        case LEFT:
-            left = 0;
-            break;
-        case RIGHT:
-            left = MIN (a.width, a.width - (barw * MAX_BANDS));
-            break;
-        case CENTER:
-            left = MAX (0, (a.width - (barw * MAX_BANDS))/2);
-            break;
-        default:
-            left = 0;
-            break;
-    }
+    const int left = get_align_pos (a.width, MAX_BANDS, barw);
 
     if (event->x > left && event->x < left + barw * MAX_BANDS) {
         int pos = CLAMP ((int)((event->x-1-left)/barw),0,MAX_BANDS-1);
@@ -541,7 +533,7 @@ spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32
 }
 
 static void
-w_spectrum_init (ddb_gtkui_widget_t *w) {
+spectrum_init (w_spectrum_t *w) {
     w_spectrum_t *s = (w_spectrum_t *)w;
     load_config ();
     deadbeef->mutex_lock (s->mutex);
@@ -566,6 +558,7 @@ w_spectrum_init (ddb_gtkui_widget_t *w) {
     create_gradient_table (s, CONFIG_GRADIENT_COLORS, CONFIG_NUM_COLORS);
 
     spectrum_set_refresh_interval (w, CONFIG_REFRESH_INTERVAL);
+    deadbeef->vis_waveform_listen (w, spectrum_wavedata_listener);
     deadbeef->mutex_unlock (s->mutex);
 }
 
@@ -575,7 +568,6 @@ w_musical_spectrum_create (void) {
     memset (w, 0, sizeof (w_spectrum_t));
 
     w->base.widget = gtk_event_box_new ();
-    w->base.init = w_spectrum_init;
     w->base.destroy  = w_spectrum_destroy;
     w->base.message = spectrum_message;
     w->drawarea = gtk_drawing_area_new ();
@@ -602,7 +594,8 @@ w_musical_spectrum_create (void) {
     g_signal_connect_after ((gpointer) w->drawarea, "motion_notify_event", G_CALLBACK (spectrum_motion_notify_event), w);
     g_signal_connect_after ((gpointer) w->popup_item, "activate", G_CALLBACK (on_button_config), w);
     gtkui_plugin->w_override_signals (w->base.widget, w);
-    deadbeef->vis_waveform_listen (w, spectrum_wavedata_listener);
+
+    spectrum_init (w);
     return (ddb_gtkui_widget_t *)w;
 }
 
