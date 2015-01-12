@@ -27,8 +27,6 @@
 
 #include <gtk/gtk.h>
 
-extern char *notes[];
-
 void
 _memset_pattern (char *data, const void* pattern, size_t data_len, size_t pattern_len);
 

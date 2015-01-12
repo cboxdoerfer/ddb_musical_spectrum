@@ -22,6 +22,17 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+#include <math.h>
+#include <fcntl.h>
+
+#include <gtk/gtk.h>
+
+#include "spectrum.h"
 #include "config.h"
 
 int CONFIG_REFRESH_INTERVAL = 25;

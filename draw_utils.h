@@ -26,7 +26,6 @@
 #define DRAW_UTILS_HEADER
 
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <stdint.h>
 #include <stdlib.h>
 

@@ -23,9 +23,9 @@
 */
 
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 #include <assert.h>
 #include <math.h>
 #include <fcntl.h>
@@ -34,6 +34,7 @@
 #include "support.h"
 #include "config.h"
 #include "config_dialog.h"
+#include "spectrum.h"
 
 #define     STR_GRADIENT_VERTICAL "Vertical"
 #define     STR_GRADIENT_HORIZONTAL "Horizontal"

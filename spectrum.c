@@ -23,12 +23,10 @@
 */
 
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
-#include <assert.h>
 #include <math.h>
-#include <fcntl.h>
 #include <gtk/gtk.h>
 #include <fftw3.h>
 
@@ -45,6 +43,19 @@
 DB_functions_t *deadbeef = NULL;
 ddb_gtkui_t *gtkui_plugin = NULL;
 
+static char *notes[] = {"C0","C#0","D0","D#0","E0","F0","F#0","G0","G#0","A0","A#0","B0",
+                 "C1","C#1","D1","D#1","E1","F1","F#1","G1","G#1","A1","A#1","B1",
+                 "C2","C#2","D2","D#2","E2","F2","F#2","G2","G#2","A2","A#2","B2",
+                 "C3","C#3","D3","D#3","E3","F3","F#3","G3","G#3","A3","A#3","B3",
+                 "C4","C#4","D4","D#4","E4","F4","F#4","G4","G#4","A4","A#4","B4",
+                 "C5","C#5","D5","D#5","E5","F5","F#5","G5","G#5","A5","A#5","B5",
+                 "C6","C#6","D6","D#6","E6","F6","F#6","G6","G#6","A6","A#6","B6",
+                 "C7","C#7","D7","D#7","E7","F7","F#7","G7","G#7","A7","A#7","B7",
+                 "C8","C#8","D8","D#8","E8","F8","F#8","G8","G#8","A8","A#8","B8",
+                 "C9","C#9","D9","D#9","E9","F9","F#9","G9","G#9","A9","A#9","B9",
+                 "C10","C#10","D10","D#10","E10","F10","F#10","G10","G#10","A10","A#10","B10"
+                };
+
 static void
 do_fft (w_spectrum_t *w)
 {
@@ -55,15 +66,15 @@ do_fft (w_spectrum_t *w)
     double real,imag;
 
     for (int i = 0; i < CONFIG_FFT_SIZE; i++) {
-        w->in[i] = (double)w->samples[i] * w->window[i];
+        w->fft_in[i] = w->samples[i] * w->window[i];
     }
 
     fftw_execute (w->p_r2c);
     for (int i = 0; i < CONFIG_FFT_SIZE/2; i++)
     {
-        real = w->out_complex[i][0];
-        imag = w->out_complex[i][1];
-        w->data[i] = (real*real + imag*imag);
+        real = w->fft_out[i][0];
+        imag = w->fft_out[i][1];
+        w->spectrum_data[i] = (real*real + imag*imag);
     }
     deadbeef->mutex_unlock (w->mutex);
 }
@@ -81,8 +92,8 @@ on_config_changed (gpointer user_data, uintptr_t ctx)
     create_frequency_table (w);
     create_gradient_table (w, CONFIG_GRADIENT_COLORS, CONFIG_NUM_COLORS);
 
-    w->p_r2c = fftw_plan_dft_r2c_1d (CONFIG_FFT_SIZE, w->in, w->out_complex, FFTW_ESTIMATE);
-    memset (w->data, 0, sizeof (double) * MAX_FFT_SIZE);
+    w->p_r2c = fftw_plan_dft_r2c_1d (CLAMP (CONFIG_FFT_SIZE, 512, MAX_FFT_SIZE), w->fft_in, w->fft_out, FFTW_ESTIMATE);
+    memset (w->spectrum_data, 0, sizeof (double) * MAX_FFT_SIZE);
     deadbeef->mutex_unlock (w->mutex);
     return 0;
 }
@@ -92,9 +103,9 @@ static void
 w_spectrum_destroy (ddb_gtkui_widget_t *w) {
     w_spectrum_t *s = (w_spectrum_t *)w;
     deadbeef->vis_waveform_unlisten (w);
-    if (s->data) {
-        free (s->data);
-        s->data = NULL;
+    if (s->spectrum_data) {
+        free (s->spectrum_data);
+        s->spectrum_data = NULL;
     }
     if (s->samples) {
         free (s->samples);
@@ -103,13 +114,13 @@ w_spectrum_destroy (ddb_gtkui_widget_t *w) {
     if (s->p_r2c) {
         fftw_destroy_plan (s->p_r2c);
     }
-    if (s->in) {
-        fftw_free (s->in);
-        s->in = NULL;
+    if (s->fft_in) {
+        fftw_free (s->fft_in);
+        s->fft_in = NULL;
     }
-    if (s->out_complex) {
-        fftw_free (s->out_complex);
-        s->out_complex = NULL;
+    if (s->fft_out) {
+        fftw_free (s->fft_out);
+        s->fft_out = NULL;
     }
     if (s->drawtimer) {
         g_source_remove (s->drawtimer);
@@ -162,11 +173,11 @@ spectrum_get_value (gpointer user_data, int start, int end)
 {
     w_spectrum_t *w = user_data;
     if (start >= end) {
-        return w->data[end];
+        return w->spectrum_data[end];
     }
     float value = 0.0;
     for (int i = start; i < end; i++) {
-        value = MAX (w->data[i],value);
+        value = MAX (w->spectrum_data[i],value);
     }
     return value;
 }
@@ -177,27 +188,27 @@ spectrum_interpolate (gpointer user_data, int bands, int index)
     w_spectrum_t *w = user_data;
     float x = 0.0;
     if (index <= w->low_res_end+1) {
-        const float v1 = 10 * log10 (w->data[w->keys[index]]);
+        const float v1 = 10 * log10 (w->spectrum_data[w->keys[index]]);
 
         // find index of next value
         int j = 0;
         while (index+j < MAX_BANDS && w->keys[index+j] == w->keys[index]) {
             j++;
         }
-        const float v2 = 10 * log10 (w->data[w->keys[index+j]]);
+        const float v2 = 10 * log10 (w->spectrum_data[w->keys[index+j]]);
 
         int l = j;
         while (index+l < MAX_BANDS && w->keys[index+l] == w->keys[index+j]) {
             l++;
         }
-        const float v3 = 10 * log10 (w->data[w->keys[index+l]]);
+        const float v3 = 10 * log10 (w->spectrum_data[w->keys[index+l]]);
 
         int k = 0;
         while ((k+index) >= 0 && w->keys[k+index] == w->keys[index]) {
             j++;
             k--;
         }
-        const float v0 = 10 * log10 (w->data[w->keys[CLAMP(index+k,0,bands-1)]]);
+        const float v0 = 10 * log10 (w->spectrum_data[w->keys[CLAMP(index+k,0,bands-1)]]);
 
         //x = linear_interpolate (v1,v2,(1.0/(j-1)) * ((-1 * k) - 1));
         x = lagrange_interpolate (v0,v1,v2,v3,1 + (1.0 / (j - 1)) * ((-1 * k) - 1));
@@ -536,15 +547,15 @@ w_spectrum_init (ddb_gtkui_widget_t *w) {
     deadbeef->mutex_lock (s->mutex);
     s->samples = malloc (sizeof (double) * MAX_FFT_SIZE);
     memset (s->samples, 0, sizeof (double) * MAX_FFT_SIZE);
-    s->data = malloc (sizeof (double) * MAX_FFT_SIZE);
-    memset (s->data, 0, sizeof (double) * MAX_FFT_SIZE);
+    s->spectrum_data = malloc (sizeof (double) * MAX_FFT_SIZE);
+    memset (s->spectrum_data, 0, sizeof (double) * MAX_FFT_SIZE);
 
-    s->in = fftw_malloc (sizeof (double) * MAX_FFT_SIZE);
-    memset (s->in, 0, sizeof (double) * MAX_FFT_SIZE);
-    s->out_complex = fftw_malloc (sizeof (fftw_complex) * MAX_FFT_SIZE);
-    memset (s->out_complex, 0, sizeof (double) * MAX_FFT_SIZE);
+    s->fft_in = fftw_malloc (sizeof (double) * MAX_FFT_SIZE);
+    memset (s->fft_in, 0, sizeof (double) * MAX_FFT_SIZE);
+    s->fft_out = fftw_malloc (sizeof (fftw_complex) * MAX_FFT_SIZE);
+    memset (s->fft_out, 0, sizeof (double) * MAX_FFT_SIZE);
 
-    s->p_r2c = fftw_plan_dft_r2c_1d (CONFIG_FFT_SIZE, s->in, s->out_complex, FFTW_ESTIMATE);
+    s->p_r2c = fftw_plan_dft_r2c_1d (CONFIG_FFT_SIZE, s->fft_in, s->fft_out, FFTW_ESTIMATE);
 
     s->buffered = 0;
     s->samplerate = deadbeef->get_output ()->fmt.samplerate;
