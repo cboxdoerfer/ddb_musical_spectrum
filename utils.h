@@ -31,7 +31,7 @@ void
 _memset_pattern (char *data, const void* pattern, size_t data_len, size_t pattern_len);
 
 void
-create_gradient_table (gpointer user_data, GdkColor *colors, int num_colors);
+create_gradient_table (uint32_t *dest, GdkColor *colors, int num_colors);
 
 void
 create_window_table (gpointer user_data);

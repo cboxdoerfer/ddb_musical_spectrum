@@ -65,9 +65,9 @@ typedef struct {
     int buffered;
     int low_res_end;
     float bars[MAX_BANDS + 1];
-    int delay[MAX_BANDS + 1];
     float peaks[MAX_BANDS + 1];
-    int delay_peak[MAX_BANDS + 1];
+    int delay_bars[MAX_BANDS + 1];
+    int delay_peaks[MAX_BANDS + 1];
     intptr_t mutex;
 } w_spectrum_t;
 

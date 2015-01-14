@@ -51,10 +51,11 @@ _memset_pattern (char *data, const void* pattern, size_t data_len, size_t patter
 }
 
 void
-create_gradient_table (gpointer user_data, GdkColor *colors, int num_colors)
+create_gradient_table (uint32_t *dest, GdkColor *colors, int num_colors)
 {
-    w_spectrum_t *w = user_data;
-
+    if (!dest) {
+        return;
+    }
     num_colors -= 1;
 
     for (int i = 0; i < GRADIENT_TABLE_SIZE; i++) {
@@ -73,25 +74,25 @@ create_gradient_table (gpointer user_data, GdkColor *colors, int num_colors)
         int n=(int)m; // integer of m
         double f=m-n;  // fraction of m
 
-        w->colors[i] = 0xFF000000;
+        dest[i] = 0xFF000000;
         float scale = 255/65535.f;
         if (num_colors == 0) {
-            w->colors[i] = (uint32_t)(colors[0].red*scale) << 16 |
+            dest[i] = (uint32_t)(colors[0].red*scale) << 16 |
                 (uint32_t)(colors[0].green*scale) << 8 |
                 (uint32_t)(colors[0].blue*scale) << 0;
         }
         else if (n < num_colors) {
-            w->colors[i] = (uint32_t)((colors[n].red*scale) + f * ((colors[n+1].red*scale)-(colors[n].red*scale))) << 16 |
+            dest[i] = (uint32_t)((colors[n].red*scale) + f * ((colors[n+1].red*scale)-(colors[n].red*scale))) << 16 |
                 (uint32_t)((colors[n].green*scale) + f * ((colors[n+1].green*scale)-(colors[n].green*scale))) << 8 |
                 (uint32_t)((colors[n].blue*scale) + f * ((colors[n+1].blue*scale)-(colors[n].blue*scale))) << 0;
         }
         else if (n == num_colors) {
-            w->colors[i] = (uint32_t)(colors[n].red*scale) << 16 |
+            dest[i] = (uint32_t)(colors[n].red*scale) << 16 |
                 (uint32_t)(colors[n].green*scale) << 8 |
                 (uint32_t)(colors[n].blue*scale) << 0;
         }
         else {
-            w->colors[i] = 0xFFFFFFFF;
+            dest[i] = 0xFFFFFFFF;
         }
     }
 }

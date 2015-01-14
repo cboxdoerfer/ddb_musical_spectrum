@@ -111,7 +111,7 @@ on_config_changed (gpointer user_data, uintptr_t ctx)
     }
     create_window_table (w);
     create_frequency_table (w);
-    create_gradient_table (w, CONFIG_GRADIENT_COLORS, CONFIG_NUM_COLORS);
+    create_gradient_table (w->colors, CONFIG_GRADIENT_COLORS, CONFIG_NUM_COLORS);
 
     w->p_r2c = fftw_plan_dft_r2c_1d (CLAMP (CONFIG_FFT_SIZE, 512, MAX_FFT_SIZE), w->fft_in, w->fft_out, FFTW_ESTIMATE);
     memset (w->spectrum_data, 0, sizeof (double) * MAX_FFT_SIZE);
@@ -290,22 +290,22 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
             w->peaks[i] = CLAMP (w->peaks[i], 0, CONFIG_DB_RANGE);
 
             if (CONFIG_BAR_FALLOFF != -1) {
-                if (w->delay[i] < 0) {
+                if (w->delay_bars[i] < 0) {
                     w->bars[i] -= bar_falloff;
                 }
                 else {
-                    w->delay[i]--;
+                    w->delay_bars[i]--;
                 }
             }
             else {
                 w->bars[i] = 0;
             }
             if (CONFIG_PEAK_FALLOFF != -1) {
-                if (w->delay_peak[i] < 0) {
+                if (w->delay_peaks[i] < 0) {
                     w->peaks[i] -= peak_falloff;
                 }
                 else {
-                    w->delay_peak[i]--;
+                    w->delay_peaks[i]--;
                 }
             }
             else {
@@ -315,11 +315,11 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
             if (x > w->bars[i])
             {
                 w->bars[i] = x;
-                w->delay[i] = bar_delay;
+                w->delay_bars[i] = bar_delay;
             }
             if (x > w->peaks[i]) {
                 w->peaks[i] = x;
-                w->delay_peak[i] = peak_delay;
+                w->delay_peaks[i] = peak_delay;
             }
             if (w->peaks[i] < w->bars[i]) {
                 w->peaks[i] = w->bars[i];
@@ -329,9 +329,9 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     else if (output_state == OUTPUT_STATE_STOPPED) {
         for (int i = 0; i < bands; i++) {
                 w->bars[i] = 0;
-                w->delay[i] = 0;
+                w->delay_bars[i] = 0;
                 w->peaks[i] = 0;
-                w->delay_peak[i] = 0;
+                w->delay_peaks[i] = 0;
         }
     }
 
@@ -387,27 +387,27 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         }
         if (CONFIG_GRADIENT_ORIENTATION == 0) {
             if (CONFIG_ENABLE_BAR_MODE == 0) {
-                _draw_bar_gradient_v (user_data, data, stride, x+1, y, bw, a.height-y, a.height);
+                _draw_bar_gradient_v (w->colors, data, stride, x+1, y, bw, a.height-y, a.height);
             }
             else {
-                _draw_bar_gradient_bar_mode_v (user_data, data, stride, x+1, y, bw, a.height-y, a.height);
+                _draw_bar_gradient_bar_mode_v (w->colors, data, stride, x+1, y, bw, a.height-y, a.height);
             }
         }
         else {
             if (CONFIG_ENABLE_BAR_MODE == 0) {
-                _draw_bar_gradient_h (user_data, data, stride, x+1, y, bw, a.height-y, a.width);
+                _draw_bar_gradient_h (w->colors, data, stride, x+1, y, bw, a.height-y, a.width);
             }
             else {
-                _draw_bar_gradient_bar_mode_h (user_data, data, stride, x+1, y, bw, a.height-y, a.width);
+                _draw_bar_gradient_bar_mode_h (w->colors, data, stride, x+1, y, bw, a.height-y, a.width);
             }
         }
         y = a.height - w->peaks[i] * base_s;
         if (y < a.height-1) {
             if (CONFIG_GRADIENT_ORIENTATION == 0) {
-                _draw_bar_gradient_v (user_data, data, stride, x + 1, y, bw, 1, a.height);
+                _draw_bar_gradient_v (w->colors, data, stride, x + 1, y, bw, 1, a.height);
             }
             else {
-                _draw_bar_gradient_h (user_data, data, stride, x + 1, y, bw, 1, a.width);
+                _draw_bar_gradient_h (w->colors, data, stride, x + 1, y, bw, 1, a.width);
             }
         }
     }
@@ -555,7 +555,7 @@ spectrum_init (w_spectrum_t *w) {
 
     create_window_table (s);
     create_frequency_table (s);
-    create_gradient_table (s, CONFIG_GRADIENT_COLORS, CONFIG_NUM_COLORS);
+    create_gradient_table (s->colors, CONFIG_GRADIENT_COLORS, CONFIG_NUM_COLORS);
 
     spectrum_set_refresh_interval (w, CONFIG_REFRESH_INTERVAL);
     deadbeef->vis_waveform_listen (w, spectrum_wavedata_listener);
