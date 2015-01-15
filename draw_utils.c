@@ -23,7 +23,6 @@
 */
 
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
@@ -93,8 +92,7 @@ _draw_bar (uint8_t *data, int stride, int x0, int y0, int w, int h, uint32_t col
 }
 
 void
-_draw_bar_gradient_v (gpointer user_data, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_h) {
-    w_spectrum_t *s = user_data;
+_draw_bar_gradient_v (uint32_t *colors, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_h) {
     int y1 = y0+h-1;
     int x1 = x0+w-1;
     uint32_t *ptr = (uint32_t*)&data[y0*stride+x0*4];
@@ -103,7 +101,7 @@ _draw_bar_gradient_v (gpointer user_data, uint8_t *data, int stride, int x0, int
         int index = ftoi(((double)y0/(double)total_h) * (GRADIENT_TABLE_SIZE - 1));
         index = CLAMP (index, 0, GRADIENT_TABLE_SIZE - 1);
         while (x++ <= x1) {
-            *ptr++ = s->colors[index];
+            *ptr++ = colors[index];
         }
         y0++;
         ptr += stride/4-w;
@@ -111,8 +109,7 @@ _draw_bar_gradient_v (gpointer user_data, uint8_t *data, int stride, int x0, int
 }
 
 void
-_draw_bar_gradient_h (gpointer user_data, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_w) {
-    w_spectrum_t *s = user_data;
+_draw_bar_gradient_h (uint32_t *colors, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_w) {
     int y1 = y0+h-1;
     int x1 = x0+w-1;
     uint32_t *ptr = (uint32_t*)&data[y0*stride+x0*4];
@@ -121,7 +118,7 @@ _draw_bar_gradient_h (gpointer user_data, uint8_t *data, int stride, int x0, int
         while (x++ <= x1) {
             int index = ftoi(((double)x/(double)total_w) * (GRADIENT_TABLE_SIZE - 1));
             index = CLAMP (index, 0, GRADIENT_TABLE_SIZE - 1);
-            *ptr++ = s->colors[index];
+            *ptr++ = colors[index];
         }
         y0++;
         ptr += stride/4-w;
@@ -129,8 +126,7 @@ _draw_bar_gradient_h (gpointer user_data, uint8_t *data, int stride, int x0, int
 }
 
 void
-_draw_bar_gradient_bar_mode_v (gpointer user_data, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_h) {
-    w_spectrum_t *s = user_data;
+_draw_bar_gradient_bar_mode_v (uint32_t *colors, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_h) {
     int y1 = y0+h-1;
     int x1 = x0+w-1;
     y0 -= y0 % 2;
@@ -140,7 +136,7 @@ _draw_bar_gradient_bar_mode_v (gpointer user_data, uint8_t *data, int stride, in
         int index = ftoi(((double)y0/(double)total_h) * (GRADIENT_TABLE_SIZE - 1));
         index = CLAMP (index, 0, GRADIENT_TABLE_SIZE - 1);
         while (x++ <= x1) {
-            *ptr++ = s->colors[index];
+            *ptr++ = colors[index];
         }
         y0 += 2;
         ptr += stride/2-w;
@@ -148,8 +144,7 @@ _draw_bar_gradient_bar_mode_v (gpointer user_data, uint8_t *data, int stride, in
 }
 
 void
-_draw_bar_gradient_bar_mode_h (gpointer user_data, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_w) {
-    w_spectrum_t *s = user_data;
+_draw_bar_gradient_bar_mode_h (uint32_t *colors, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_w) {
     int y1 = y0+h-1;
     int x1 = x0+w-1;
     y0 -= y0 % 2;
@@ -159,7 +154,7 @@ _draw_bar_gradient_bar_mode_h (gpointer user_data, uint8_t *data, int stride, in
         while (x++ <= x1) {
             int index = ftoi(((double)x/(double)total_w) * (GRADIENT_TABLE_SIZE - 1));
             index = CLAMP (index, 0, GRADIENT_TABLE_SIZE - 1);
-            *ptr++ = s->colors[index];
+            *ptr++ = colors[index];
         }
         y0 += 2;
         ptr += stride/2-w;

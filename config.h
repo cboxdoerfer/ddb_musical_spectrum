@@ -25,18 +25,6 @@
 #ifndef CONFIG_HEADER
 #define CONFIG_HEADER
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-#include <math.h>
-#include <fcntl.h>
-
-#include <gtk/gtk.h>
-
-#include "spectrum.h"
-
 #define     CONFSTR_MS_REFRESH_INTERVAL       "musical_spectrum.refresh_interval"
 #define     CONFSTR_MS_FFT_SIZE               "musical_spectrum.fft_size"
 #define     CONFSTR_MS_DB_RANGE               "musical_spectrum.db_range"

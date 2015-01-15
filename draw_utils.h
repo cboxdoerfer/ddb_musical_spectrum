@@ -26,7 +26,6 @@
 #define DRAW_UTILS_HEADER
 
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -43,15 +42,15 @@ void
 _draw_bar (uint8_t *data, int stride, int x0, int y0, int w, int h, uint32_t color);
 
 void
-_draw_bar_gradient_v (gpointer user_data, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_h);
+_draw_bar_gradient_v (uint32_t *colors, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_h);
 
 void
-_draw_bar_gradient_h (gpointer user_data, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_w);
+_draw_bar_gradient_h (uint32_t *colors, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_w);
 
 void
-_draw_bar_gradient_bar_mode_v (gpointer user_data, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_h);
+_draw_bar_gradient_bar_mode_v (uint32_t *colors, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_h);
 
 void
-_draw_bar_gradient_bar_mode_h (gpointer user_data, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_w);
+_draw_bar_gradient_bar_mode_h (uint32_t *colors, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_w);
 
 #endif

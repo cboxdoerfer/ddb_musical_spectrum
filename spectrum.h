@@ -25,6 +25,8 @@
 #ifndef SPECTRUM_HEADER
 #define SPECTRUM_HEADER
 
+#include <gtk/gtk.h>
+#include <stdint.h>
 #include <fftw3.h>
 
 #include <deadbeef/deadbeef.h>
@@ -47,8 +49,8 @@ typedef struct {
     GtkWidget *popup_item;
     cairo_surface_t *surf;
     guint drawtimer;
-    // data: holds amplitude of frequency bins (result of fft)
-    double *data;
+    // spectrum_data: holds amplitude of frequency bins (result of fft)
+    double *spectrum_data;
     double window[MAX_FFT_SIZE];
     // keys: index of frequencies of musical notes (c0;d0;...;f10) in data
     int keys[MAX_BARS + 1];
@@ -57,15 +59,15 @@ typedef struct {
     uint32_t colors[GRADIENT_TABLE_SIZE];
     int samplerate;
     double *samples;
-    double *in;
-    fftw_complex *out_complex;
+    double *fft_in;
+    fftw_complex *fft_out;
     fftw_plan p_r2c;
     int buffered;
     int low_res_end;
     float bars[MAX_BARS + 1];
-    int delay[MAX_BARS + 1];
     float peaks[MAX_BARS + 1];
-    int delay_peak[MAX_BARS + 1];
+    int delay_bars[MAX_BARS + 1];
+    int delay_peaks[MAX_BARS + 1];
     intptr_t mutex;
 } w_spectrum_t;
 
