@@ -493,7 +493,13 @@ spectrum_motion_notify_event (GtkWidget *widget, GdkEventButton *event, gpointer
     GtkAllocation a;
     gtk_widget_get_allocation (widget, &a);
 
-    const int barw = CLAMP (a.width / CONFIG_NUM_BARS, 2, 20);
+    int barw;
+
+    if (CONFIG_GAPS)
+        barw = CLAMP (a.width / CONFIG_NUM_BARS, 2, 20);
+    else
+        barw = CLAMP (a.width / CONFIG_NUM_BARS, 2, 20) - 1;
+
     const int left = get_align_pos (a.width, CONFIG_NUM_BARS, barw);
 
     if (event->x > left && event->x < left + barw * CONFIG_NUM_BARS) {
