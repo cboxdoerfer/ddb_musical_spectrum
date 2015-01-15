@@ -214,13 +214,13 @@ spectrum_interpolate (gpointer user_data, int bands, int index)
 
         // find index of next value
         int j = 0;
-        while (index+j < MAX_BANDS && w->keys[index+j] == w->keys[index]) {
+        while (index+j < CONFIG_NUM_BARS && w->keys[index+j] == w->keys[index]) {
             j++;
         }
         const float v2 = 10 * log10 (w->spectrum_data[w->keys[index+j]]);
 
         int l = j;
-        while (index+l < MAX_BANDS && w->keys[index+l] == w->keys[index+j]) {
+        while (index+l < CONFIG_NUM_BARS && w->keys[index+l] == w->keys[index+j]) {
             l++;
         }
         const float v3 = 10 * log10 (w->spectrum_data[w->keys[index+l]]);
@@ -266,7 +266,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     GtkAllocation a;
     gtk_widget_get_allocation (widget, &a);
 
-    const int bands = MAX_BANDS;
+    const int bands = CONFIG_NUM_BARS;
     const int width = a.width;
     const int height = a.height;
 
@@ -355,12 +355,18 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     const int stride = cairo_image_surface_get_stride (w->surf);
     memset (data, 0, a.height * stride);
 
-    const int barw = CLAMP (width / bands, 2, 20);
+    int barw;
+    if (CONFIG_GAPS)
+        barw = CLAMP (width / bands, 2, 20);
+    else
+        barw = CLAMP (width / bands, 2, 20) - 1;
+
     const int left = get_align_pos (a.width, bands, barw);
+
     //draw background
     _draw_background (data, a.width, a.height, CONFIG_COLOR_BG32);
     // draw vertical grid
-    if (CONFIG_ENABLE_VGRID) {
+    if (CONFIG_ENABLE_VGRID && CONFIG_GAPS) {
         int num_lines = MIN (a.width/barw, bands);
         for (int i = 0; i < num_lines; i++) {
             _draw_vline (data, stride, left + barw * i, 0, a.height-1, CONFIG_COLOR_VGRID32);
@@ -377,38 +383,48 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
 
     for (gint i = 0; i < bands; i++)
     {
-        const int x = left + barw * i;
+        int x = left + barw * i;
         int y = a.height - ftoi (w->bars[i] * base_s);
         if (y < 0) {
             y = 0;
         }
-        int bw = barw-1;
+
+        int bw;
+
+        if (CONFIG_GAPS) {
+            bw = barw -1;
+            x += 1;
+        }
+        else {
+            bw = barw;
+        }
+
         if (x + bw >= a.width) {
             bw = a.width-x-1;
         }
         if (CONFIG_GRADIENT_ORIENTATION == 0) {
             if (CONFIG_ENABLE_BAR_MODE == 0) {
-                _draw_bar_gradient_v (w->colors, data, stride, x+1, y, bw, a.height-y, a.height);
+                _draw_bar_gradient_v (w->colors, data, stride, x, y, bw, a.height-y, a.height);
             }
             else {
-                _draw_bar_gradient_bar_mode_v (w->colors, data, stride, x+1, y, bw, a.height-y, a.height);
+                _draw_bar_gradient_bar_mode_v (w->colors, data, stride, x, y, bw, a.height-y, a.height);
             }
         }
         else {
             if (CONFIG_ENABLE_BAR_MODE == 0) {
-                _draw_bar_gradient_h (w->colors, data, stride, x+1, y, bw, a.height-y, a.width);
+                _draw_bar_gradient_h (w->colors, data, stride, x, y, bw, a.height-y, a.width);
             }
             else {
-                _draw_bar_gradient_bar_mode_h (w->colors, data, stride, x+1, y, bw, a.height-y, a.width);
+                _draw_bar_gradient_bar_mode_h (w->colors, data, stride, x, y, bw, a.height-y, a.width);
             }
         }
         y = a.height - w->peaks[i] * base_s;
         if (y < a.height-1) {
             if (CONFIG_GRADIENT_ORIENTATION == 0) {
-                _draw_bar_gradient_v (w->colors, data, stride, x + 1, y, bw, 1, a.height);
+                _draw_bar_gradient_v (w->colors, data, stride, x, y, bw, 1, a.height);
             }
             else {
-                _draw_bar_gradient_h (w->colors, data, stride, x + 1, y, bw, 1, a.width);
+                _draw_bar_gradient_h (w->colors, data, stride, x, y, bw, 1, a.width);
             }
         }
     }
@@ -477,13 +493,14 @@ spectrum_motion_notify_event (GtkWidget *widget, GdkEventButton *event, gpointer
     GtkAllocation a;
     gtk_widget_get_allocation (widget, &a);
 
-    const int barw = CLAMP (a.width / MAX_BANDS, 2, 20);
-    const int left = get_align_pos (a.width, MAX_BANDS, barw);
+    const int barw = CLAMP (a.width / CONFIG_NUM_BARS, 2, 20);
+    const int left = get_align_pos (a.width, CONFIG_NUM_BARS, barw);
 
-    if (event->x > left && event->x < left + barw * MAX_BANDS) {
-        int pos = CLAMP ((int)((event->x-1-left)/barw),0,MAX_BANDS-1);
+    if (event->x > left && event->x < left + barw * CONFIG_NUM_BARS) {
+        int pos = CLAMP ((int)((event->x-1-left)/barw),0,CONFIG_NUM_BARS-1);
+        int npos = ftoi( pos * 126 / CONFIG_NUM_BARS );
         char tooltip_text[20];
-        snprintf (tooltip_text, sizeof (tooltip_text), "%5.0f Hz (%s)", w->freq[pos], notes[pos]);
+        snprintf (tooltip_text, sizeof (tooltip_text), "%5.0f Hz (%s)", w->freq[pos], notes[npos]);
         gtk_widget_set_tooltip_text (widget, tooltip_text);
         return TRUE;
     }
@@ -530,7 +547,7 @@ spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32
             deadbeef->mutex_lock (w->mutex);
             memset (w->spectrum_data, 0, sizeof (double) * MAX_FFT_SIZE);
             memset (w->samples, 0, sizeof (double) * MAX_FFT_SIZE);
-            for (int i = 0; i < MAX_BANDS; i++) {
+            for (int i = 0; i < MAX_BARS; i++) {
                 w->bars[i] = 0;
                 w->peaks[i] = 0;
             }
@@ -647,11 +664,13 @@ musical_spectrum_disconnect (void)
 }
 
 static const char settings_dlg[] =
-    "property \"Refresh interval (ms): \"           spinbtn[10,1000,1] "      CONFSTR_MS_REFRESH_INTERVAL         " 25 ;\n"
-    "property \"Bar falloff (dB/s): \"           spinbtn[-1,1000,1] "      CONFSTR_MS_BAR_FALLOFF         " -1 ;\n"
-    "property \"Bar delay (ms): \"                spinbtn[0,10000,100] "      CONFSTR_MS_BAR_DELAY           " 0 ;\n"
-    "property \"Peak falloff (dB/s): \"          spinbtn[-1,1000,1] "      CONFSTR_MS_PEAK_FALLOFF        " 90 ;\n"
-    "property \"Peak delay (ms): \"               spinbtn[0,10000,100] "      CONFSTR_MS_PEAK_DELAY          " 500 ;\n"
+    "property \"Refresh interval (ms): \"       spinbtn[10,1000,1] "        CONFSTR_MS_REFRESH_INTERVAL         " 25 ;\n"
+    "property \"Number of bars: \"              spinbtn[2,2000,1] "         CONFSTR_MS_NUM_BARS                 " 126 ;\n"
+    "property \"Gap between bars  \"            checkbox "                  CONFSTR_MS_GAPS                     " 1 ;\n"
+    "property \"Bar falloff (dB/s): \"          spinbtn[-1,1000,1] "        CONFSTR_MS_BAR_FALLOFF              " -1 ;\n"
+    "property \"Bar delay (ms): \"              spinbtn[0,10000,100] "      CONFSTR_MS_BAR_DELAY                " 0 ;\n"
+    "property \"Peak falloff (dB/s): \"         spinbtn[-1,1000,1] "        CONFSTR_MS_PEAK_FALLOFF             " 90 ;\n"
+    "property \"Peak delay (ms): \"             spinbtn[0,10000,100] "      CONFSTR_MS_PEAK_DELAY               " 500 ;\n"
 ;
 
 DB_misc_t plugin = {

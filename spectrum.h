@@ -32,7 +32,7 @@
 #include <deadbeef/deadbeef.h>
 #include <deadbeef/gtkui_api.h>
 
-#define MAX_BANDS 126
+#define MAX_BARS 2000
 #define REFRESH_INTERVAL 25
 #define GRADIENT_TABLE_SIZE 1024
 #define MAX_FFT_SIZE 32768
@@ -53,9 +53,9 @@ typedef struct {
     double *spectrum_data;
     double window[MAX_FFT_SIZE];
     // keys: index of frequencies of musical notes (c0;d0;...;f10) in data
-    int keys[MAX_BANDS + 1];
+    int keys[MAX_BARS + 1];
     // freq: hold frequency values
-    float freq[MAX_BANDS + 1];
+    float freq[MAX_BARS + 1];
     uint32_t colors[GRADIENT_TABLE_SIZE];
     int samplerate;
     double *samples;
@@ -64,10 +64,10 @@ typedef struct {
     fftw_plan p_r2c;
     int buffered;
     int low_res_end;
-    float bars[MAX_BANDS + 1];
-    float peaks[MAX_BANDS + 1];
-    int delay_bars[MAX_BANDS + 1];
-    int delay_peaks[MAX_BANDS + 1];
+    float bars[MAX_BARS + 1];
+    float peaks[MAX_BARS + 1];
+    int delay_bars[MAX_BARS + 1];
+    int delay_peaks[MAX_BARS + 1];
     intptr_t mutex;
 } w_spectrum_t;
 
