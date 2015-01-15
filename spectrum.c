@@ -116,6 +116,7 @@ on_config_changed (gpointer user_data, uintptr_t ctx)
     w->p_r2c = fftw_plan_dft_r2c_1d (CLAMP (CONFIG_FFT_SIZE, 512, MAX_FFT_SIZE), w->fft_in, w->fft_out, FFTW_ESTIMATE);
     memset (w->spectrum_data, 0, sizeof (double) * MAX_FFT_SIZE);
     deadbeef->mutex_unlock (w->mutex);
+    gtk_widget_queue_draw (w->drawarea);
     return 0;
 }
 
@@ -522,11 +523,20 @@ spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32
             }
             break;
         case DB_EV_STOP:
-            spectrum_set_refresh_interval (w, 100);
-            //if (w->drawtimer) {
-            //    g_source_remove (w->drawtimer);
-            //    w->drawtimer = 0;
-            //}
+            if (w->drawtimer) {
+                g_source_remove (w->drawtimer);
+                w->drawtimer = 0;
+            }
+            deadbeef->mutex_lock (w->mutex);
+            memset (w->spectrum_data, 0, sizeof (double) * MAX_FFT_SIZE);
+            memset (w->samples, 0, sizeof (double) * MAX_FFT_SIZE);
+            for (int i = 0; i < MAX_BANDS; i++) {
+                w->bars[i] = 0;
+                w->peaks[i] = 0;
+            }
+            deadbeef->mutex_unlock (w->mutex);
+            gtk_widget_queue_draw (w->drawarea);
+
             break;
     }
     return 0;
