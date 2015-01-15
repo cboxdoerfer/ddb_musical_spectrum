@@ -126,14 +126,18 @@ create_frequency_table (gpointer user_data)
     w_spectrum_t *w = user_data;
 
     w->low_res_end = 0;
-    for (int i = 0; i < MAX_BANDS; i++) {
-        w->freq[i] = 440.0 * pow (2.0, (double)(i-57)/12.0);
+
+    double ratio = CONFIG_NUM_BARS / 126.0;
+    double a4pos = 57.0 * ratio;
+    double octave = 12.0 * ratio;
+
+    for (int i = 0; i < CONFIG_NUM_BARS; i++) {
+        w->freq[i] = 440.0 * pow (2.0, (double)(i-a4pos)/octave);
         w->keys[i] = ftoi (w->freq[i] * CONFIG_FFT_SIZE/(float)w->samplerate);
         if (i > 0 && w->keys[i-1] == w->keys[i])
             w->low_res_end = i;
     }
 }
-
 float
 linear_interpolate (float y1, float y2, float mu)
 {
@@ -149,4 +153,3 @@ lagrange_interpolate (float y0, float y1, float y2, float y3, float x)
     const float a3 = ((x - 0) * (x - 1) * (x - 2)) /  6 * y3;
     return (a0 + a1 + a2 + a3);
 }
-

@@ -31,6 +31,7 @@
 #define     CONFSTR_MS_ENABLE_HGRID           "musical_spectrum.enable_hgrid"
 #define     CONFSTR_MS_ENABLE_VGRID           "musical_spectrum.enable_vgrid"
 #define     CONFSTR_MS_ENABLE_BAR_MODE        "musical_spectrum.enable_bar_mode"
+#define     CONFSTR_MS_NUM_BARS               "musical_spectrum.num_bars"
 #define     CONFSTR_MS_BAR_FALLOFF            "musical_spectrum.bar_falloff"
 #define     CONFSTR_MS_BAR_DELAY              "musical_spectrum.bar_delay"
 #define     CONFSTR_MS_PEAK_FALLOFF           "musical_spectrum.peak_falloff"
@@ -61,6 +62,7 @@ extern int CONFIG_GRADIENT_ORIENTATION;
 extern int CONFIG_NUM_COLORS;
 extern int CONFIG_FFT_SIZE;
 extern int CONFIG_WINDOW;
+extern int CONFIG_NUM_BARS;
 extern GdkColor CONFIG_COLOR_BG;
 extern GdkColor CONFIG_COLOR_VGRID;
 extern GdkColor CONFIG_COLOR_HGRID;

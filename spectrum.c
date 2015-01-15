@@ -214,13 +214,13 @@ spectrum_interpolate (gpointer user_data, int bands, int index)
 
         // find index of next value
         int j = 0;
-        while (index+j < MAX_BANDS && w->keys[index+j] == w->keys[index]) {
+        while (index+j < CONFIG_NUM_BARS && w->keys[index+j] == w->keys[index]) {
             j++;
         }
         const float v2 = 10 * log10 (w->spectrum_data[w->keys[index+j]]);
 
         int l = j;
-        while (index+l < MAX_BANDS && w->keys[index+l] == w->keys[index+j]) {
+        while (index+l < CONFIG_NUM_BARS && w->keys[index+l] == w->keys[index+j]) {
             l++;
         }
         const float v3 = 10 * log10 (w->spectrum_data[w->keys[index+l]]);
@@ -266,7 +266,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     GtkAllocation a;
     gtk_widget_get_allocation (widget, &a);
 
-    const int bands = MAX_BANDS;
+    const int bands = CONFIG_NUM_BARS;
     const int width = a.width;
     const int height = a.height;
 
@@ -477,13 +477,14 @@ spectrum_motion_notify_event (GtkWidget *widget, GdkEventButton *event, gpointer
     GtkAllocation a;
     gtk_widget_get_allocation (widget, &a);
 
-    const int barw = CLAMP (a.width / MAX_BANDS, 2, 20);
-    const int left = get_align_pos (a.width, MAX_BANDS, barw);
+    const int barw = CLAMP (a.width / CONFIG_NUM_BARS, 2, 20);
+    const int left = get_align_pos (a.width, CONFIG_NUM_BARS, barw);
 
-    if (event->x > left && event->x < left + barw * MAX_BANDS) {
-        int pos = CLAMP ((int)((event->x-1-left)/barw),0,MAX_BANDS-1);
+    if (event->x > left && event->x < left + barw * CONFIG_NUM_BARS) {
+        int pos = CLAMP ((int)((event->x-1-left)/barw),0,CONFIG_NUM_BARS-1);
+        int npos = ftoi( pos * 126 / CONFIG_NUM_BARS );
         char tooltip_text[20];
-        snprintf (tooltip_text, sizeof (tooltip_text), "%5.0f Hz (%s)", w->freq[pos], notes[pos]);
+        snprintf (tooltip_text, sizeof (tooltip_text), "%5.0f Hz (%s)", w->freq[pos], notes[npos]);
         gtk_widget_set_tooltip_text (widget, tooltip_text);
         return TRUE;
     }
@@ -648,6 +649,7 @@ musical_spectrum_disconnect (void)
 
 static const char settings_dlg[] =
     "property \"Refresh interval (ms): \"           spinbtn[10,1000,1] "      CONFSTR_MS_REFRESH_INTERVAL         " 25 ;\n"
+    "property \"Number of bars: \"           spinbtn[2,2000,1] "      CONFSTR_MS_NUM_BARS         " 126 ;\n"
     "property \"Bar falloff (dB/s): \"           spinbtn[-1,1000,1] "      CONFSTR_MS_BAR_FALLOFF         " -1 ;\n"
     "property \"Bar delay (ms): \"                spinbtn[0,10000,100] "      CONFSTR_MS_BAR_DELAY           " 0 ;\n"
     "property \"Peak falloff (dB/s): \"          spinbtn[-1,1000,1] "      CONFSTR_MS_PEAK_FALLOFF        " 90 ;\n"
