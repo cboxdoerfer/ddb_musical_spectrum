@@ -34,6 +34,7 @@
 #include "fastftoi.h"
 #include "config.h"
 #include "spectrum.h"
+#include "utils.h"
 
 void
 _memset_pattern (char *data, const void* pattern, size_t data_len, size_t pattern_len)
@@ -124,10 +125,21 @@ void
 create_frequency_table (gpointer user_data)
 {
     w_spectrum_t *w = user_data;
-
     w->low_res_end = 0;
 
-    double ratio = CONFIG_NUM_BARS / 126.0;
+    GtkAllocation a;
+    gtk_widget_get_allocation (w->drawarea, &a);
+
+    if (CONFIG_BAR_W > 0) {
+        int added_bar_w = CONFIG_BAR_W;
+        if (CONFIG_GAPS)
+            added_bar_w += 1;
+        CONFIG_NUM_BARS = a.width/added_bar_w;
+    }
+    if (CONFIG_NUM_BARS > MAX_BARS)
+        CONFIG_NUM_BARS = MAX_BARS;
+
+    double ratio = CONFIG_NUM_BARS / 131.0;
     double a4pos = 57.0 * ratio;
     double octave = 12.0 * ratio;
 
