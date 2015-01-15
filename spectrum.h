@@ -30,8 +30,6 @@
 #include <deadbeef/deadbeef.h>
 #include <deadbeef/gtkui_api.h>
 
-#include "config.h"
-
 #define MAX_BARS 2000
 #define REFRESH_INTERVAL 25
 #define GRADIENT_TABLE_SIZE 1024

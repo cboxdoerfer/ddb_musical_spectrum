@@ -322,7 +322,13 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     const int stride = cairo_image_surface_get_stride (w->surf);
     memset (data, 0, a.height * stride);
 
-    const int barw = CLAMP (width / bands, 2, 20);
+    int barw;
+
+    if (CONFIG_GAPS)
+        barw = CLAMP (width / bands, 2, 20);
+    else
+        barw = CLAMP (width / bands, 2, 20) - 1;
+
     int left = 0;
     switch (CONFIG_ALIGNMENT) {
         case LEFT:
@@ -364,7 +370,14 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         if (y < 0) {
             y = 0;
         }
-        int bw = barw-1;
+
+        int bw;
+
+        if (CONFIG_GAPS)
+            bw = barw -1;
+        else
+            bw = barw;
+
         if (x + bw >= a.width) {
             bw = a.width-x-1;
         }
@@ -634,12 +647,13 @@ musical_spectrum_disconnect (void)
 }
 
 static const char settings_dlg[] =
-    "property \"Refresh interval (ms): \"           spinbtn[10,1000,1] "      CONFSTR_MS_REFRESH_INTERVAL         " 25 ;\n"
-    "property \"Number of bars: \"           spinbtn[2,2000,1] "      CONFSTR_MS_NUM_BARS         " 126 ;\n"
-    "property \"Bar falloff (dB/s): \"           spinbtn[-1,1000,1] "      CONFSTR_MS_BAR_FALLOFF         " -1 ;\n"
-    "property \"Bar delay (ms): \"                spinbtn[0,10000,100] "      CONFSTR_MS_BAR_DELAY           " 0 ;\n"
-    "property \"Peak falloff (dB/s): \"          spinbtn[-1,1000,1] "      CONFSTR_MS_PEAK_FALLOFF        " 90 ;\n"
-    "property \"Peak delay (ms): \"               spinbtn[0,10000,100] "      CONFSTR_MS_PEAK_DELAY          " 500 ;\n"
+    "property \"Refresh interval (ms): \"       spinbtn[10,1000,1] "        CONFSTR_MS_REFRESH_INTERVAL         " 25 ;\n"
+    "property \"Number of bars: \"              spinbtn[2,2000,1] "         CONFSTR_MS_NUM_BARS                 " 126 ;\n"
+    "property \"Gap between bars: \"            checkbox "                  CONFSTR_MS_GAPS                     " 1 ;\n"
+    "property \"Bar falloff (dB/s): \"          spinbtn[-1,1000,1] "        CONFSTR_MS_BAR_FALLOFF              " -1 ;\n"
+    "property \"Bar delay (ms): \"              spinbtn[0,10000,100] "      CONFSTR_MS_BAR_DELAY                " 0 ;\n"
+    "property \"Peak falloff (dB/s): \"         spinbtn[-1,1000,1] "        CONFSTR_MS_PEAK_FALLOFF             " 90 ;\n"
+    "property \"Peak delay (ms): \"             spinbtn[0,10000,100] "      CONFSTR_MS_PEAK_DELAY               " 500 ;\n"
 ;
 
 DB_misc_t plugin = {
