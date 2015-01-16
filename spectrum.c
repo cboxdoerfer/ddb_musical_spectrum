@@ -263,10 +263,14 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     if (!w->samples) {
         return FALSE;
     }
-    create_frequency_table(w);
 
     GtkAllocation a;
     gtk_widget_get_allocation (w->drawarea, &a);
+
+    static int last_bar_w = 1000;
+    if (a.width != last_bar_w)
+        create_frequency_table(w);
+    last_bar_w = a.width;
 
     const int bands = CONFIG_NUM_BARS;
     const int width = a.width;
@@ -358,7 +362,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     memset (data, 0, a.height * stride);
 
     int barw;
-    if (CONFIG_GAPS)
+    if (CONFIG_GAPS || CONFIG_BAR_W > 1)
         barw = CLAMP (width / bands, 2, 20);
     else
         barw = CLAMP (width / bands, 2, 20) - 1;
