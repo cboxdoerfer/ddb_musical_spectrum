@@ -510,7 +510,7 @@ spectrum_motion_notify_event (GtkWidget *widget, GdkEventButton *event, gpointer
 
     if (event->x > left && event->x < left + barw * CONFIG_NUM_BARS) {
         int pos = CLAMP ((int)((event->x-1-left)/barw),0,CONFIG_NUM_BARS-1);
-        int npos = ftoi( pos * 131 / CONFIG_NUM_BARS );
+        int npos = ftoi( pos * 132 / CONFIG_NUM_BARS );
         char tooltip_text[20];
         snprintf (tooltip_text, sizeof (tooltip_text), "%5.0f Hz (%s)", w->freq[pos], notes[npos]);
         gtk_widget_set_tooltip_text (widget, tooltip_text);
@@ -677,7 +677,7 @@ musical_spectrum_disconnect (void)
 
 static const char settings_dlg[] =
     "property \"Refresh interval (ms): \"       spinbtn[10,1000,1] "        CONFSTR_MS_REFRESH_INTERVAL         " 25 ;\n"
-    "property \"Number of bars: \"              spinbtn[2,2000,1] "         CONFSTR_MS_NUM_BARS                 " 131 ;\n"
+    "property \"Number of bars: \"              spinbtn[2,2000,1] "         CONFSTR_MS_NUM_BARS                 " 132 ;\n"
     "property \"Bar width (0 - auto):               \"     spinbtn[0,10,1] "           CONFSTR_MS_BAR_W                    " 1 ;\n"
     "property \"Gap between bars  \"            checkbox "                  CONFSTR_MS_GAPS                     " 1 ;\n"
     "property \"Bar falloff (dB/s): \"          spinbtn[-1,1000,1] "        CONFSTR_MS_BAR_FALLOFF              " -1 ;\n"

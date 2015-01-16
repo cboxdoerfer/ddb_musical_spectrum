@@ -139,7 +139,7 @@ create_frequency_table (gpointer user_data)
     if (CONFIG_NUM_BARS > MAX_BARS)
         CONFIG_NUM_BARS = MAX_BARS;
 
-    double ratio = CONFIG_NUM_BARS / 131.0;
+    double ratio = CONFIG_NUM_BARS / 132.0;
     double a4pos = 57.0 * ratio;
     double octave = 12.0 * ratio;
 

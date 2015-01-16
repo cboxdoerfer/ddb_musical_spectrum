@@ -49,7 +49,7 @@ int CONFIG_GRADIENT_ORIENTATION = 0;
 int CONFIG_NUM_COLORS = 6;
 int CONFIG_FFT_SIZE = 8192;
 int CONFIG_WINDOW = 0;
-int CONFIG_NUM_BARS = 131;
+int CONFIG_NUM_BARS = 132;
 int CONFIG_BAR_W = TRUE;
 int CONFIG_GAPS = TRUE;
 GdkColor CONFIG_COLOR_BG;
@@ -118,7 +118,7 @@ load_config (void)
     CONFIG_ALIGNMENT = deadbeef->conf_get_int (CONFSTR_MS_ALIGNMENT,                      LEFT);
     CONFIG_ENABLE_BAR_MODE = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_BAR_MODE,             0);
     CONFIG_REFRESH_INTERVAL = deadbeef->conf_get_int (CONFSTR_MS_REFRESH_INTERVAL,          25);
-    CONFIG_NUM_BARS = deadbeef->conf_get_int (CONFSTR_MS_NUM_BARS,                         131);
+    CONFIG_NUM_BARS = deadbeef->conf_get_int (CONFSTR_MS_NUM_BARS,                         132);
     CONFIG_BAR_W = deadbeef->conf_get_int (CONFSTR_MS_BAR_W,                                 1);
     CONFIG_GAPS = deadbeef->conf_get_int (CONFSTR_MS_GAPS,                                TRUE);
     CONFIG_BAR_FALLOFF = deadbeef->conf_get_int (CONFSTR_MS_BAR_FALLOFF,                    -1);
