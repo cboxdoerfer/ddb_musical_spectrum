@@ -1,12 +1,12 @@
 pkgname=deadbeef-plugin-musical-spectrum-git
-pkgver=20130303
+pkgver=20150117
 pkgrel=1
 pkgdesc="Musical Spectrum Plugin for the DeaDBeeF audio player (development version)"
 url="https://github.com/cboxdoerfer/ddb_musical_spectrum"
 arch=('i686' 'x86_64')
 license='GPL2'
 depends=('deadbeef' 'fftw')
-makedepends=('git')
+makedepends=('git' 'pkg-config')
 
 _gitname=ddb_musical_spectrum
 _gitroot=https://github.com/cboxdoerfer/${_gitname}

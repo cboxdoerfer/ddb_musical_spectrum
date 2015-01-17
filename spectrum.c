@@ -1,10 +1,10 @@
 /*
     Musical Spectrum plugin for the DeaDBeeF audio player
 
-    Copyright (C) 2014 Christian Boxdörfer <christian.boxdoerfer@posteo.de>
+    Copyright (C) 2015 Christian Boxdörfer <christian.boxdoerfer@posteo.de>
 
     Based on DeaDBeeFs stock spectrum.
-    Copyright (c) 2009-2014 Alexey Yakovenko <waker@users.sourceforge.net>
+    Copyright (c) 2009-2015 Alexey Yakovenko <waker@users.sourceforge.net>
     Copyright (c) 2011 William Pitcock <nenolod@dereferenced.org>
 
     This program is free software; you can redistribute it and/or
@@ -694,7 +694,7 @@ DB_misc_t plugin = {
     .plugin.api_vmajor      = 1,
     .plugin.api_vminor      = 5,
     .plugin.version_major   = 0,
-    .plugin.version_minor   = 1,
+    .plugin.version_minor   = 2,
 #if GTK_CHECK_VERSION(3,0,0)
     .plugin.id              = "musical_spectrum-gtk3",
 #else
@@ -703,7 +703,7 @@ DB_misc_t plugin = {
     .plugin.name            = "Musical Spectrum",
     .plugin.descr           = "Musical Spectrum",
     .plugin.copyright       =
-        "Copyright (C) 2013 Christian Boxdörfer <christian.boxdoerfer@posteo.de>\n"
+        "Copyright (C) 2015 Christian Boxdörfer <christian.boxdoerfer@posteo.de>\n"
         "\n"
         "Based on DeaDBeeFs stock spectrum.\n"
         "\n"
