@@ -27,8 +27,16 @@
 
 #include <gtk/gtk.h>
 
+extern int CALCULATED_NUM_BARS;
+
 void
 _memset_pattern (char *data, const void* pattern, size_t data_len, size_t pattern_len);
+
+void
+update_num_bars (gpointer user_data);
+
+int
+get_num_bars ();
 
 void
 create_gradient_table (uint32_t *dest, GdkColor *colors, int num_colors);

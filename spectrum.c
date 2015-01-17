@@ -214,13 +214,13 @@ spectrum_interpolate (gpointer user_data, int bands, int index)
 
         // find index of next value
         int j = 0;
-        while (index+j < CONFIG_NUM_BARS && w->keys[index+j] == w->keys[index]) {
+        while (index+j < bands && w->keys[index+j] == w->keys[index]) {
             j++;
         }
         const float v2 = 10 * log10 (w->spectrum_data[w->keys[index+j]]);
 
         int l = j;
-        while (index+l < CONFIG_NUM_BARS && w->keys[index+l] == w->keys[index+j]) {
+        while (index+l < bands && w->keys[index+l] == w->keys[index+j]) {
             l++;
         }
         const float v3 = 10 * log10 (w->spectrum_data[w->keys[index+l]]);
@@ -267,12 +267,13 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     GtkAllocation a;
     gtk_widget_get_allocation (w->drawarea, &a);
 
-    static int last_bar_w = 1000;
-    if (a.width != last_bar_w)
+    static int last_bar_w = 0;
+    if (a.width != last_bar_w) {
         create_frequency_table(w);
+    }
     last_bar_w = a.width;
 
-    const int bands = CONFIG_NUM_BARS;
+    const int bands = get_num_bars ();
     const int width = a.width;
     const int height = a.height;
 
@@ -499,18 +500,19 @@ spectrum_motion_notify_event (GtkWidget *widget, GdkEventButton *event, gpointer
     GtkAllocation a;
     gtk_widget_get_allocation (widget, &a);
 
+    const int num_bars = get_num_bars ();
     int barw;
 
     if (CONFIG_GAPS)
-        barw = CLAMP (a.width / CONFIG_NUM_BARS, 2, 20);
+        barw = CLAMP (a.width / num_bars, 2, 20);
     else
-        barw = CLAMP (a.width / CONFIG_NUM_BARS, 2, 20) - 1;
+        barw = CLAMP (a.width / num_bars, 2, 20) - 1;
 
-    const int left = get_align_pos (a.width, CONFIG_NUM_BARS, barw);
+    const int left = get_align_pos (a.width, num_bars, barw);
 
-    if (event->x > left && event->x < left + barw * CONFIG_NUM_BARS) {
-        int pos = CLAMP ((int)((event->x-1-left)/barw),0,CONFIG_NUM_BARS-1);
-        int npos = ftoi( pos * 132 / CONFIG_NUM_BARS );
+    if (event->x > left && event->x < left + barw * num_bars) {
+        int pos = CLAMP ((int)((event->x-1-left)/barw),0,num_bars-1);
+        int npos = ftoi( pos * 132 / num_bars );
         char tooltip_text[20];
         snprintf (tooltip_text, sizeof (tooltip_text), "%5.0f Hz (%s)", w->freq[pos], notes[npos]);
         gtk_widget_set_tooltip_text (widget, tooltip_text);
