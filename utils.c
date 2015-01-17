@@ -36,6 +36,21 @@
 #include "spectrum.h"
 #include "utils.h"
 
+int CALCULATED_NUM_BARS = 1;
+
+int
+get_num_bars ()
+{
+    int bar_num = 1;
+    if (CONFIG_BAR_W > 0) {
+        bar_num = CALCULATED_NUM_BARS;
+    }
+    else {
+        bar_num = CONFIG_NUM_BARS;
+    }
+    return bar_num;
+}
+
 void
 _memset_pattern (char *data, const void* pattern, size_t data_len, size_t pattern_len)
 {
@@ -122,28 +137,35 @@ create_window_table (gpointer user_data)
 }
 
 void
+update_num_bars (gpointer user_data)
+{
+    w_spectrum_t *w = user_data;
+
+    GtkAllocation a;
+    gtk_widget_get_allocation (w->drawarea, &a);
+
+    CALCULATED_NUM_BARS = 1;
+    if (CONFIG_BAR_W > 0) {
+        int added_bar_w = CONFIG_BAR_W;
+        if (CONFIG_GAPS)
+            added_bar_w += 1;
+        CALCULATED_NUM_BARS = CLAMP (a.width/added_bar_w, 1, MAX_BARS);
+    }
+}
+
+void
 create_frequency_table (gpointer user_data)
 {
     w_spectrum_t *w = user_data;
     w->low_res_end = 0;
 
-    GtkAllocation a;
-    gtk_widget_get_allocation (w->drawarea, &a);
+    update_num_bars (w);
+    const int num_bars = get_num_bars ();
+    const double ratio = num_bars / 132.0;
+    const double a4pos = 57.0 * ratio;
+    const double octave = 12.0 * ratio;
 
-    if (CONFIG_BAR_W > 0) {
-        int added_bar_w = CONFIG_BAR_W;
-        if (CONFIG_GAPS)
-            added_bar_w += 1;
-        CONFIG_NUM_BARS = a.width/added_bar_w;
-    }
-    if (CONFIG_NUM_BARS > MAX_BARS)
-        CONFIG_NUM_BARS = MAX_BARS;
-
-    double ratio = CONFIG_NUM_BARS / 132.0;
-    double a4pos = 57.0 * ratio;
-    double octave = 12.0 * ratio;
-
-    for (int i = 0; i < CONFIG_NUM_BARS; i++) {
+    for (int i = 0; i < num_bars; i++) {
         w->freq[i] = 440.0 * pow (2.0, (double)(i-a4pos)/octave);
         w->keys[i] = ftoi (w->freq[i] * CONFIG_FFT_SIZE/(float)w->samplerate);
         if (i > 0 && w->keys[i-1] == w->keys[i])
