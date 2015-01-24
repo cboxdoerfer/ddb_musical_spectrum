@@ -100,9 +100,12 @@ do_fft (w_spectrum_t *w)
     deadbeef->mutex_unlock (w->mutex);
 }
 
+static int config_changed = 0;
+
 static int
 on_config_changed (gpointer user_data, uintptr_t ctx)
 {
+    config_changed = 1;
     w_spectrum_t *w = user_data;
     load_config ();
     deadbeef->mutex_lock (w->mutex);
@@ -151,6 +154,10 @@ w_spectrum_destroy (ddb_gtkui_widget_t *w) {
     if (s->surf) {
         cairo_surface_destroy (s->surf);
         s->surf = NULL;
+    }
+    if (s->surf_data) {
+        free (s->surf_data);
+        s->surf_data = NULL;
     }
     if (s->mutex) {
         deadbeef->mutex_free (s->mutex);
@@ -257,6 +264,50 @@ spectrum_interpolate (gpointer user_data, int bands, int index)
     return x;
 }
 
+static void
+draw_background (unsigned char *data, int stride, int bands, int width, int height)
+{
+    if (!data) {
+        return;
+    }
+    memset (data, 0, height * stride);
+
+    int barw;
+    if (CONFIG_GAPS || CONFIG_BAR_W > 1)
+        barw = CLAMP (width / bands, 2, 20);
+    else
+        barw = CLAMP (width / bands, 2, 20) - 1;
+
+    const int left = get_align_pos (width, bands, barw);
+
+    //draw background
+    _draw_background (data, width, height, CONFIG_COLOR_BG32);
+    // draw vertical grid
+    if (CONFIG_ENABLE_VGRID && CONFIG_GAPS) {
+        int num_lines = MIN (width/barw, bands);
+        for (int i = 0; i < num_lines; i++) {
+            _draw_vline (data, stride, left + barw * i, 0, height-1, CONFIG_COLOR_VGRID32);
+        }
+    }
+
+    //// draw octave grid
+    //if (CONFIG_ENABLE_VGRID) {
+    //    int num_lines = MIN (width/barw, bands);
+    //    int spectrum_width = MIN (barw * bands, width);
+    //    int octave_width = ftoi ((float)spectrum_width / 11);
+    //    for (int i = left; i < spectrum_width - 1 && i < width - 1; i += octave_width) {
+    //        _draw_vline (data, stride, i, 0, height-1, CONFIG_COLOR_HGRID32);
+    //    }
+    //}
+    const int hgrid_num = CONFIG_DB_RANGE/10;
+    // draw horizontal grid
+    if (CONFIG_ENABLE_HGRID && height > 2*hgrid_num && width > 1) {
+        for (int i = 1; i < hgrid_num; i++) {
+            _draw_hline (data, stride, 0, ftoi (i/(float)hgrid_num * height), width-1, CONFIG_COLOR_HGRID32);
+        }
+    }
+}
+
 static gboolean
 spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     w_spectrum_t *w = user_data;
@@ -344,12 +395,20 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     }
 
     // start drawing
-    if (!w->surf || cairo_image_surface_get_width (w->surf) != a.width || cairo_image_surface_get_height (w->surf) != a.height) {
+    int stride = 0;
+    if (!w->surf || !w->surf_data || cairo_image_surface_get_width (w->surf) != a.width || cairo_image_surface_get_height (w->surf) != a.height) {
+        config_changed = 1;
         if (w->surf) {
             cairo_surface_destroy (w->surf);
             w->surf = NULL;
         }
+        if (w->surf_data) {
+            free (w->surf_data);
+            w->surf_data = NULL;
+        }
         w->surf = cairo_image_surface_create (CAIRO_FORMAT_RGB24, a.width, a.height);
+        stride = cairo_image_surface_get_stride (w->surf);
+        w->surf_data = malloc (stride * a.height);
     }
     const float base_s = (height / (float)CONFIG_DB_RANGE);
 
@@ -359,8 +418,16 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     if (!data) {
         return FALSE;
     }
-    const int stride = cairo_image_surface_get_stride (w->surf);
-    memset (data, 0, a.height * stride);
+
+    stride = cairo_image_surface_get_stride (w->surf);
+    if (config_changed) {
+        draw_background (data, stride, bands, a.width, a.height);
+        memcpy (w->surf_data, data, stride * a.height);
+    }
+    else {
+        memcpy (data, w->surf_data, stride * a.height);
+    }
+    //memset (data, 0, a.height * stride);
 
     int barw;
     if (CONFIG_GAPS || CONFIG_BAR_W > 1)
@@ -369,24 +436,6 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         barw = CLAMP (width / bands, 2, 20) - 1;
 
     const int left = get_align_pos (a.width, bands, barw);
-
-    //draw background
-    _draw_background (data, a.width, a.height, CONFIG_COLOR_BG32);
-    // draw vertical grid
-    if (CONFIG_ENABLE_VGRID && CONFIG_GAPS) {
-        int num_lines = MIN (a.width/barw, bands);
-        for (int i = 0; i < num_lines; i++) {
-            _draw_vline (data, stride, left + barw * i, 0, a.height-1, CONFIG_COLOR_VGRID32);
-        }
-    }
-
-    const int hgrid_num = CONFIG_DB_RANGE/10;
-    // draw horizontal grid
-    if (CONFIG_ENABLE_HGRID && a.height > 2*hgrid_num && a.width > 1) {
-        for (int i = 1; i < hgrid_num; i++) {
-            _draw_hline (data, stride, 0, ftoi (i/(float)hgrid_num * a.height), a.width-1, CONFIG_COLOR_HGRID32);
-        }
-    }
 
     for (gint i = 0; i < bands; i++)
     {
@@ -437,13 +486,10 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     }
 
     cairo_surface_mark_dirty (w->surf);
-
-    cairo_save (cr);
     cairo_set_source_surface (cr, w->surf, 0, 0);
-    cairo_rectangle (cr, 0, 0, a.width, a.height);
-    cairo_fill (cr);
-    cairo_restore (cr);
+    cairo_paint (cr);
 
+    config_changed = 0;
     return FALSE;
 }
 

@@ -48,6 +48,7 @@ typedef struct {
     GtkWidget *popup;
     GtkWidget *popup_item;
     cairo_surface_t *surf;
+    unsigned char *surf_data;
     guint drawtimer;
     // spectrum_data: holds amplitude of frequency bins (result of fft)
     double *spectrum_data;
