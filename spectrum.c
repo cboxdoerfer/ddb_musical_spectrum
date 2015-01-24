@@ -100,12 +100,12 @@ do_fft (w_spectrum_t *w)
     deadbeef->mutex_unlock (w->mutex);
 }
 
-static int config_changed = 0;
+static int need_redraw = 0;
 
 static int
 on_config_changed (gpointer user_data, uintptr_t ctx)
 {
-    config_changed = 1;
+    need_redraw = 1;
     w_spectrum_t *w = user_data;
     load_config ();
     deadbeef->mutex_lock (w->mutex);
@@ -265,7 +265,7 @@ spectrum_interpolate (gpointer user_data, int bands, int index)
 }
 
 static void
-draw_background (unsigned char *data, int stride, int bands, int width, int height)
+draw_static_content (unsigned char *data, int stride, int bands, int width, int height)
 {
     if (!data) {
         return;
@@ -397,7 +397,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     // start drawing
     int stride = 0;
     if (!w->surf || !w->surf_data || cairo_image_surface_get_width (w->surf) != a.width || cairo_image_surface_get_height (w->surf) != a.height) {
-        config_changed = 1;
+        need_redraw = 1;
         if (w->surf) {
             cairo_surface_destroy (w->surf);
             w->surf = NULL;
@@ -420,14 +420,14 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     }
 
     stride = cairo_image_surface_get_stride (w->surf);
-    if (config_changed) {
-        draw_background (data, stride, bands, a.width, a.height);
+    if (need_redraw) {
+        draw_static_content (data, stride, bands, a.width, a.height);
         memcpy (w->surf_data, data, stride * a.height);
+        need_redraw = 0;
     }
     else {
         memcpy (data, w->surf_data, stride * a.height);
     }
-    //memset (data, 0, a.height * stride);
 
     int barw;
     if (CONFIG_GAPS || CONFIG_BAR_W > 1)
@@ -441,10 +441,6 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     {
         int x = left + barw * i;
         int y = a.height - ftoi (w->bars[i] * base_s);
-        if (y < 0) {
-            y = 0;
-        }
-
         int bw;
 
         if (CONFIG_GAPS) {
@@ -458,24 +454,26 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         if (x + bw >= a.width) {
             bw = a.width-x-1;
         }
-        if (CONFIG_GRADIENT_ORIENTATION == 0) {
-            if (CONFIG_ENABLE_BAR_MODE == 0) {
-                _draw_bar_gradient_v (w->colors, data, stride, x, y, bw, a.height-y, a.height);
+        if (y > 0) {
+            if (CONFIG_GRADIENT_ORIENTATION == 0) {
+                if (CONFIG_ENABLE_BAR_MODE == 0) {
+                    _draw_bar_gradient_v (w->colors, data, stride, x, y, bw, a.height-y, a.height);
+                }
+                else {
+                    _draw_bar_gradient_bar_mode_v (w->colors, data, stride, x, y, bw, a.height-y, a.height);
+                }
             }
             else {
-                _draw_bar_gradient_bar_mode_v (w->colors, data, stride, x, y, bw, a.height-y, a.height);
-            }
-        }
-        else {
-            if (CONFIG_ENABLE_BAR_MODE == 0) {
-                _draw_bar_gradient_h (w->colors, data, stride, x, y, bw, a.height-y, a.width);
-            }
-            else {
-                _draw_bar_gradient_bar_mode_h (w->colors, data, stride, x, y, bw, a.height-y, a.width);
+                if (CONFIG_ENABLE_BAR_MODE == 0) {
+                    _draw_bar_gradient_h (w->colors, data, stride, x, y, bw, a.height-y, a.width);
+                }
+                else {
+                    _draw_bar_gradient_bar_mode_h (w->colors, data, stride, x, y, bw, a.height-y, a.width);
+                }
             }
         }
         y = a.height - w->peaks[i] * base_s;
-        if (y < a.height-1) {
+        if (y < a.height-1 && y > 0) {
             if (CONFIG_GRADIENT_ORIENTATION == 0) {
                 _draw_bar_gradient_v (w->colors, data, stride, x, y, bw, 1, a.height);
             }
@@ -489,7 +487,6 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     cairo_set_source_surface (cr, w->surf, 0, 0);
     cairo_paint (cr);
 
-    config_changed = 0;
     return FALSE;
 }
 
