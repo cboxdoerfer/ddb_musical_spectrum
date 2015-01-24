@@ -290,15 +290,18 @@ draw_static_content (unsigned char *data, int stride, int bands, int width, int 
         }
     }
 
-    //// draw octave grid
-    //if (CONFIG_ENABLE_VGRID) {
-    //    int num_lines = MIN (width/barw, bands);
-    //    int spectrum_width = MIN (barw * bands, width);
-    //    int octave_width = ftoi ((float)spectrum_width / 11);
-    //    for (int i = left; i < spectrum_width - 1 && i < width - 1; i += octave_width) {
-    //        _draw_vline (data, stride, i, 0, height-1, CONFIG_COLOR_HGRID32);
-    //    }
-    //}
+    // draw octave grid
+    if (CONFIG_ENABLE_OCTAVE_GRID) {
+        int num_lines = MIN (width/barw, bands);
+        int spectrum_width = MIN (barw * bands, width);
+        float octave_width = CLAMP (((float)spectrum_width / 11), 1, spectrum_width);
+        int x = 0;
+        for (float i = left; i < spectrum_width - 1 && i < width - 1; i += octave_width) {
+            x = ftoi (i) + (ftoi (i) % barw);
+            _draw_vline (data, stride, x, 0, height-1, CONFIG_COLOR_OCTAVE_GRID32);
+        }
+    }
+
     const int hgrid_num = CONFIG_DB_RANGE/10;
     // draw horizontal grid
     if (CONFIG_ENABLE_HGRID && height > 2*hgrid_num && width > 1) {

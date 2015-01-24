@@ -30,6 +30,7 @@
 #define     CONFSTR_MS_DB_RANGE               "musical_spectrum.db_range"
 #define     CONFSTR_MS_ENABLE_HGRID           "musical_spectrum.enable_hgrid"
 #define     CONFSTR_MS_ENABLE_VGRID           "musical_spectrum.enable_vgrid"
+#define     CONFSTR_MS_ENABLE_OCTAVE_GRID     "musical_spectrum.enable_octave_grid"
 #define     CONFSTR_MS_ENABLE_BAR_MODE        "musical_spectrum.enable_bar_mode"
 #define     CONFSTR_MS_NUM_BARS               "musical_spectrum.num_bars"
 #define     CONFSTR_MS_BAR_W                  "musical_spectrum.bar_w"
@@ -44,6 +45,7 @@
 #define     CONFSTR_MS_COLOR_BG               "musical_spectrum.color.background"
 #define     CONFSTR_MS_COLOR_VGRID            "musical_spectrum.color.vgrid"
 #define     CONFSTR_MS_COLOR_HGRID            "musical_spectrum.color.hgrid"
+#define     CONFSTR_MS_COLOR_OCTAVE_GRID      "musical_spectrum.color.octave_grid"
 #define     CONFSTR_MS_NUM_COLORS             "musical_spectrum.num_colors"
 #define     CONFSTR_MS_COLOR_GRADIENT         "musical_spectrum.color.gradient_"
 
@@ -54,6 +56,7 @@ extern int CONFIG_REFRESH_INTERVAL;
 extern int CONFIG_DB_RANGE;
 extern int CONFIG_ENABLE_HGRID;
 extern int CONFIG_ENABLE_VGRID;
+extern int CONFIG_ENABLE_OCTAVE_GRID;
 extern int CONFIG_ALIGNMENT;
 extern int CONFIG_ENABLE_BAR_MODE;
 extern int CONFIG_BAR_FALLOFF;
@@ -70,10 +73,12 @@ extern int CONFIG_GAPS;
 extern GdkColor CONFIG_COLOR_BG;
 extern GdkColor CONFIG_COLOR_VGRID;
 extern GdkColor CONFIG_COLOR_HGRID;
+extern GdkColor CONFIG_COLOR_OCTAVE_GRID;
 extern GdkColor CONFIG_GRADIENT_COLORS[];
 extern uint32_t CONFIG_COLOR_BG32;
 extern uint32_t CONFIG_COLOR_VGRID32;
 extern uint32_t CONFIG_COLOR_HGRID32;
+extern uint32_t CONFIG_COLOR_OCTAVE_GRID32;
 
 extern int FFT_INDEX;
 

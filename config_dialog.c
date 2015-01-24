@@ -159,6 +159,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     GtkWidget *valign_01;
     GtkWidget *valign_02;
     GtkWidget *valign_03;
+    GtkWidget *valign_04;
     GtkWidget *color_label;
     GtkWidget *color_frame;
     GtkWidget *processing_label;
@@ -171,6 +172,8 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     GtkWidget *color_vgrid;
     GtkWidget *color_hgrid_label;
     GtkWidget *color_hgrid;
+    GtkWidget *color_ogrid_label;
+    GtkWidget *color_ogrid;
     GtkWidget *hseparator_01;
     GtkWidget *num_colors_label;
     GtkWidget *num_colors;
@@ -179,6 +182,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     GtkWidget *db_range;
     GtkWidget *hgrid;
     GtkWidget *vgrid;
+    GtkWidget *ogrid;
     GtkWidget *bar_mode;
     GtkWidget *fft_label;
     GtkWidget *fft;
@@ -276,6 +280,20 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_color_button_set_use_alpha ((GtkColorButton *)color_hgrid, TRUE);
     gtk_widget_show (color_hgrid);
     gtk_box_pack_start (GTK_BOX (vbox04), color_hgrid, TRUE, TRUE, 0);
+
+    valign_04 = gtk_alignment_new(0, 1, 0, 1);
+    gtk_container_add(GTK_CONTAINER(vbox03), valign_04);
+    gtk_widget_show (valign_04);
+
+    color_ogrid_label = gtk_label_new (NULL);
+    gtk_label_set_markup (GTK_LABEL (color_ogrid_label),"Octave grid:");
+    gtk_widget_show (color_ogrid_label);
+    gtk_container_add(GTK_CONTAINER(valign_04), color_ogrid_label);
+
+    color_ogrid = gtk_color_button_new ();
+    gtk_color_button_set_use_alpha ((GtkColorButton *)color_ogrid, TRUE);
+    gtk_widget_show (color_ogrid);
+    gtk_box_pack_start (GTK_BOX (vbox04), color_ogrid, TRUE, TRUE, 0);
 
     hseparator_01 = gtk_hseparator_new ();
     gtk_widget_show (hseparator_01);
@@ -454,6 +472,10 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_widget_show (vgrid);
     gtk_box_pack_start (GTK_BOX (vbox07), vgrid, FALSE, FALSE, 0);
 
+    ogrid = gtk_check_button_new_with_label ("Octave grid");
+    gtk_widget_show (ogrid);
+    gtk_box_pack_start (GTK_BOX (vbox07), ogrid, FALSE, FALSE, 0);
+
     bar_mode = gtk_check_button_new_with_label ("Bar mode");
     gtk_widget_show (bar_mode);
     gtk_box_pack_start (GTK_BOX (vbox07), bar_mode, FALSE, FALSE, 0);
@@ -479,6 +501,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
 
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (hgrid), CONFIG_ENABLE_HGRID);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (vgrid), CONFIG_ENABLE_VGRID);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ogrid), CONFIG_ENABLE_OCTAVE_GRID);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (bar_mode), CONFIG_ENABLE_BAR_MODE);
     gtk_combo_box_set_active (GTK_COMBO_BOX (window), CONFIG_WINDOW);
     gtk_combo_box_set_active (GTK_COMBO_BOX (fft), FFT_INDEX);
@@ -489,6 +512,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_color_button_set_color (GTK_COLOR_BUTTON (color_bg), &CONFIG_COLOR_BG);
     gtk_color_button_set_color (GTK_COLOR_BUTTON (color_vgrid), &CONFIG_COLOR_VGRID);
     gtk_color_button_set_color (GTK_COLOR_BUTTON (color_hgrid), &CONFIG_COLOR_HGRID);
+    gtk_color_button_set_color (GTK_COLOR_BUTTON (color_ogrid), &CONFIG_COLOR_OCTAVE_GRID);
 
     char text[100];
     for (;;) {
@@ -497,11 +521,13 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
             gtk_color_button_get_color (GTK_COLOR_BUTTON (color_bg), &CONFIG_COLOR_BG);
             gtk_color_button_get_color (GTK_COLOR_BUTTON (color_vgrid), &CONFIG_COLOR_VGRID);
             gtk_color_button_get_color (GTK_COLOR_BUTTON (color_hgrid), &CONFIG_COLOR_HGRID);
+            gtk_color_button_get_color (GTK_COLOR_BUTTON (color_ogrid), &CONFIG_COLOR_OCTAVE_GRID);
             for (int i = 0; i < CONFIG_NUM_COLORS; i++) {
                 gtk_color_button_get_color (GTK_COLOR_BUTTON (color_gradients[i]), &CONFIG_GRADIENT_COLORS[i]);
             }
             CONFIG_ENABLE_HGRID = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (hgrid));
             CONFIG_ENABLE_VGRID = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (vgrid));
+            CONFIG_ENABLE_OCTAVE_GRID = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (ogrid));
             CONFIG_ENABLE_BAR_MODE = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (bar_mode));
             CONFIG_DB_RANGE = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (db_range));
             CONFIG_NUM_COLORS = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (num_colors));
