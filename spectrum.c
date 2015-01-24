@@ -297,7 +297,7 @@ draw_static_content (unsigned char *data, int stride, int bands, int width, int 
         float octave_width = CLAMP (((float)spectrum_width / 11), 1, spectrum_width);
         int x = 0;
         for (float i = left; i < spectrum_width - 1 && i < width - 1; i += octave_width) {
-            x = ftoi (i) + (ftoi (i) % barw);
+            x = ftoi (i) + (CONFIG_GAPS ? (ftoi (i) % barw) : 0);
             _draw_vline (data, stride, x, 0, height-1, CONFIG_COLOR_OCTAVE_GRID32);
         }
     }
