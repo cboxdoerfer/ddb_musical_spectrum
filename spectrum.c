@@ -473,7 +473,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
             }
         }
         y = a.height - w->peaks[i] * base_s;
-        if (y < a.height-1 && y > 0) {
+        if (y > 0 && y < a.height-1) {
             if (CONFIG_GRADIENT_ORIENTATION == 0) {
                 _draw_bar_gradient_v (w->colors, data, stride, x, y, bw, 1, a.height);
             }
