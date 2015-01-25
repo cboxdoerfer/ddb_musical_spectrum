@@ -32,6 +32,7 @@
 #define     CONFSTR_MS_ENABLE_VGRID           "musical_spectrum.enable_vgrid"
 #define     CONFSTR_MS_ENABLE_OCTAVE_GRID     "musical_spectrum.enable_octave_grid"
 #define     CONFSTR_MS_ENABLE_BAR_MODE        "musical_spectrum.enable_bar_mode"
+#define     CONFSTR_MS_DISPLAY_OCTAVES        "musical_spectrum.display_octaves_on_hover"
 #define     CONFSTR_MS_NUM_BARS               "musical_spectrum.num_bars"
 #define     CONFSTR_MS_BAR_W                  "musical_spectrum.bar_w"
 #define     CONFSTR_MS_GAPS                   "musical_spectrum.gaps"
@@ -59,6 +60,7 @@ extern int CONFIG_ENABLE_VGRID;
 extern int CONFIG_ENABLE_OCTAVE_GRID;
 extern int CONFIG_ALIGNMENT;
 extern int CONFIG_ENABLE_BAR_MODE;
+extern int CONFIG_DISPLAY_OCTAVES;
 extern int CONFIG_BAR_FALLOFF;
 extern int CONFIG_BAR_DELAY;
 extern int CONFIG_PEAK_FALLOFF;

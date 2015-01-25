@@ -42,6 +42,7 @@ int CONFIG_ENABLE_VGRID = 1;
 int CONFIG_ENABLE_OCTAVE_GRID = 0;
 int CONFIG_ALIGNMENT = 0;
 int CONFIG_ENABLE_BAR_MODE = 0;
+int CONFIG_DISPLAY_OCTAVES = 0;
 int CONFIG_BAR_FALLOFF = -1;
 int CONFIG_BAR_DELAY = 0;
 int CONFIG_PEAK_FALLOFF = 90;
@@ -83,6 +84,7 @@ save_config (void)
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_OCTAVE_GRID,          CONFIG_ENABLE_OCTAVE_GRID);
     deadbeef->conf_set_int (CONFSTR_MS_ALIGNMENT,                   CONFIG_ALIGNMENT);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_BAR_MODE,             CONFIG_ENABLE_BAR_MODE);
+    deadbeef->conf_set_int (CONFSTR_MS_DISPLAY_OCTAVES,             CONFIG_DISPLAY_OCTAVES);
     deadbeef->conf_set_int (CONFSTR_MS_NUM_BARS,                    CONFIG_NUM_BARS);
     deadbeef->conf_set_int (CONFSTR_MS_BAR_W,                       CONFIG_BAR_W);
     deadbeef->conf_set_int (CONFSTR_MS_GAPS,                        CONFIG_GAPS);
@@ -124,6 +126,7 @@ load_config (void)
     CONFIG_ENABLE_OCTAVE_GRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_OCTAVE_GRID,       0);
     CONFIG_ALIGNMENT = deadbeef->conf_get_int (CONFSTR_MS_ALIGNMENT,                      LEFT);
     CONFIG_ENABLE_BAR_MODE = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_BAR_MODE,             0);
+    CONFIG_DISPLAY_OCTAVES = deadbeef->conf_get_int (CONFSTR_MS_DISPLAY_OCTAVES,             0);
     CONFIG_REFRESH_INTERVAL = deadbeef->conf_get_int (CONFSTR_MS_REFRESH_INTERVAL,          25);
     CONFIG_NUM_BARS = deadbeef->conf_get_int (CONFSTR_MS_NUM_BARS,                         132);
     CONFIG_BAR_W = deadbeef->conf_get_int (CONFSTR_MS_BAR_W,                                 0);

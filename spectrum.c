@@ -43,6 +43,13 @@
 DB_functions_t *deadbeef = NULL;
 ddb_gtkui_t *gtkui_plugin = NULL;
 
+struct motion_context {
+    uint8_t entered;
+    double x;
+};
+
+static struct motion_context motion_ctx;
+
 static char *notes[] = {"C0","C#0","D0","D#0","E0","F0","F#0","G0","G#0","A0","A#0","B0",
                  "C1","C#1","D1","D#1","E1","F1","F#1","G1","G#1","A1","A#1","B1",
                  "C2","C#2","D2","D#2","E2","F2","F#2","G2","G#2","A2","A#2","B2",
@@ -292,7 +299,6 @@ draw_static_content (unsigned char *data, int stride, int bands, int width, int 
 
     // draw octave grid
     if (CONFIG_ENABLE_OCTAVE_GRID) {
-        int num_lines = MIN (width/barw, bands);
         int spectrum_width = MIN (barw * bands, width);
         float octave_width = CLAMP (((float)spectrum_width / 11), 1, spectrum_width);
         int x = 0;
@@ -321,8 +327,8 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     GtkAllocation a;
     gtk_widget_get_allocation (w->drawarea, &a);
 
-    static int last_bar_w = 0;
-    if (a.width != last_bar_w) {
+    static int last_bar_w = -1;
+    if (a.width != last_bar_w || need_redraw) {
         create_frequency_table(w);
     }
     last_bar_w = a.width;
@@ -333,7 +339,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
 
     const int output_state = deadbeef->get_output ()->state ();
 
-    if (output_state == OUTPUT_STATE_PLAYING) {
+    if (1 || output_state == OUTPUT_STATE_PLAYING) {
         do_fft (w);
 
         const float bar_falloff = CONFIG_BAR_FALLOFF/1000.0 * CONFIG_REFRESH_INTERVAL;
@@ -424,11 +430,13 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
 
     stride = cairo_image_surface_get_stride (w->surf);
     if (need_redraw) {
+        // widget size or config changed, background needs to be redrawn
         draw_static_content (data, stride, bands, a.width, a.height);
         memcpy (w->surf_data, data, stride * a.height);
         need_redraw = 0;
     }
     else {
+        // just copy pre-rendered background to surface
         memcpy (data, w->surf_data, stride * a.height);
     }
 
@@ -440,9 +448,14 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
 
     const int left = get_align_pos (a.width, bands, barw);
 
+    int band_offset = (((int)motion_ctx.x % ((barw * bands) / 11)))/barw;
     for (gint i = 0; i < bands; i++)
     {
         int x = left + barw * i;
+        int octave_enabled = 0;
+        if (CONFIG_DISPLAY_OCTAVES && motion_ctx.entered) {
+            octave_enabled = (motion_ctx.entered && (i % (bands / 11)) == band_offset) ? 1 : 0;
+        }
         int y = a.height - ftoi (w->bars[i] * base_s);
         int bw;
 
@@ -457,7 +470,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         if (x + bw >= a.width) {
             bw = a.width-x-1;
         }
-        if (y > 0) {
+        if ((y >= 0 && y < a.height - 1) || octave_enabled) {
             if (CONFIG_GRADIENT_ORIENTATION == 0) {
                 if (CONFIG_ENABLE_BAR_MODE == 0) {
                     _draw_bar_gradient_v (w->colors, data, stride, x, y, bw, a.height-y, a.height);
@@ -474,6 +487,10 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
                     _draw_bar_gradient_bar_mode_h (w->colors, data, stride, x, y, bw, a.height-y, a.width);
                 }
             }
+            if (octave_enabled) {
+                _draw_bar (data, stride, x, y, bw, a.height - y, 0xFF0000);
+                _draw_bar (data, stride, x, 0, bw, y, 0x888888);
+            }
         }
         y = a.height - w->peaks[i] * base_s;
         if (y > 0 && y < a.height-1) {
@@ -482,6 +499,9 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
             }
             else {
                 _draw_bar_gradient_h (w->colors, data, stride, x, y, bw, 1, a.width);
+            }
+            if (octave_enabled) {
+                _draw_bar (data, stride, x, y, bw, 1, 0xFF0000);
             }
         }
     }
@@ -540,11 +560,32 @@ spectrum_button_release_event (GtkWidget *widget, GdkEventButton *event, gpointe
 }
 
 static gboolean
-spectrum_motion_notify_event (GtkWidget *widget, GdkEventButton *event, gpointer user_data)
+spectrum_enter_notify_event (GtkWidget *widget, GdkEventMotion *event, gpointer user_data)
+{
+    motion_ctx.entered = 1;
+    return FALSE;
+}
+
+static gboolean
+spectrum_leave_notify_event (GtkWidget *widget, GdkEventMotion *event, gpointer user_data)
+{
+    w_spectrum_t *w = user_data;
+    motion_ctx.entered = 0;
+    gtk_widget_queue_draw (w->drawarea);
+    return FALSE;
+}
+
+static gboolean
+spectrum_motion_notify_event (GtkWidget *widget, GdkEventMotion *event, gpointer user_data)
 {
     w_spectrum_t *w = user_data;
     GtkAllocation a;
     gtk_widget_get_allocation (widget, &a);
+    if (CONFIG_DISPLAY_OCTAVES) {
+        gtk_widget_queue_draw (w->drawarea);
+    }
+
+    motion_ctx.x = event->x - 1;
 
     const int num_bars = get_num_bars ();
     int barw;
@@ -644,9 +685,10 @@ spectrum_init (w_spectrum_t *w) {
     create_frequency_table (s);
     create_gradient_table (s->colors, CONFIG_GRADIENT_COLORS, CONFIG_NUM_COLORS);
 
-    spectrum_set_refresh_interval (w, CONFIG_REFRESH_INTERVAL);
+    //spectrum_set_refresh_interval (w, CONFIG_REFRESH_INTERVAL);
     deadbeef->vis_waveform_listen (w, spectrum_wavedata_listener);
     deadbeef->mutex_unlock (s->mutex);
+    need_redraw = 1;
 }
 
 static ddb_gtkui_widget_t *
@@ -669,7 +711,7 @@ w_musical_spectrum_create (void) {
     gtk_widget_show (w->popup_item);
 
     gtk_widget_add_events (w->drawarea,
-            GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK | GDK_LEAVE_NOTIFY_MASK );
+            GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK | GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK );
 
 #if !GTK_CHECK_VERSION(3,0,0)
     g_signal_connect_after ((gpointer) w->drawarea, "expose_event", G_CALLBACK (spectrum_expose_event), w);
@@ -679,6 +721,8 @@ w_musical_spectrum_create (void) {
     g_signal_connect_after ((gpointer) w->drawarea, "button_press_event", G_CALLBACK (spectrum_button_press_event), w);
     g_signal_connect_after ((gpointer) w->drawarea, "button_release_event", G_CALLBACK (spectrum_button_release_event), w);
     g_signal_connect_after ((gpointer) w->drawarea, "motion_notify_event", G_CALLBACK (spectrum_motion_notify_event), w);
+    g_signal_connect_after ((gpointer) w->drawarea, "enter_notify_event", G_CALLBACK (spectrum_enter_notify_event), w);
+    g_signal_connect_after ((gpointer) w->drawarea, "leave_notify_event", G_CALLBACK (spectrum_leave_notify_event), w);
     g_signal_connect_after ((gpointer) w->popup_item, "activate", G_CALLBACK (on_button_config), w);
     gtkui_plugin->w_override_signals (w->base.widget, w);
 

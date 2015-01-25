@@ -36,12 +36,12 @@
 #include "spectrum.h"
 #include "utils.h"
 
-int CALCULATED_NUM_BARS = 1;
+int CALCULATED_NUM_BARS = 136;
 
 int
 get_num_bars ()
 {
-    int bar_num = 1;
+    int bar_num = CALCULATED_NUM_BARS;
     if (CONFIG_BAR_W > 0) {
         bar_num = CALCULATED_NUM_BARS;
     }
@@ -144,7 +144,7 @@ update_num_bars (gpointer user_data)
     GtkAllocation a;
     gtk_widget_get_allocation (w->drawarea, &a);
 
-    CALCULATED_NUM_BARS = 1;
+    CALCULATED_NUM_BARS = 136;
     if (CONFIG_BAR_W > 0) {
         int added_bar_w = CONFIG_BAR_W;
         if (CONFIG_GAPS)

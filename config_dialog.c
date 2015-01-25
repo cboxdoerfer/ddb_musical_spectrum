@@ -184,6 +184,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     GtkWidget *vgrid;
     GtkWidget *ogrid;
     GtkWidget *bar_mode;
+    GtkWidget *display_octaves;
     GtkWidget *fft_label;
     GtkWidget *fft;
     GtkWidget *hbox04;
@@ -480,6 +481,10 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_widget_show (bar_mode);
     gtk_box_pack_start (GTK_BOX (vbox07), bar_mode, FALSE, FALSE, 0);
 
+    display_octaves = gtk_check_button_new_with_label ("Highlight octaves on hover");
+    gtk_widget_show (display_octaves);
+    gtk_box_pack_start (GTK_BOX (vbox07), display_octaves, FALSE, FALSE, 0);
+
     dialog_action_area13 = gtk_dialog_get_action_area (GTK_DIALOG (spectrum_properties));
     gtk_widget_show (dialog_action_area13);
     gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area13), GTK_BUTTONBOX_END);
@@ -503,6 +508,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (vgrid), CONFIG_ENABLE_VGRID);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ogrid), CONFIG_ENABLE_OCTAVE_GRID);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (bar_mode), CONFIG_ENABLE_BAR_MODE);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (display_octaves), CONFIG_DISPLAY_OCTAVES);
     gtk_combo_box_set_active (GTK_COMBO_BOX (window), CONFIG_WINDOW);
     gtk_combo_box_set_active (GTK_COMBO_BOX (fft), FFT_INDEX);
     gtk_combo_box_set_active (GTK_COMBO_BOX (gradient_orientation), CONFIG_GRADIENT_ORIENTATION);
@@ -529,6 +535,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
             CONFIG_ENABLE_VGRID = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (vgrid));
             CONFIG_ENABLE_OCTAVE_GRID = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (ogrid));
             CONFIG_ENABLE_BAR_MODE = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (bar_mode));
+            CONFIG_DISPLAY_OCTAVES = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (display_octaves));
             CONFIG_DB_RANGE = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (db_range));
             CONFIG_NUM_COLORS = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (num_colors));
             for (int i = 0; i < MAX_NUM_COLORS && color_gradients[i]; i++) {
