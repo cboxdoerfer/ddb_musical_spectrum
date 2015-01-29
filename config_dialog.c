@@ -211,7 +211,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     hbox01 = gtk_hbox_new (FALSE, 8);
     gtk_widget_show (hbox01);
     gtk_box_pack_start (GTK_BOX (config_dialog), hbox01, FALSE, FALSE, 0);
-    gtk_container_set_border_width (GTK_CONTAINER (hbox01), 12);
+    gtk_container_set_border_width (GTK_CONTAINER (hbox01), 8);
 
     color_label = gtk_label_new (NULL);
     gtk_label_set_markup (GTK_LABEL (color_label),"<b>Colors</b>");
@@ -221,7 +221,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_frame_set_label_widget ((GtkFrame *)color_frame, color_label);
     gtk_frame_set_shadow_type ((GtkFrame *)color_frame, GTK_SHADOW_IN);
     gtk_widget_show (color_frame);
-    gtk_box_pack_start (GTK_BOX (hbox01), color_frame, TRUE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (hbox01), color_frame, TRUE, TRUE, 0);
 
     vbox01 = gtk_vbox_new (FALSE, 8);
     gtk_widget_show (vbox01);
@@ -368,7 +368,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_frame_set_label_widget ((GtkFrame *)processing_frame, processing_label);
     gtk_frame_set_shadow_type ((GtkFrame *)processing_frame, GTK_SHADOW_IN);
     gtk_widget_show (processing_frame);
-    gtk_box_pack_start (GTK_BOX (vbox02), processing_frame, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox02), processing_frame, TRUE, TRUE, 0);
 
     vbox06 = gtk_vbox_new (FALSE, 8);
     gtk_widget_show (vbox06);
@@ -427,7 +427,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_frame_set_label_widget ((GtkFrame *)style_frame, style_label);
     gtk_frame_set_shadow_type ((GtkFrame *)style_frame, GTK_SHADOW_IN);
     gtk_widget_show (style_frame);
-    gtk_box_pack_start (GTK_BOX (vbox02), style_frame, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox02), style_frame, TRUE, TRUE, 0);
 
     vbox07 = gtk_vbox_new (FALSE, 8);
     gtk_widget_show (vbox07);
