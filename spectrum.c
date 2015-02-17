@@ -50,6 +50,9 @@ struct motion_context {
 
 static struct motion_context motion_ctx;
 
+static enum PLAYBACK_STATUS { STOPPED = 0, PLAYING = 1, PAUSED = 2 };
+static int playback_status = STOPPED;
+
 static char *notes[] = {"C0","C#0","D0","D#0","E0","F0","F#0","G0","G#0","A0","A#0","B0",
                  "C1","C#1","D1","D#1","E1","F1","F#1","G1","G#1","A1","A#1","B1",
                  "C2","C#2","D2","D#2","E2","F2","F#2","G2","G#2","A2","A#2","B2",
@@ -109,6 +112,20 @@ do_fft (w_spectrum_t *w)
 
 static int need_redraw = 0;
 
+static gboolean
+spectrum_draw_cb (void *data) {
+    w_spectrum_t *s = data;
+    gtk_widget_queue_draw (s->drawarea);
+    return TRUE;
+}
+
+static gboolean
+spectrum_redraw_cb (void *data) {
+    w_spectrum_t *s = data;
+    gtk_widget_queue_draw (s->drawarea);
+    return FALSE;
+}
+
 static int
 on_config_changed (gpointer user_data, uintptr_t ctx)
 {
@@ -126,7 +143,7 @@ on_config_changed (gpointer user_data, uintptr_t ctx)
     w->p_r2c = fftw_plan_dft_r2c_1d (CLAMP (CONFIG_FFT_SIZE, 512, MAX_FFT_SIZE), w->fft_in, w->fft_out, FFTW_ESTIMATE);
     memset (w->spectrum_data, 0, sizeof (double) * MAX_FFT_SIZE);
     deadbeef->mutex_unlock (w->mutex);
-    gtk_widget_queue_draw (w->drawarea);
+    g_idle_add (spectrum_redraw_cb, w);
     return 0;
 }
 
@@ -173,9 +190,25 @@ w_spectrum_destroy (ddb_gtkui_widget_t *w) {
 }
 
 static gboolean
-spectrum_draw_cb (void *data) {
-    w_spectrum_t *s = data;
-    gtk_widget_queue_draw (s->drawarea);
+spectrum_remove_refresh_interval (gpointer user_data)
+{
+    w_spectrum_t *w = user_data;
+    if (w->drawtimer) {
+        g_source_remove (w->drawtimer);
+        w->drawtimer = 0;
+    }
+    return TRUE;
+}
+
+static gboolean
+spectrum_set_refresh_interval (gpointer user_data, int interval)
+{
+    w_spectrum_t *w = user_data;
+    if (!w || interval <= 0) {
+        return FALSE;
+    }
+    spectrum_remove_refresh_interval (w);
+    w->drawtimer = g_timeout_add (interval, spectrum_draw_cb, w);
     return TRUE;
 }
 
@@ -337,64 +370,68 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     const int width = a.width;
     const int height = a.height;
 
-    const int output_state = deadbeef->get_output ()->state ();
+    if (playback_status != STOPPED) {
+        if (playback_status == PAUSED) {
+            spectrum_remove_refresh_interval (w);
+        }
+        else {
+            do_fft (w);
 
-    if (1 || output_state == OUTPUT_STATE_PLAYING) {
-        do_fft (w);
+            const float bar_falloff = CONFIG_BAR_FALLOFF/1000.0 * CONFIG_REFRESH_INTERVAL;
+            const float peak_falloff = CONFIG_PEAK_FALLOFF/1000.0 * CONFIG_REFRESH_INTERVAL;
+            const int bar_delay = ftoi (CONFIG_BAR_DELAY/CONFIG_REFRESH_INTERVAL);
+            const int peak_delay = ftoi (CONFIG_PEAK_DELAY/CONFIG_REFRESH_INTERVAL);
 
-        const float bar_falloff = CONFIG_BAR_FALLOFF/1000.0 * CONFIG_REFRESH_INTERVAL;
-        const float peak_falloff = CONFIG_PEAK_FALLOFF/1000.0 * CONFIG_REFRESH_INTERVAL;
-        const int bar_delay = ftoi (CONFIG_BAR_DELAY/CONFIG_REFRESH_INTERVAL);
-        const int peak_delay = ftoi (CONFIG_PEAK_DELAY/CONFIG_REFRESH_INTERVAL);
+            for (int i = 0; i < bands; i++) {
+                // interpolate
+                float x = spectrum_interpolate (w, bands, i);
 
-        for (int i = 0; i < bands; i++) {
-            // interpolate
-            float x = spectrum_interpolate (w, bands, i);
+                // TODO: get rid of hardcoding
+                x += CONFIG_DB_RANGE - 63;
+                x = CLAMP (x, 0, CONFIG_DB_RANGE);
+                w->bars[i] = CLAMP (w->bars[i], 0, CONFIG_DB_RANGE);
+                w->peaks[i] = CLAMP (w->peaks[i], 0, CONFIG_DB_RANGE);
 
-            // TODO: get rid of hardcoding
-            x += CONFIG_DB_RANGE - 63;
-            x = CLAMP (x, 0, CONFIG_DB_RANGE);
-            w->bars[i] = CLAMP (w->bars[i], 0, CONFIG_DB_RANGE);
-            w->peaks[i] = CLAMP (w->peaks[i], 0, CONFIG_DB_RANGE);
-
-            if (CONFIG_BAR_FALLOFF != -1) {
-                if (w->delay_bars[i] < 0) {
-                    w->bars[i] -= bar_falloff;
+                if (CONFIG_BAR_FALLOFF != -1) {
+                    if (w->delay_bars[i] < 0) {
+                        w->bars[i] -= bar_falloff;
+                    }
+                    else {
+                        w->delay_bars[i]--;
+                    }
                 }
                 else {
-                    w->delay_bars[i]--;
+                    w->bars[i] = 0;
                 }
-            }
-            else {
-                w->bars[i] = 0;
-            }
-            if (CONFIG_PEAK_FALLOFF != -1) {
-                if (w->delay_peaks[i] < 0) {
-                    w->peaks[i] -= peak_falloff;
+                if (CONFIG_PEAK_FALLOFF != -1) {
+                    if (w->delay_peaks[i] < 0) {
+                        w->peaks[i] -= peak_falloff;
+                    }
+                    else {
+                        w->delay_peaks[i]--;
+                    }
                 }
                 else {
-                    w->delay_peaks[i]--;
+                    w->peaks[i] = 0;
                 }
-            }
-            else {
-                w->peaks[i] = 0;
-            }
 
-            if (x > w->bars[i])
-            {
-                w->bars[i] = x;
-                w->delay_bars[i] = bar_delay;
-            }
-            if (x > w->peaks[i]) {
-                w->peaks[i] = x;
-                w->delay_peaks[i] = peak_delay;
-            }
-            if (w->peaks[i] < w->bars[i]) {
-                w->peaks[i] = w->bars[i];
+                if (x > w->bars[i])
+                {
+                    w->bars[i] = x;
+                    w->delay_bars[i] = bar_delay;
+                }
+                if (x > w->peaks[i]) {
+                    w->peaks[i] = x;
+                    w->delay_peaks[i] = peak_delay;
+                }
+                if (w->peaks[i] < w->bars[i]) {
+                    w->peaks[i] = w->bars[i];
+                }
             }
         }
     }
-    else if (output_state == OUTPUT_STATE_STOPPED) {
+    else if (playback_status == STOPPED) {
+        spectrum_remove_refresh_interval (w);
         for (int i = 0; i < bands; i++) {
                 w->bars[i] = 0;
                 w->delay_bars[i] = 0;
@@ -456,7 +493,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         if (CONFIG_DISPLAY_OCTAVES && motion_ctx.entered) {
             octave_enabled = (motion_ctx.entered && (i % (bands / 11)) == band_offset) ? 1 : 0;
         }
-        int y = a.height - ftoi (w->bars[i] * base_s);
+        int y = CLAMP (a.height - ftoi (w->bars[i] * base_s), 0, a.height);
         int bw;
 
         if (CONFIG_GAPS) {
@@ -470,6 +507,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         if (x + bw >= a.width) {
             bw = a.width-x-1;
         }
+
         if ((y >= 0 && y < a.height - 1) || octave_enabled) {
             if (CONFIG_GRADIENT_ORIENTATION == 0) {
                 if (CONFIG_ENABLE_BAR_MODE == 0) {
@@ -511,21 +549,6 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     cairo_paint (cr);
 
     return FALSE;
-}
-
-static gboolean
-spectrum_set_refresh_interval (gpointer user_data, int interval)
-{
-    w_spectrum_t *w = user_data;
-    if (!w || interval <= 0) {
-        return FALSE;
-    }
-    if (w->drawtimer) {
-        g_source_remove (w->drawtimer);
-        w->drawtimer = 0;
-    }
-    w->drawtimer = g_timeout_add (interval, spectrum_draw_cb, w);
-    return TRUE;
 }
 
 static gboolean
@@ -616,6 +639,7 @@ spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32
     int samplerate_temp = w->samplerate;
     switch (id) {
         case DB_EV_SONGSTARTED:
+            playback_status = PLAYING;
             w->samplerate = deadbeef->get_output ()->fmt.samplerate;
             if (w->samplerate == 0) w->samplerate = 44100;
             if (samplerate_temp != w->samplerate) {
@@ -631,30 +655,16 @@ spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32
             break;
         case DB_EV_PAUSED:
             if (deadbeef->get_output ()->state () == OUTPUT_STATE_PLAYING) {
+                playback_status = PLAYING;
                 spectrum_set_refresh_interval (w, CONFIG_REFRESH_INTERVAL);
             }
             else {
-                if (w->drawtimer) {
-                    g_source_remove (w->drawtimer);
-                    w->drawtimer = 0;
-                }
+                playback_status = PAUSED;
             }
             break;
         case DB_EV_STOP:
-            if (w->drawtimer) {
-                g_source_remove (w->drawtimer);
-                w->drawtimer = 0;
-            }
-            deadbeef->mutex_lock (w->mutex);
-            memset (w->spectrum_data, 0, sizeof (double) * MAX_FFT_SIZE);
-            memset (w->samples, 0, sizeof (double) * MAX_FFT_SIZE);
-            for (int i = 0; i < MAX_BARS; i++) {
-                w->bars[i] = 0;
-                w->peaks[i] = 0;
-            }
-            deadbeef->mutex_unlock (w->mutex);
-            gtk_widget_queue_draw (w->drawarea);
-
+            playback_status = STOPPED;
+            g_idle_add (spectrum_redraw_cb, w);
             break;
     }
     return 0;
@@ -685,7 +695,10 @@ spectrum_init (w_spectrum_t *w) {
     create_frequency_table (s);
     create_gradient_table (s->colors, CONFIG_GRADIENT_COLORS, CONFIG_NUM_COLORS);
 
-    //spectrum_set_refresh_interval (w, CONFIG_REFRESH_INTERVAL);
+    if (deadbeef->get_output ()->state () == OUTPUT_STATE_PLAYING) {
+        playback_status = PLAYING;
+        spectrum_set_refresh_interval (w, CONFIG_REFRESH_INTERVAL);
+    }
     deadbeef->vis_waveform_listen (w, spectrum_wavedata_listener);
     deadbeef->mutex_unlock (s->mutex);
     need_redraw = 1;
