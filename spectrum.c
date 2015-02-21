@@ -427,6 +427,214 @@ draw_static_content (unsigned char *data, int stride, int bands, int width, int 
     }
 }
 
+static void
+spectrum_draw_cairo (gpointer user_data, cairo_t *cr, int bands, int width, int height)
+{
+    w_spectrum_t *w = user_data;
+
+    const float base_s = (height / (float)CONFIG_DB_RANGE);
+    const int barw = CLAMP (width / bands, 2, 20) - 1;
+    const int left = get_align_pos (width, bands, barw);
+
+    // draw background
+    cairo_set_source_rgb (cr, CONFIG_COLOR_BG.red/65535.f, CONFIG_COLOR_BG.green/65535.f, CONFIG_COLOR_BG.blue/65535.f);
+    cairo_rectangle (cr, 0, 0, width, height);
+    cairo_fill (cr);
+
+    // create gradient
+    cairo_pattern_t *pat;
+    pat = cairo_pattern_create_linear (0, 0, 0, height);
+    if (CONFIG_NUM_COLORS > 1) {
+        float grad = 1.0/CONFIG_NUM_COLORS;
+        for (int i = 0; i < CONFIG_NUM_COLORS; i++) {
+            cairo_pattern_add_color_stop_rgb (pat, grad, CONFIG_GRADIENT_COLORS[i].red/65535.f, CONFIG_GRADIENT_COLORS[i].green/65535.f, CONFIG_GRADIENT_COLORS[i].blue/65535.f);
+            grad += 1.0/CONFIG_NUM_COLORS;
+        }
+        cairo_set_source (cr, pat);
+    }
+    else {
+        cairo_set_source_rgb (cr, CONFIG_GRADIENT_COLORS[0].red/65535.f, CONFIG_GRADIENT_COLORS[0].green/65535.f, CONFIG_GRADIENT_COLORS[0].blue/65535.f);
+    }
+
+    // draw spectrum
+    cairo_set_line_width (cr, 1);
+    cairo_line_to (cr, 0, height);
+    float py = height - base_s * w->bars[0];
+    cairo_line_to (cr, 0, py);
+    for (gint i = 0; i < bands; i++)
+    {
+        float x = left + barw * i;
+        float y = height - base_s * w->bars[i];
+
+        if (!CONFIG_FILL_SPECTRUM) {
+            cairo_move_to (cr, x - 0.5, py);
+        }
+        cairo_line_to (cr, x + 0.5, y);
+        py = y;
+    }
+    if (CONFIG_FILL_SPECTRUM) {
+        cairo_move_to (cr, left + barw * bands, 0);
+        cairo_line_to (cr, 0, height);
+
+        cairo_close_path (cr);
+        cairo_fill (cr);
+    }
+    else {
+        cairo_stroke (cr);
+    }
+
+    // draw octave grid
+    if (CONFIG_ENABLE_OCTAVE_GRID) {
+        cairo_set_source_rgba (cr, CONFIG_COLOR_VGRID.red/65535.f, CONFIG_COLOR_VGRID.green/65535.f, CONFIG_COLOR_VGRID.blue/65535.f, 0.2);
+        int spectrum_width = MIN (barw * bands, width);
+        float octave_width = CLAMP (((float)spectrum_width / 11), 1, spectrum_width);
+        for (float i = left; i < spectrum_width - 1 && i < width - 1; i += octave_width) {
+            cairo_move_to (cr, i, 0);
+            cairo_line_to (cr, i, height);
+            cairo_stroke (cr);
+        }
+    }
+
+    // draw horizontal grid
+    const int hgrid_num = CONFIG_DB_RANGE/10;
+    if (CONFIG_ENABLE_HGRID && height > 2*hgrid_num && width > 1) {
+        cairo_set_source_rgba (cr, CONFIG_COLOR_HGRID.red/65535.f, CONFIG_COLOR_HGRID.green/65535.f, CONFIG_COLOR_HGRID.blue/65535.f, 0.2);
+        for (int i = 1; i < hgrid_num; i++) {
+            cairo_move_to (cr, 0, i/(float)hgrid_num * height);
+            cairo_line_to (cr, width, i/(float)hgrid_num * height);
+            cairo_stroke (cr);
+        }
+    }
+
+    // draw octave grid
+    if (CONFIG_DISPLAY_OCTAVES && motion_ctx.entered) {
+        int band_offset = (((int)motion_ctx.x % ((barw * bands) / 11)))/barw;
+        cairo_set_source_rgba (cr, 1, 0, 0, 0.5);
+        for (gint i = 0; i < bands; i++) {
+            int octave_enabled  = (motion_ctx.entered && (i % (bands / 11)) == band_offset) ? 1 : 0;
+            float x = left + barw * i;
+            if (octave_enabled) {
+                cairo_move_to (cr, x, 0);
+                cairo_line_to (cr, x, height);
+                cairo_stroke (cr);
+            }
+        }
+    }
+}
+
+static void
+spectrum_draw_self (gpointer user_data, cairo_t *cr, int bands, int width, int height)
+{
+    w_spectrum_t *w = user_data;
+    // start drawing
+    int stride = 0;
+    if (!w->surf || !w->surf_data || cairo_image_surface_get_width (w->surf) != width || cairo_image_surface_get_height (w->surf) != height) {
+        need_redraw = 1;
+        if (w->surf) {
+            cairo_surface_destroy (w->surf);
+            w->surf = NULL;
+        }
+        if (w->surf_data) {
+            free (w->surf_data);
+            w->surf_data = NULL;
+        }
+        w->surf = cairo_image_surface_create (CAIRO_FORMAT_RGB24, width, height);
+        stride = cairo_image_surface_get_stride (w->surf);
+        w->surf_data = malloc (stride * height);
+    }
+    const float base_s = (height / (float)CONFIG_DB_RANGE);
+
+    cairo_surface_flush (w->surf);
+
+    unsigned char *data = cairo_image_surface_get_data (w->surf);
+    if (!data) {
+        return;
+    }
+
+    stride = cairo_image_surface_get_stride (w->surf);
+    if (need_redraw) {
+        // widget size or config changed, background needs to be redrawn
+        draw_static_content (data, stride, bands, width, height);
+        memcpy (w->surf_data, data, stride * height);
+        need_redraw = 0;
+    }
+    else {
+        // just copy pre-rendered background to surface
+        memcpy (data, w->surf_data, stride * height);
+    }
+
+    int barw;
+    if (CONFIG_GAPS || CONFIG_BAR_W > 1)
+        barw = CLAMP (width / bands, 2, 20);
+    else
+        barw = CLAMP (width / bands, 2, 20) - 1;
+
+    const int left = get_align_pos (width, bands, barw);
+
+    int band_offset = (((int)motion_ctx.x % ((barw * bands) / 11)))/barw;
+    for (gint i = 0; i < bands; i++)
+    {
+        int x = left + barw * i;
+        int octave_enabled = 0;
+        if (CONFIG_DISPLAY_OCTAVES && motion_ctx.entered) {
+            octave_enabled = (motion_ctx.entered && (i % (bands / 11)) == band_offset) ? 1 : 0;
+        }
+        int y = CLAMP (height - ftoi (w->bars[i] * base_s), 0, height);
+        int bw;
+
+        if (CONFIG_GAPS) {
+            bw = barw -1;
+            x += 1;
+        }
+        else {
+            bw = barw;
+        }
+
+        if (x + bw >= width) {
+            bw = width-x-1;
+        }
+
+        if ((y >= 0 && y < height - 1) || octave_enabled) {
+            if (CONFIG_GRADIENT_ORIENTATION == 0) {
+                if (CONFIG_ENABLE_BAR_MODE == 0) {
+                    _draw_bar_gradient_v (w->colors, data, stride, x, y, bw, height-y, height);
+                }
+                else {
+                    _draw_bar_gradient_bar_mode_v (w->colors, data, stride, x, y, bw, height-y, height);
+                }
+            }
+            else {
+                if (CONFIG_ENABLE_BAR_MODE == 0) {
+                    _draw_bar_gradient_h (w->colors, data, stride, x, y, bw, height-y, width);
+                }
+                else {
+                    _draw_bar_gradient_bar_mode_h (w->colors, data, stride, x, y, bw, height-y, width);
+                }
+            }
+            if (octave_enabled) {
+                _draw_bar (data, stride, x, y, bw, height - y, 0xFF0000);
+                _draw_bar (data, stride, x, 0, bw, y, 0x888888);
+            }
+        }
+        y = height - w->peaks[i] * base_s;
+        if (y > 0 && y < height-1) {
+            if (CONFIG_GRADIENT_ORIENTATION == 0) {
+                _draw_bar_gradient_v (w->colors, data, stride, x, y, bw, 1, height);
+            }
+            else {
+                _draw_bar_gradient_h (w->colors, data, stride, x, y, bw, 1, width);
+            }
+            if (octave_enabled) {
+                _draw_bar (data, stride, x, y, bw, 1, 0xFF0000);
+            }
+        }
+    }
+
+    cairo_surface_mark_dirty (w->surf);
+    cairo_set_source_surface (cr, w->surf, 0, 0);
+    cairo_paint (cr);
+}
+
 static gboolean
 spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     w_spectrum_t *w = user_data;
@@ -449,113 +657,12 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
 
     spectrum_render (w, bands);
 
-    // start drawing
-    int stride = 0;
-    if (!w->surf || !w->surf_data || cairo_image_surface_get_width (w->surf) != a.width || cairo_image_surface_get_height (w->surf) != a.height) {
-        need_redraw = 1;
-        if (w->surf) {
-            cairo_surface_destroy (w->surf);
-            w->surf = NULL;
-        }
-        if (w->surf_data) {
-            free (w->surf_data);
-            w->surf_data = NULL;
-        }
-        w->surf = cairo_image_surface_create (CAIRO_FORMAT_RGB24, a.width, a.height);
-        stride = cairo_image_surface_get_stride (w->surf);
-        w->surf_data = malloc (stride * a.height);
-    }
-    const float base_s = (height / (float)CONFIG_DB_RANGE);
-
-    cairo_surface_flush (w->surf);
-
-    unsigned char *data = cairo_image_surface_get_data (w->surf);
-    if (!data) {
-        return FALSE;
-    }
-
-    stride = cairo_image_surface_get_stride (w->surf);
-    if (need_redraw) {
-        // widget size or config changed, background needs to be redrawn
-        draw_static_content (data, stride, bands, a.width, a.height);
-        memcpy (w->surf_data, data, stride * a.height);
-        need_redraw = 0;
+    if (!CONFIG_CAIRO_DRAWING) {
+        spectrum_draw_self (w, cr, bands, width, height);
     }
     else {
-        // just copy pre-rendered background to surface
-        memcpy (data, w->surf_data, stride * a.height);
+        spectrum_draw_cairo (w, cr, bands, width, height);
     }
-
-    int barw;
-    if (CONFIG_GAPS || CONFIG_BAR_W > 1)
-        barw = CLAMP (width / bands, 2, 20);
-    else
-        barw = CLAMP (width / bands, 2, 20) - 1;
-
-    const int left = get_align_pos (a.width, bands, barw);
-
-    int band_offset = (((int)motion_ctx.x % ((barw * bands) / 11)))/barw;
-    for (gint i = 0; i < bands; i++)
-    {
-        int x = left + barw * i;
-        int octave_enabled = 0;
-        if (CONFIG_DISPLAY_OCTAVES && motion_ctx.entered) {
-            octave_enabled = (motion_ctx.entered && (i % (bands / 11)) == band_offset) ? 1 : 0;
-        }
-        int y = CLAMP (a.height - ftoi (w->bars[i] * base_s), 0, a.height);
-        int bw;
-
-        if (CONFIG_GAPS) {
-            bw = barw -1;
-            x += 1;
-        }
-        else {
-            bw = barw;
-        }
-
-        if (x + bw >= a.width) {
-            bw = a.width-x-1;
-        }
-
-        if ((y >= 0 && y < a.height - 1) || octave_enabled) {
-            if (CONFIG_GRADIENT_ORIENTATION == 0) {
-                if (CONFIG_ENABLE_BAR_MODE == 0) {
-                    _draw_bar_gradient_v (w->colors, data, stride, x, y, bw, a.height-y, a.height);
-                }
-                else {
-                    _draw_bar_gradient_bar_mode_v (w->colors, data, stride, x, y, bw, a.height-y, a.height);
-                }
-            }
-            else {
-                if (CONFIG_ENABLE_BAR_MODE == 0) {
-                    _draw_bar_gradient_h (w->colors, data, stride, x, y, bw, a.height-y, a.width);
-                }
-                else {
-                    _draw_bar_gradient_bar_mode_h (w->colors, data, stride, x, y, bw, a.height-y, a.width);
-                }
-            }
-            if (octave_enabled) {
-                _draw_bar (data, stride, x, y, bw, a.height - y, 0xFF0000);
-                _draw_bar (data, stride, x, 0, bw, y, 0x888888);
-            }
-        }
-        y = a.height - w->peaks[i] * base_s;
-        if (y > 0 && y < a.height-1) {
-            if (CONFIG_GRADIENT_ORIENTATION == 0) {
-                _draw_bar_gradient_v (w->colors, data, stride, x, y, bw, 1, a.height);
-            }
-            else {
-                _draw_bar_gradient_h (w->colors, data, stride, x, y, bw, 1, a.width);
-            }
-            if (octave_enabled) {
-                _draw_bar (data, stride, x, y, bw, 1, 0xFF0000);
-            }
-        }
-    }
-
-    cairo_surface_mark_dirty (w->surf);
-    cairo_set_source_surface (cr, w->surf, 0, 0);
-    cairo_paint (cr);
 
     return FALSE;
 }
@@ -794,6 +901,8 @@ static const char settings_dlg[] =
     "property \"Number of bars: \"              spinbtn[2,2000,1] "         CONFSTR_MS_NUM_BARS                 " 132 ;\n"
     "property \"Bar width (0 - auto): \"        spinbtn[0,10,1] "           CONFSTR_MS_BAR_W                    " 0 ;\n"
     "property \"Gap between bars  \"            checkbox "                  CONFSTR_MS_GAPS                     " 1 ;\n"
+    "property \"Use cairo drawing (slower)  \"  checkbox "                  CONFSTR_MS_CAIRO_DRAWING            " 0 ;\n"
+    "property \"Fill spectrum  \"               checkbox "                  CONFSTR_MS_FILL_SPECTRUM            " 1 ;\n"
     "property \"Bar falloff (dB/s): \"          spinbtn[-1,1000,1] "        CONFSTR_MS_BAR_FALLOFF              " -1 ;\n"
     "property \"Bar delay (ms): \"              spinbtn[0,10000,100] "      CONFSTR_MS_BAR_DELAY                " 0 ;\n"
     "property \"Peak falloff (dB/s): \"         spinbtn[-1,1000,1] "        CONFSTR_MS_PEAK_FALLOFF             " 90 ;\n"
