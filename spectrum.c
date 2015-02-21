@@ -443,7 +443,13 @@ spectrum_draw_cairo (gpointer user_data, cairo_t *cr, int bands, int width, int 
 
     // create gradient
     cairo_pattern_t *pat;
-    pat = cairo_pattern_create_linear (0, 0, 0, height);
+    if (CONFIG_GRADIENT_ORIENTATION == 0) {
+        pat = cairo_pattern_create_linear (0, 0, 0, height);
+    }
+    else {
+        pat = cairo_pattern_create_linear (0, 0, width, 0);
+    }
+
     if (CONFIG_NUM_COLORS > 1) {
         float step = 1.0/CONFIG_NUM_COLORS;
         float grad_pos = step;
@@ -524,7 +530,7 @@ spectrum_draw_cairo (gpointer user_data, cairo_t *cr, int bands, int width, int 
 }
 
 static void
-spectrum_draw_self (gpointer user_data, cairo_t *cr, int bands, int width, int height)
+spectrum_draw_custom (gpointer user_data, cairo_t *cr, int bands, int width, int height)
 {
     w_spectrum_t *w = user_data;
     // start drawing
@@ -659,7 +665,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     spectrum_render (w, bands);
 
     if (!CONFIG_CAIRO_DRAWING) {
-        spectrum_draw_self (w, cr, bands, width, height);
+        spectrum_draw_custom (w, cr, bands, width, height);
     }
     else {
         spectrum_draw_cairo (w, cr, bands, width, height);
