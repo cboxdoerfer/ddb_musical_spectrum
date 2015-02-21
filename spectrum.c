@@ -485,7 +485,7 @@ spectrum_draw_cairo (gpointer user_data, cairo_t *cr, int bands, int width, int 
 
     // draw octave grid
     if (CONFIG_ENABLE_OCTAVE_GRID) {
-        cairo_set_source_rgba (cr, CONFIG_COLOR_VGRID.red/65535.f, CONFIG_COLOR_VGRID.green/65535.f, CONFIG_COLOR_VGRID.blue/65535.f, 0.2);
+        cairo_set_source_rgba (cr, CONFIG_COLOR_OCTAVE_GRID.red/65535.f, CONFIG_COLOR_OCTAVE_GRID.green/65535.f, CONFIG_COLOR_OCTAVE_GRID.blue/65535.f, 0.2);
         int spectrum_width = MIN (barw * bands, width);
         float octave_width = CLAMP (((float)spectrum_width / 11), 1, spectrum_width);
         for (float i = left; i < spectrum_width - 1 && i < width - 1; i += octave_width) {
