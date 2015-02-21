@@ -451,8 +451,8 @@ spectrum_draw_cairo (gpointer user_data, cairo_t *cr, int bands, int width, int 
     }
 
     if (CONFIG_NUM_COLORS > 1) {
-        float step = 1.0/CONFIG_NUM_COLORS;
-        float grad_pos = step;
+        float step = 1.0/(CONFIG_NUM_COLORS - 1);
+        float grad_pos = 0;
         for (int i = 0; i < CONFIG_NUM_COLORS; i++) {
             cairo_pattern_add_color_stop_rgb (pat, grad_pos, CONFIG_GRADIENT_COLORS[i].red/65535.f, CONFIG_GRADIENT_COLORS[i].green/65535.f, CONFIG_GRADIENT_COLORS[i].blue/65535.f);
             grad_pos += step;
@@ -470,8 +470,8 @@ spectrum_draw_cairo (gpointer user_data, cairo_t *cr, int bands, int width, int 
     cairo_line_to (cr, 0, py);
     for (gint i = 0; i < bands; i++)
     {
-        float x = left + barw * i;
-        float y = height - base_s * w->bars[i];
+        const float x = left + barw * i;
+        const float y = height - base_s * w->bars[i];
 
         if (!CONFIG_FILL_SPECTRUM) {
             cairo_move_to (cr, x - 0.5, py);
