@@ -305,70 +305,9 @@ spectrum_interpolate (gpointer user_data, int bands, int index)
 }
 
 static void
-draw_static_content (unsigned char *data, int stride, int bands, int width, int height)
+spectrum_render (gpointer user_data, int bands)
 {
-    if (!data) {
-        return;
-    }
-    memset (data, 0, height * stride);
-
-    int barw;
-    if (CONFIG_GAPS || CONFIG_BAR_W > 1)
-        barw = CLAMP (width / bands, 2, 20);
-    else
-        barw = CLAMP (width / bands, 2, 20) - 1;
-
-    const int left = get_align_pos (width, bands, barw);
-
-    //draw background
-    _draw_background (data, width, height, CONFIG_COLOR_BG32);
-    // draw vertical grid
-    if (CONFIG_ENABLE_VGRID && CONFIG_GAPS) {
-        int num_lines = MIN (width/barw, bands);
-        for (int i = 0; i < num_lines; i++) {
-            _draw_vline (data, stride, left + barw * i, 0, height-1, CONFIG_COLOR_VGRID32);
-        }
-    }
-
-    // draw octave grid
-    if (CONFIG_ENABLE_OCTAVE_GRID) {
-        int spectrum_width = MIN (barw * bands, width);
-        float octave_width = CLAMP (((float)spectrum_width / 11), 1, spectrum_width);
-        int x = 0;
-        for (float i = left; i < spectrum_width - 1 && i < width - 1; i += octave_width) {
-            x = ftoi (i) + (CONFIG_GAPS ? (ftoi (i) % barw) : 0);
-            _draw_vline (data, stride, x, 0, height-1, CONFIG_COLOR_OCTAVE_GRID32);
-        }
-    }
-
-    const int hgrid_num = CONFIG_DB_RANGE/10;
-    // draw horizontal grid
-    if (CONFIG_ENABLE_HGRID && height > 2*hgrid_num && width > 1) {
-        for (int i = 1; i < hgrid_num; i++) {
-            _draw_hline (data, stride, 0, ftoi (i/(float)hgrid_num * height), width-1, CONFIG_COLOR_HGRID32);
-        }
-    }
-}
-
-static gboolean
-spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     w_spectrum_t *w = user_data;
-    if (!w->samples) {
-        return FALSE;
-    }
-
-    GtkAllocation a;
-    gtk_widget_get_allocation (w->drawarea, &a);
-
-    static int last_bar_w = -1;
-    if (a.width != last_bar_w || need_redraw) {
-        create_frequency_table(w);
-    }
-    last_bar_w = a.width;
-
-    const int bands = get_num_bars ();
-    const int width = a.width;
-    const int height = a.height;
 
     if (playback_status != STOPPED) {
         if (playback_status == PAUSED) {
@@ -439,6 +378,76 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
                 w->delay_peaks[i] = 0;
         }
     }
+
+}
+
+static void
+draw_static_content (unsigned char *data, int stride, int bands, int width, int height)
+{
+    if (!data) {
+        return;
+    }
+    memset (data, 0, height * stride);
+
+    int barw;
+    if (CONFIG_GAPS || CONFIG_BAR_W > 1)
+        barw = CLAMP (width / bands, 2, 20);
+    else
+        barw = CLAMP (width / bands, 2, 20) - 1;
+
+    const int left = get_align_pos (width, bands, barw);
+
+    //draw background
+    _draw_background (data, width, height, CONFIG_COLOR_BG32);
+    // draw vertical grid
+    if (CONFIG_ENABLE_VGRID && CONFIG_GAPS) {
+        int num_lines = MIN (width/barw, bands);
+        for (int i = 0; i < num_lines; i++) {
+            _draw_vline (data, stride, left + barw * i, 0, height-1, CONFIG_COLOR_VGRID32);
+        }
+    }
+
+    // draw octave grid
+    if (CONFIG_ENABLE_OCTAVE_GRID) {
+        int spectrum_width = MIN (barw * bands, width);
+        float octave_width = CLAMP (((float)spectrum_width / 11), 1, spectrum_width);
+        int x = 0;
+        for (float i = left; i < spectrum_width - 1 && i < width - 1; i += octave_width) {
+            x = ftoi (i) + (CONFIG_GAPS ? (ftoi (i) % barw) : 0);
+            _draw_vline (data, stride, x, 0, height-1, CONFIG_COLOR_OCTAVE_GRID32);
+        }
+    }
+
+    const int hgrid_num = CONFIG_DB_RANGE/10;
+    // draw horizontal grid
+    if (CONFIG_ENABLE_HGRID && height > 2*hgrid_num && width > 1) {
+        for (int i = 1; i < hgrid_num; i++) {
+            _draw_hline (data, stride, 0, ftoi (i/(float)hgrid_num * height), width-1, CONFIG_COLOR_HGRID32);
+        }
+    }
+}
+
+static gboolean
+spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
+    w_spectrum_t *w = user_data;
+    if (!w->samples) {
+        return FALSE;
+    }
+
+    GtkAllocation a;
+    gtk_widget_get_allocation (w->drawarea, &a);
+
+    static int last_bar_w = -1;
+    if (a.width != last_bar_w || need_redraw) {
+        create_frequency_table(w);
+    }
+    last_bar_w = a.width;
+
+    const int bands = get_num_bars ();
+    const int width = a.width;
+    const int height = a.height;
+
+    spectrum_render (w, bands);
 
     // start drawing
     int stride = 0;
