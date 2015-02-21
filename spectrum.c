@@ -445,10 +445,11 @@ spectrum_draw_cairo (gpointer user_data, cairo_t *cr, int bands, int width, int 
     cairo_pattern_t *pat;
     pat = cairo_pattern_create_linear (0, 0, 0, height);
     if (CONFIG_NUM_COLORS > 1) {
-        float grad = 1.0/CONFIG_NUM_COLORS;
+        float step = 1.0/CONFIG_NUM_COLORS;
+        float grad_pos = step;
         for (int i = 0; i < CONFIG_NUM_COLORS; i++) {
-            cairo_pattern_add_color_stop_rgb (pat, grad, CONFIG_GRADIENT_COLORS[i].red/65535.f, CONFIG_GRADIENT_COLORS[i].green/65535.f, CONFIG_GRADIENT_COLORS[i].blue/65535.f);
-            grad += 1.0/CONFIG_NUM_COLORS;
+            cairo_pattern_add_color_stop_rgb (pat, grad_pos, CONFIG_GRADIENT_COLORS[i].red/65535.f, CONFIG_GRADIENT_COLORS[i].green/65535.f, CONFIG_GRADIENT_COLORS[i].blue/65535.f);
+            grad_pos += step;
         }
         cairo_set_source (cr, pat);
     }
@@ -506,7 +507,7 @@ spectrum_draw_cairo (gpointer user_data, cairo_t *cr, int bands, int width, int 
         }
     }
 
-    // draw octave grid
+    // draw octave grid on hover
     if (CONFIG_DISPLAY_OCTAVES && motion_ctx.entered) {
         int band_offset = (((int)motion_ctx.x % ((barw * bands) / 11)))/barw;
         cairo_set_source_rgba (cr, 1, 0, 0, 0.5);
