@@ -54,7 +54,7 @@ int CONFIG_WINDOW = 0;
 int CONFIG_NUM_BARS = 132;
 int CONFIG_BAR_W = 0;
 int CONFIG_GAPS = TRUE;
-int CONFIG_CAIRO_DRAWING = FALSE;
+int CONFIG_DRAW_STYLE = FALSE;
 int CONFIG_FILL_SPECTRUM = TRUE;
 GdkColor CONFIG_COLOR_BG;
 GdkColor CONFIG_COLOR_VGRID;
@@ -90,7 +90,7 @@ save_config (void)
     deadbeef->conf_set_int (CONFSTR_MS_NUM_BARS,                    CONFIG_NUM_BARS);
     deadbeef->conf_set_int (CONFSTR_MS_BAR_W,                       CONFIG_BAR_W);
     deadbeef->conf_set_int (CONFSTR_MS_GAPS,                        CONFIG_GAPS);
-    deadbeef->conf_set_int (CONFSTR_MS_CAIRO_DRAWING,               CONFIG_CAIRO_DRAWING);
+    deadbeef->conf_set_int (CONFSTR_MS_DRAW_STYLE,                  CONFIG_DRAW_STYLE);
     deadbeef->conf_set_int (CONFSTR_MS_FILL_SPECTRUM,               CONFIG_FILL_SPECTRUM);
     deadbeef->conf_set_int (CONFSTR_MS_BAR_FALLOFF,                 CONFIG_BAR_FALLOFF);
     deadbeef->conf_set_int (CONFSTR_MS_BAR_DELAY,                   CONFIG_BAR_DELAY);
@@ -135,7 +135,7 @@ load_config (void)
     CONFIG_NUM_BARS = deadbeef->conf_get_int (CONFSTR_MS_NUM_BARS,                         132);
     CONFIG_BAR_W = deadbeef->conf_get_int (CONFSTR_MS_BAR_W,                                 0);
     CONFIG_GAPS = deadbeef->conf_get_int (CONFSTR_MS_GAPS,                                TRUE);
-    CONFIG_CAIRO_DRAWING = deadbeef->conf_get_int (CONFSTR_MS_CAIRO_DRAWING,             FALSE);
+    CONFIG_DRAW_STYLE = deadbeef->conf_get_int (CONFSTR_MS_DRAW_STYLE,                   FALSE);
     CONFIG_FILL_SPECTRUM = deadbeef->conf_get_int (CONFSTR_MS_FILL_SPECTRUM,              TRUE);
     CONFIG_BAR_FALLOFF = deadbeef->conf_get_int (CONFSTR_MS_BAR_FALLOFF,                    -1);
     CONFIG_BAR_DELAY = deadbeef->conf_get_int (CONFSTR_MS_BAR_DELAY,                         0);

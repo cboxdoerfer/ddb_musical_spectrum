@@ -664,7 +664,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
 
     spectrum_render (w, bands);
 
-    if (!CONFIG_CAIRO_DRAWING) {
+    if (!CONFIG_DRAW_STYLE) {
         spectrum_draw_custom (w, cr, bands, width, height);
     }
     else {
@@ -908,7 +908,7 @@ static const char settings_dlg[] =
     "property \"Number of bars: \"              spinbtn[2,2000,1] "         CONFSTR_MS_NUM_BARS                 " 132 ;\n"
     "property \"Bar width (0 - auto): \"        spinbtn[0,10,1] "           CONFSTR_MS_BAR_W                    " 0 ;\n"
     "property \"Gap between bars  \"            checkbox "                  CONFSTR_MS_GAPS                     " 1 ;\n"
-    "property \"Use cairo drawing (slower)  \"  checkbox "                  CONFSTR_MS_CAIRO_DRAWING            " 0 ;\n"
+    "property \"Use cairo drawing (slower)  \"  checkbox "                  CONFSTR_MS_DRAW_STYLE               " 0 ;\n"
     "property \"Fill spectrum  \"               checkbox "                  CONFSTR_MS_FILL_SPECTRUM            " 1 ;\n"
     "property \"Bar falloff (dB/s): \"          spinbtn[-1,1000,1] "        CONFSTR_MS_BAR_FALLOFF              " -1 ;\n"
     "property \"Bar delay (ms): \"              spinbtn[0,10000,100] "      CONFSTR_MS_BAR_DELAY                " 0 ;\n"
