@@ -489,6 +489,7 @@ spectrum_draw_cairo (gpointer user_data, cairo_t *cr, int bands, int width, int 
     else {
         cairo_stroke (cr);
     }
+    cairo_pattern_destroy(pat);
 
     // draw octave grid
     if (CONFIG_ENABLE_OCTAVE_GRID) {
