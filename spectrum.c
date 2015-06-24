@@ -90,9 +90,8 @@ get_align_pos (int width, int bands, int bar_width)
 static void
 do_fft (w_spectrum_t *w)
 {
-    if (!w->samples || w->buffered < CONFIG_FFT_SIZE) {
-        return;
-    }
+    g_return_if_fail (w->samples && w->buffered >= CONFIG_FFT_SIZE);
+
     deadbeef->mutex_lock (w->mutex);
     double real,imag;
 
@@ -204,9 +203,8 @@ static gboolean
 spectrum_set_refresh_interval (gpointer user_data, int interval)
 {
     w_spectrum_t *w = user_data;
-    if (!w || interval <= 0) {
-        return FALSE;
-    }
+    g_return_val_if_fail (w && interval > 0, FALSE);
+
     spectrum_remove_refresh_interval (w);
     w->drawtimer = g_timeout_add (interval, spectrum_draw_cb, w);
     return TRUE;
@@ -215,9 +213,8 @@ spectrum_set_refresh_interval (gpointer user_data, int interval)
 static void
 spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
     w_spectrum_t *w = ctx;
-    if (!w->samples) {
-        return;
-    }
+    g_return_if_fail (w->samples);
+
     deadbeef->mutex_lock (w->mutex);
     const int nsamples = data->nframes;
     const int sz = MIN (CONFIG_FFT_SIZE, nsamples);
@@ -384,9 +381,8 @@ spectrum_render (gpointer user_data, int bands)
 static void
 draw_static_content (unsigned char *data, int stride, int bands, int width, int height)
 {
-    if (!data) {
-        return;
-    }
+    g_return_if_fail (data);
+
     memset (data, 0, height * stride);
 
     int barw;
@@ -555,9 +551,7 @@ spectrum_draw_custom (gpointer user_data, cairo_t *cr, int bands, int width, int
     cairo_surface_flush (w->surf);
 
     unsigned char *data = cairo_image_surface_get_data (w->surf);
-    if (!data) {
-        return;
-    }
+    g_return_if_fail (data);
 
     stride = cairo_image_surface_get_stride (w->surf);
     if (need_redraw) {
@@ -646,9 +640,7 @@ spectrum_draw_custom (gpointer user_data, cairo_t *cr, int bands, int width, int
 static gboolean
 spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     w_spectrum_t *w = user_data;
-    if (!w->samples) {
-        return FALSE;
-    }
+    g_return_if_fail (w->samples);
 
     GtkAllocation a;
     gtk_widget_get_allocation (w->drawarea, &a);
@@ -689,9 +681,6 @@ static gboolean
 spectrum_button_press_event (GtkWidget *widget, GdkEventButton *event, gpointer user_data)
 {
     //w_spectrum_t *w = user_data;
-    if (event->button == 3) {
-      return TRUE;
-    }
     return TRUE;
 }
 
@@ -701,7 +690,6 @@ spectrum_button_release_event (GtkWidget *widget, GdkEventButton *event, gpointe
     w_spectrum_t *w = user_data;
     if (event->button == 3) {
       gtk_menu_popup (GTK_MENU (w->popup), NULL, NULL, NULL, w->drawarea, 0, gtk_get_current_event_time ());
-      return TRUE;
     }
     return TRUE;
 }
@@ -737,10 +725,12 @@ spectrum_motion_notify_event (GtkWidget *widget, GdkEventMotion *event, gpointer
     const int num_bars = get_num_bars ();
     int barw;
 
-    if (CONFIG_GAPS)
+    if (CONFIG_GAPS) {
         barw = CLAMP (a.width / num_bars, 2, 20);
-    else
+    }
+    else {
         barw = CLAMP (a.width / num_bars, 2, 20) - 1;
+    }
 
     const int left = get_align_pos (a.width, num_bars, barw);
 
@@ -874,7 +864,6 @@ musical_spectrum_connect (void)
     if (gtkui_plugin) {
         //trace("using '%s' plugin %d.%d\n", DDB_GTKUI_PLUGIN_ID, gtkui_plugin->gui.plugin.version_major, gtkui_plugin->gui.plugin.version_minor );
         if (gtkui_plugin->gui.plugin.version_major == 2) {
-            //printf ("fb api2\n");
             // 0.6+, use the new widget API
             gtkui_plugin->w_reg_widget ("Musical Spectrum", DDB_WF_SINGLE_INSTANCE, w_musical_spectrum_create, "musical_spectrum", NULL);
             return 0;
