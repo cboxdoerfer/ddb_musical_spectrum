@@ -254,30 +254,30 @@ spectrum_interpolate (gpointer user_data, int bands, int index)
     w_spectrum_t *w = user_data;
     float x = 0.0;
     if (index <= w->low_res_end+1) {
-        const float v1 = 10 * log10 (w->spectrum_data[w->keys[index]]);
+        const float v1 = log10f (w->spectrum_data[w->keys[index]]);
 
         // find index of next value
         int j = 0;
         while (index+j < bands && w->keys[index+j] == w->keys[index]) {
             j++;
         }
-        const float v2 = 10 * log10 (w->spectrum_data[w->keys[index+j]]);
+        const float v2 = log10f (w->spectrum_data[w->keys[index+j]]);
 
         int l = j;
         while (index+l < bands && w->keys[index+l] == w->keys[index+j]) {
             l++;
         }
-        const float v3 = 10 * log10 (w->spectrum_data[w->keys[index+l]]);
+        const float v3 = log10f (w->spectrum_data[w->keys[index+l]]);
 
         int k = 0;
         while ((k+index) >= 0 && w->keys[k+index] == w->keys[index]) {
             j++;
             k--;
         }
-        const float v0 = 10 * log10 (w->spectrum_data[w->keys[CLAMP(index+k,0,bands-1)]]);
+        const float v0 = log10f (w->spectrum_data[w->keys[CLAMP(index+k,0,bands-1)]]);
 
         //x = linear_interpolate (v1,v2,(1.0/(j-1)) * ((-1 * k) - 1));
-        x = lagrange_interpolate (v0,v1,v2,v3,1 + (1.0 / (j - 1)) * ((-1 * k) - 1));
+        x = 10 * lagrange_interpolate (v0,v1,v2,v3,1 + (1.0 / (j - 1)) * ((-1 * k) - 1));
     }
     else {
         int start = 0;
@@ -296,7 +296,7 @@ spectrum_interpolate (gpointer user_data, int bands, int index)
         else {
             end = w->keys[index];
         }
-        x = 10 * log10 (spectrum_get_value (w, start, end));
+        x = 10 * log10f (spectrum_get_value (w, start, end));
     }
     return x;
 }
@@ -397,7 +397,7 @@ draw_static_content (unsigned char *data, int stride, int bands, int width, int 
     _draw_background (data, width, height, CONFIG_COLOR_BG32);
     // draw vertical grid
     if (CONFIG_ENABLE_VGRID && CONFIG_GAPS) {
-        int num_lines = MIN (width/barw, bands);
+        const int num_lines = MIN (width/barw, bands);
         for (int i = 0; i < num_lines; i++) {
             _draw_vline (data, stride, left + barw * i, 0, height-1, CONFIG_COLOR_VGRID32);
         }
@@ -405,8 +405,8 @@ draw_static_content (unsigned char *data, int stride, int bands, int width, int 
 
     // draw octave grid
     if (CONFIG_ENABLE_OCTAVE_GRID) {
-        int spectrum_width = MIN (barw * bands, width);
-        float octave_width = CLAMP (((float)spectrum_width / 11), 1, spectrum_width);
+        const int spectrum_width = MIN (barw * bands, width);
+        const float octave_width = CLAMP (((float)spectrum_width / 11), 1, spectrum_width);
         int x = 0;
         for (float i = left; i < spectrum_width - 1 && i < width - 1; i += octave_width) {
             x = ftoi (i) + (CONFIG_GAPS ? (ftoi (i) % barw) : 0);
