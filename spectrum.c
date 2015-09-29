@@ -640,7 +640,7 @@ spectrum_draw_custom (gpointer user_data, cairo_t *cr, int bands, int width, int
 static gboolean
 spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     w_spectrum_t *w = user_data;
-    g_return_if_fail (w->samples);
+    g_return_val_if_fail (w->samples, FALSE);
 
     GtkAllocation a;
     gtk_widget_get_allocation (w->drawarea, &a);
