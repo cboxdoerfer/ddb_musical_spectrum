@@ -42,7 +42,10 @@ int
 get_num_bars ()
 {
     int bar_num = CALCULATED_NUM_BARS;
-    if (CONFIG_BAR_W > 0) {
+    if (CONFIG_DRAW_STYLE == 1) {
+        bar_num = CALCULATED_NUM_BARS;
+    }
+    else if (CONFIG_BAR_W > 0) {
         bar_num = CALCULATED_NUM_BARS;
     }
     else {
@@ -145,7 +148,10 @@ update_num_bars (gpointer user_data)
     gtk_widget_get_allocation (w->drawarea, &a);
 
     CALCULATED_NUM_BARS = 136;
-    if (CONFIG_BAR_W > 0) {
+    if (CONFIG_DRAW_STYLE == 1) {
+        CALCULATED_NUM_BARS = CLAMP (a.width, 1, MAX_BARS);
+    }
+    else if (CONFIG_BAR_W > 0) {
         int added_bar_w = CONFIG_BAR_W;
         if (CONFIG_GAPS)
             added_bar_w += 1;
@@ -172,6 +178,7 @@ create_frequency_table (gpointer user_data)
             w->low_res_end = i;
     }
 }
+
 float
 linear_interpolate (float y1, float y2, float mu)
 {

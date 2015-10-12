@@ -41,6 +41,8 @@
 
 #define     STR_GRADIENT_VERTICAL "Vertical"
 #define     STR_GRADIENT_HORIZONTAL "Horizontal"
+#define     STR_DRAW_STYLE_SOLID "Solid"
+#define     STR_DRAW_STYLE_BARS "Bars"
 #define     STR_ALIGNMENT_LEFT "Left"
 #define     STR_ALIGNMENT_RIGHT "Right"
 #define     STR_ALIGNMENT_CENTER "Center"
@@ -135,6 +137,40 @@ on_color_changed (GtkWidget *widget, gpointer user_data)
     return TRUE;
 }
 
+static GtkWidget *vbox_draw_style_bars;
+static GtkWidget *vbox_draw_style_solid;
+static GtkWidget *hbox_num_bars;
+static GtkWidget *hbox_bar_width;
+
+void
+on_draw_style_changed (GtkComboBox *widget,
+               gpointer     user_data)
+{
+    int draw_style = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
+    if (draw_style == 0) {
+        gtk_widget_show (vbox_draw_style_bars);
+        gtk_widget_hide (vbox_draw_style_solid);
+    }
+    else {
+        gtk_widget_show (vbox_draw_style_solid);
+        gtk_widget_hide (vbox_draw_style_bars);
+    }
+}
+
+static gboolean
+on_bar_width_changed (GtkSpinButton *spin, gpointer user_data)
+{
+    int value = gtk_spin_button_get_value_as_int (spin);
+    if (value > 0) {
+        gtk_widget_set_sensitive (hbox_num_bars, FALSE);
+    }
+    else {
+        gtk_widget_set_sensitive (hbox_num_bars, TRUE);
+    }
+    return TRUE;
+}
+
+
 void
 on_button_config (GtkMenuItem *menuitem, gpointer user_data)
 {
@@ -149,6 +185,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     GtkWidget *vbox05;
     GtkWidget *vbox06;
     GtkWidget *vbox07;
+    GtkWidget *vbox_draw_styles;
     GtkWidget *hbox01;
     GtkWidget *hbox02;
     GtkWidget *hbox07;
@@ -177,13 +214,14 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     GtkWidget *hseparator_01;
     GtkWidget *num_colors_label;
     GtkWidget *num_colors;
-    GtkWidget *hbox03;
     GtkWidget *db_range_label0;
     GtkWidget *db_range;
     GtkWidget *hgrid;
     GtkWidget *vgrid;
     GtkWidget *ogrid;
     GtkWidget *bar_mode;
+    GtkWidget *gap_between_bars;
+    GtkWidget *fill_spectrum;
     GtkWidget *display_octaves;
     GtkWidget *fft_label;
     GtkWidget *fft;
@@ -191,6 +229,14 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     GtkWidget *window_label;
     GtkWidget *window;
     GtkWidget *hbox05;
+    GtkWidget *hbox_draw_style;
+    GtkWidget *draw_style_frame;
+    GtkWidget *draw_style_label;
+    GtkWidget *draw_style_combo_box;
+    GtkWidget *num_bars_label;
+    GtkWidget *num_bars;
+    GtkWidget *bar_width_label;
+    GtkWidget *bar_width;
     GtkWidget *gradient_orientation_label;
     GtkWidget *gradient_orientation;
     GtkWidget *hbox06;
@@ -434,6 +480,90 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_container_add (GTK_CONTAINER (style_frame), vbox07);
     gtk_container_set_border_width (GTK_CONTAINER (vbox07), 12);
 
+    hbox_draw_style = gtk_hbox_new (FALSE, 8);
+    gtk_widget_show (hbox_draw_style);
+
+    draw_style_label = gtk_label_new (NULL);
+    gtk_label_set_markup (GTK_LABEL (draw_style_label),"<b>Draw style:</b>");
+    gtk_widget_show (draw_style_label);
+    gtk_box_pack_start (GTK_BOX (hbox_draw_style), draw_style_label, FALSE, TRUE, 0);
+
+    draw_style_combo_box = gtk_combo_box_text_new ();
+    gtk_widget_show (draw_style_combo_box);
+    gtk_box_pack_start (GTK_BOX (hbox_draw_style), draw_style_combo_box, TRUE, TRUE, 0);
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(draw_style_combo_box), STR_DRAW_STYLE_BARS);
+    gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT(draw_style_combo_box), STR_DRAW_STYLE_SOLID);
+    g_signal_connect_after ((gpointer) draw_style_combo_box, "changed", G_CALLBACK (on_draw_style_changed), NULL);
+
+    draw_style_frame = gtk_frame_new ("Draw style");
+    gtk_frame_set_label_widget ((GtkFrame *)draw_style_frame, hbox_draw_style);
+    gtk_frame_set_shadow_type ((GtkFrame *)draw_style_frame, GTK_SHADOW_IN);
+    gtk_widget_show (draw_style_frame);
+    gtk_box_pack_start (GTK_BOX (vbox07), draw_style_frame, TRUE, TRUE, 0);
+
+    vbox_draw_styles = gtk_vbox_new (FALSE, 8);
+    gtk_widget_show (vbox_draw_styles);
+    gtk_container_add (GTK_CONTAINER (draw_style_frame), vbox_draw_styles);
+
+    vbox_draw_style_bars = gtk_vbox_new (FALSE, 8);
+    if (!CONFIG_DRAW_STYLE) {
+        gtk_widget_show (vbox_draw_style_bars);
+    }
+    gtk_container_add (GTK_CONTAINER (vbox_draw_styles), vbox_draw_style_bars);
+    gtk_container_set_border_width (GTK_CONTAINER (vbox_draw_style_bars), 12);
+
+    hbox_bar_width = gtk_hbox_new (FALSE, 8);
+    gtk_widget_show (hbox_bar_width);
+    gtk_container_add (GTK_CONTAINER (vbox_draw_style_bars), hbox_bar_width);
+
+    bar_width_label = gtk_label_new (NULL);
+    gtk_label_set_markup (GTK_LABEL (bar_width_label),"Bar width (0 = auto):");
+    gtk_widget_show (bar_width_label);
+    gtk_box_pack_start (GTK_BOX (hbox_bar_width), bar_width_label, FALSE, FALSE, 0);
+
+    bar_width = gtk_spin_button_new_with_range (0,10,1);
+    gtk_widget_show (bar_width);
+    gtk_box_pack_start (GTK_BOX (hbox_bar_width), bar_width, FALSE, FALSE, 0);
+    g_signal_connect_after ((gpointer) bar_width, "value-changed", G_CALLBACK (on_bar_width_changed), NULL);
+
+    hbox_num_bars = gtk_hbox_new (FALSE, 8);
+    gtk_widget_show (hbox_num_bars);
+    gtk_container_add (GTK_CONTAINER (vbox_draw_style_bars), hbox_num_bars);
+    if (CONFIG_BAR_W > 0) {
+        gtk_widget_set_sensitive (hbox_num_bars, FALSE);
+    }
+    else {
+        gtk_widget_set_sensitive (hbox_num_bars, TRUE);
+    }
+
+    num_bars_label = gtk_label_new (NULL);
+    gtk_label_set_markup (GTK_LABEL (num_bars_label),"Number of bars:");
+    gtk_widget_show (num_bars_label);
+    gtk_box_pack_start (GTK_BOX (hbox_num_bars), num_bars_label, FALSE, FALSE, 0);
+
+    num_bars = gtk_spin_button_new_with_range (2,2000,1);
+    gtk_widget_show (num_bars);
+    gtk_box_pack_start (GTK_BOX (hbox_num_bars), num_bars, FALSE, FALSE, 0);
+
+    bar_mode = gtk_check_button_new_with_label ("Bar mode");
+    gtk_widget_show (bar_mode);
+    gtk_box_pack_start (GTK_BOX (vbox_draw_style_bars), bar_mode, FALSE, FALSE, 0);
+
+    gap_between_bars = gtk_check_button_new_with_label ("Gap between bars");
+    gtk_widget_show (gap_between_bars);
+    gtk_box_pack_start (GTK_BOX (vbox_draw_style_bars), gap_between_bars, FALSE, FALSE, 0);
+
+    vbox_draw_style_solid = gtk_vbox_new (FALSE, 8);
+    if (CONFIG_DRAW_STYLE) {
+        gtk_widget_show (vbox_draw_style_solid);
+    }
+    gtk_container_add (GTK_CONTAINER (vbox_draw_styles), vbox_draw_style_solid);
+    gtk_container_set_border_width (GTK_CONTAINER (vbox_draw_style_solid), 12);
+
+    fill_spectrum = gtk_check_button_new_with_label ("Fill spectrum");
+    gtk_widget_show (fill_spectrum);
+    gtk_box_pack_start (GTK_BOX (vbox_draw_style_solid), fill_spectrum, FALSE, FALSE, 0);
+
     hbox05 = gtk_hbox_new (FALSE, 8);
     gtk_widget_show (hbox05);
     gtk_box_pack_start (GTK_BOX (vbox07), hbox05, FALSE, FALSE, 0);
@@ -477,10 +607,6 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_widget_show (ogrid);
     gtk_box_pack_start (GTK_BOX (vbox07), ogrid, FALSE, FALSE, 0);
 
-    bar_mode = gtk_check_button_new_with_label ("Bar mode");
-    gtk_widget_show (bar_mode);
-    gtk_box_pack_start (GTK_BOX (vbox07), bar_mode, FALSE, FALSE, 0);
-
     display_octaves = gtk_check_button_new_with_label ("Highlight octaves on hover");
     gtk_widget_show (display_octaves);
     gtk_box_pack_start (GTK_BOX (vbox07), display_octaves, FALSE, FALSE, 0);
@@ -507,7 +633,12 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (hgrid), CONFIG_ENABLE_HGRID);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (vgrid), CONFIG_ENABLE_VGRID);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ogrid), CONFIG_ENABLE_OCTAVE_GRID);
+    gtk_combo_box_set_active (GTK_COMBO_BOX (draw_style_combo_box), CONFIG_DRAW_STYLE);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (bar_mode), CONFIG_ENABLE_BAR_MODE);
+    gtk_spin_button_set_value (GTK_SPIN_BUTTON (num_bars), CONFIG_NUM_BARS);
+    gtk_spin_button_set_value (GTK_SPIN_BUTTON (bar_width), CONFIG_BAR_W);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (gap_between_bars), CONFIG_GAPS);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (fill_spectrum), CONFIG_FILL_SPECTRUM);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (display_octaves), CONFIG_DISPLAY_OCTAVES);
     gtk_combo_box_set_active (GTK_COMBO_BOX (window), CONFIG_WINDOW);
     gtk_combo_box_set_active (GTK_COMBO_BOX (fft), FFT_INDEX);
@@ -535,6 +666,10 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
             CONFIG_ENABLE_VGRID = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (vgrid));
             CONFIG_ENABLE_OCTAVE_GRID = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (ogrid));
             CONFIG_ENABLE_BAR_MODE = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (bar_mode));
+            CONFIG_GAPS = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (gap_between_bars));
+            CONFIG_FILL_SPECTRUM = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (fill_spectrum));
+            CONFIG_NUM_BARS = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (num_bars));
+            CONFIG_BAR_W = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (bar_width));
             CONFIG_DISPLAY_OCTAVES = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (display_octaves));
             CONFIG_DB_RANGE = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (db_range));
             CONFIG_NUM_COLORS = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (num_colors));
@@ -545,6 +680,17 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
                 else if (color_gradients[i]) {
                     gtk_widget_hide (color_gradients[i]);
                 }
+            }
+
+            snprintf (text, sizeof (text), "%s", gtk_combo_box_text_get_active_text (GTK_COMBO_BOX_TEXT (draw_style_combo_box)));
+            if (strcmp (text, STR_DRAW_STYLE_BARS) == 0) {
+                CONFIG_DRAW_STYLE = 0;
+            }
+            else if (strcmp (text, STR_DRAW_STYLE_SOLID) == 0) {
+                CONFIG_DRAW_STYLE = 1;
+            }
+            else {
+                CONFIG_DRAW_STYLE = -1;
             }
 
             snprintf (text, sizeof (text), "%s", gtk_combo_box_text_get_active_text (GTK_COMBO_BOX_TEXT (gradient_orientation)));

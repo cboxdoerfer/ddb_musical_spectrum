@@ -725,7 +725,7 @@ spectrum_motion_notify_event (GtkWidget *widget, GdkEventMotion *event, gpointer
     const int num_bars = get_num_bars ();
     int barw;
 
-    if (CONFIG_GAPS) {
+    if (CONFIG_GAPS && !CONFIG_DRAW_STYLE) {
         barw = CLAMP (a.width / num_bars, 2, 20);
     }
     else {
@@ -895,11 +895,6 @@ musical_spectrum_disconnect (void)
 
 static const char settings_dlg[] =
     "property \"Refresh interval (ms): \"       spinbtn[10,1000,1] "        CONFSTR_MS_REFRESH_INTERVAL         " 25 ;\n"
-    "property \"Number of bars: \"              spinbtn[2,2000,1] "         CONFSTR_MS_NUM_BARS                 " 132 ;\n"
-    "property \"Bar width (0 - auto): \"        spinbtn[0,10,1] "           CONFSTR_MS_BAR_W                    " 0 ;\n"
-    "property \"Gap between bars  \"            checkbox "                  CONFSTR_MS_GAPS                     " 1 ;\n"
-    "property \"Use cairo drawing (slower)  \"  checkbox "                  CONFSTR_MS_DRAW_STYLE               " 0 ;\n"
-    "property \"Fill spectrum  \"               checkbox "                  CONFSTR_MS_FILL_SPECTRUM            " 1 ;\n"
     "property \"Bar falloff (dB/s): \"          spinbtn[-1,1000,1] "        CONFSTR_MS_BAR_FALLOFF              " -1 ;\n"
     "property \"Bar delay (ms): \"              spinbtn[0,10000,100] "      CONFSTR_MS_BAR_DELAY                " 0 ;\n"
     "property \"Peak falloff (dB/s): \"         spinbtn[-1,1000,1] "        CONFSTR_MS_PEAK_FALLOFF             " 90 ;\n"
@@ -938,7 +933,7 @@ DB_misc_t plugin = {
         "You should have received a copy of the GNU General Public License\n"
         "along with this program; if not, write to the Free Software\n"
         "Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.\n"
-    ,
+     ,
     .plugin.website         = "https://github.com/cboxdoerfer/ddb_musical_spectrum",
     .plugin.start           = musical_spectrum_start,
     .plugin.stop            = musical_spectrum_stop,
