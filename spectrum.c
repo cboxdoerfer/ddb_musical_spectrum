@@ -447,7 +447,7 @@ spectrum_draw_cairo (gpointer user_data, cairo_t *cr, int bands, int width, int 
     }
 
     if (CONFIG_NUM_COLORS > 1) {
-        float step = 1.0/(CONFIG_NUM_COLORS - 1);
+        const float step = 1.0/(CONFIG_NUM_COLORS - 1);
         float grad_pos = 0;
         for (int i = 0; i < CONFIG_NUM_COLORS; i++) {
             cairo_pattern_add_color_stop_rgb (pat, grad_pos, CONFIG_GRADIENT_COLORS[i].red/65535.f, CONFIG_GRADIENT_COLORS[i].green/65535.f, CONFIG_GRADIENT_COLORS[i].blue/65535.f);
@@ -490,8 +490,8 @@ spectrum_draw_cairo (gpointer user_data, cairo_t *cr, int bands, int width, int 
     // draw octave grid
     if (CONFIG_ENABLE_OCTAVE_GRID) {
         cairo_set_source_rgba (cr, CONFIG_COLOR_OCTAVE_GRID.red/65535.f, CONFIG_COLOR_OCTAVE_GRID.green/65535.f, CONFIG_COLOR_OCTAVE_GRID.blue/65535.f, 0.2);
-        int spectrum_width = MIN (barw * bands, width);
-        float octave_width = CLAMP (((float)spectrum_width / 11), 1, spectrum_width);
+        const int spectrum_width = MIN (barw * bands, width);
+        const float octave_width = CLAMP (((float)spectrum_width / 11), 1, spectrum_width);
         for (float i = left; i < spectrum_width - 1 && i < width - 1; i += octave_width) {
             cairo_move_to (cr, i, 0);
             cairo_line_to (cr, i, height);
@@ -512,11 +512,11 @@ spectrum_draw_cairo (gpointer user_data, cairo_t *cr, int bands, int width, int 
 
     // draw octave grid on hover
     if (CONFIG_DISPLAY_OCTAVES && motion_ctx.entered) {
-        int band_offset = (((int)motion_ctx.x % ((barw * bands) / 11)))/barw;
+        const int band_offset = (((int)motion_ctx.x % ((barw * bands) / 11)))/barw;
         cairo_set_source_rgba (cr, 1, 0, 0, 0.5);
         for (gint i = 0; i < bands; i++) {
-            int octave_enabled  = (motion_ctx.entered && (i % (bands / 11)) == band_offset) ? 1 : 0;
-            float x = left + barw * i;
+            const int octave_enabled  = (motion_ctx.entered && (i % (bands / 11)) == band_offset) ? 1 : 0;
+            const float x = left + barw * i;
             if (octave_enabled) {
                 cairo_move_to (cr, x, 0);
                 cairo_line_to (cr, x, height);
@@ -573,7 +573,7 @@ spectrum_draw_custom (gpointer user_data, cairo_t *cr, int bands, int width, int
 
     const int left = get_align_pos (width, bands, barw);
 
-    int band_offset = (((int)motion_ctx.x % ((barw * bands) / 11)))/barw;
+    const int band_offset = (((int)motion_ctx.x % ((barw * bands) / 11)))/barw;
     for (gint i = 0; i < bands; i++)
     {
         int x = left + barw * i;
@@ -735,8 +735,8 @@ spectrum_motion_notify_event (GtkWidget *widget, GdkEventMotion *event, gpointer
     const int left = get_align_pos (a.width, num_bars, barw);
 
     if (event->x > left && event->x < left + barw * num_bars) {
-        int pos = CLAMP ((int)((event->x-1-left)/barw),0,num_bars-1);
-        int npos = ftoi( pos * 132 / num_bars );
+        const int pos = CLAMP ((int)((event->x-1-left)/barw),0,num_bars-1);
+        const int npos = ftoi( pos * 132 / num_bars );
         char tooltip_text[20];
         snprintf (tooltip_text, sizeof (tooltip_text), "%5.0f Hz (%s)", w->freq[pos], notes[npos]);
         gtk_widget_set_tooltip_text (widget, tooltip_text);
@@ -750,7 +750,7 @@ spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32
 {
     w_spectrum_t *w = (w_spectrum_t *)widget;
 
-    int samplerate_temp = w->samplerate;
+    const int samplerate_temp = w->samplerate;
     switch (id) {
         case DB_EV_SONGSTARTED:
             playback_status = PLAYING;
