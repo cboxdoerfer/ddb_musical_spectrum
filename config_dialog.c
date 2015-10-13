@@ -142,12 +142,27 @@ static GtkWidget *vbox_draw_style_solid;
 static GtkWidget *hbox_num_bars;
 static GtkWidget *hbox_bar_width;
 
-void
-on_draw_style_changed (GtkComboBox *widget,
-               gpointer     user_data)
+static void
+on_draw_style_bars_toggled (GtkToggleButton *togglebutton,
+               gpointer         user_data)
 {
-    int draw_style = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
-    if (draw_style == 0) {
+    int active = gtk_toggle_button_get_active (togglebutton);
+    if (active == 0) {
+        gtk_widget_show (vbox_draw_style_solid);
+        gtk_widget_hide (vbox_draw_style_bars);
+    }
+    else {
+        gtk_widget_show (vbox_draw_style_bars);
+        gtk_widget_hide (vbox_draw_style_solid);
+    }
+}
+
+static void
+on_draw_style_solid_toggled (GtkToggleButton *togglebutton,
+               gpointer         user_data)
+{
+    int active = gtk_toggle_button_get_active (togglebutton);
+    if (active == 0) {
         gtk_widget_show (vbox_draw_style_bars);
         gtk_widget_hide (vbox_draw_style_solid);
     }
@@ -231,8 +246,9 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     GtkWidget *hbox05;
     GtkWidget *hbox_draw_style;
     GtkWidget *draw_style_frame;
+    GtkWidget *draw_style_bars_radio;
+    GtkWidget *draw_style_solid_radio;
     GtkWidget *draw_style_label;
-    GtkWidget *draw_style_combo_box;
     GtkWidget *num_bars_label;
     GtkWidget *num_bars;
     GtkWidget *bar_width_label;
@@ -484,16 +500,20 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_widget_show (hbox_draw_style);
 
     draw_style_label = gtk_label_new (NULL);
-    gtk_label_set_markup (GTK_LABEL (draw_style_label),"<b>Draw style:</b>");
+    gtk_label_set_markup (GTK_LABEL (draw_style_label),"Draw style:");
     gtk_widget_show (draw_style_label);
     gtk_box_pack_start (GTK_BOX (hbox_draw_style), draw_style_label, FALSE, TRUE, 0);
 
-    draw_style_combo_box = gtk_combo_box_text_new ();
-    gtk_widget_show (draw_style_combo_box);
-    gtk_box_pack_start (GTK_BOX (hbox_draw_style), draw_style_combo_box, TRUE, TRUE, 0);
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(draw_style_combo_box), STR_DRAW_STYLE_BARS);
-    gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT(draw_style_combo_box), STR_DRAW_STYLE_SOLID);
-    g_signal_connect_after ((gpointer) draw_style_combo_box, "changed", G_CALLBACK (on_draw_style_changed), NULL);
+    draw_style_bars_radio = gtk_radio_button_new_with_label (NULL, "Bars");
+    gtk_widget_show (draw_style_bars_radio);
+    gtk_box_pack_start (GTK_BOX (hbox_draw_style), draw_style_bars_radio, TRUE, TRUE, 0);
+
+    draw_style_solid_radio = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (draw_style_bars_radio), "Solid");
+    gtk_widget_show (draw_style_solid_radio);
+    gtk_box_pack_start (GTK_BOX (hbox_draw_style), draw_style_solid_radio, TRUE, TRUE, 0);
+
+    g_signal_connect_after ((gpointer) draw_style_bars_radio, "toggled", G_CALLBACK (on_draw_style_bars_toggled), NULL);
+    g_signal_connect_after ((gpointer) draw_style_solid_radio, "toggled", G_CALLBACK (on_draw_style_solid_toggled), NULL);
 
     draw_style_frame = gtk_frame_new ("Draw style");
     gtk_frame_set_label_widget ((GtkFrame *)draw_style_frame, hbox_draw_style);
@@ -519,11 +539,11 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     bar_width_label = gtk_label_new (NULL);
     gtk_label_set_markup (GTK_LABEL (bar_width_label),"Bar width (0 = auto):");
     gtk_widget_show (bar_width_label);
-    gtk_box_pack_start (GTK_BOX (hbox_bar_width), bar_width_label, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (hbox_bar_width), bar_width_label, FALSE, TRUE, 0);
 
     bar_width = gtk_spin_button_new_with_range (0,10,1);
     gtk_widget_show (bar_width);
-    gtk_box_pack_start (GTK_BOX (hbox_bar_width), bar_width, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (hbox_bar_width), bar_width, TRUE, TRUE, 0);
     g_signal_connect_after ((gpointer) bar_width, "value-changed", G_CALLBACK (on_bar_width_changed), NULL);
 
     hbox_num_bars = gtk_hbox_new (FALSE, 8);
@@ -539,11 +559,11 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     num_bars_label = gtk_label_new (NULL);
     gtk_label_set_markup (GTK_LABEL (num_bars_label),"Number of bars:");
     gtk_widget_show (num_bars_label);
-    gtk_box_pack_start (GTK_BOX (hbox_num_bars), num_bars_label, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (hbox_num_bars), num_bars_label, FALSE, TRUE, 0);
 
     num_bars = gtk_spin_button_new_with_range (2,2000,1);
     gtk_widget_show (num_bars);
-    gtk_box_pack_start (GTK_BOX (hbox_num_bars), num_bars, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (hbox_num_bars), num_bars, TRUE, TRUE, 0);
 
     bar_mode = gtk_check_button_new_with_label ("Bar mode");
     gtk_widget_show (bar_mode);
@@ -633,7 +653,16 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (hgrid), CONFIG_ENABLE_HGRID);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (vgrid), CONFIG_ENABLE_VGRID);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ogrid), CONFIG_ENABLE_OCTAVE_GRID);
-    gtk_combo_box_set_active (GTK_COMBO_BOX (draw_style_combo_box), CONFIG_DRAW_STYLE);
+
+    switch (CONFIG_DRAW_STYLE) {
+    case 0:
+        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (draw_style_bars_radio), TRUE);
+        break;
+    case 1:
+        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (draw_style_solid_radio), TRUE);
+        break;
+    }
+
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (bar_mode), CONFIG_ENABLE_BAR_MODE);
     gtk_spin_button_set_value (GTK_SPIN_BUTTON (num_bars), CONFIG_NUM_BARS);
     gtk_spin_button_set_value (GTK_SPIN_BUTTON (bar_width), CONFIG_BAR_W);
@@ -673,6 +702,14 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
             CONFIG_DISPLAY_OCTAVES = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (display_octaves));
             CONFIG_DB_RANGE = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (db_range));
             CONFIG_NUM_COLORS = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (num_colors));
+
+            if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (draw_style_bars_radio)) == TRUE) {
+                CONFIG_DRAW_STYLE = 0;
+            }
+            else if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (draw_style_solid_radio)) == TRUE) {
+                CONFIG_DRAW_STYLE = 1;
+            }
+
             for (int i = 0; i < MAX_NUM_COLORS && color_gradients[i]; i++) {
                 if (i < CONFIG_NUM_COLORS) {
                     gtk_widget_show (color_gradients[i]);
@@ -680,17 +717,6 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
                 else if (color_gradients[i]) {
                     gtk_widget_hide (color_gradients[i]);
                 }
-            }
-
-            snprintf (text, sizeof (text), "%s", gtk_combo_box_text_get_active_text (GTK_COMBO_BOX_TEXT (draw_style_combo_box)));
-            if (strcmp (text, STR_DRAW_STYLE_BARS) == 0) {
-                CONFIG_DRAW_STYLE = 0;
-            }
-            else if (strcmp (text, STR_DRAW_STYLE_SOLID) == 0) {
-                CONFIG_DRAW_STYLE = 1;
-            }
-            else {
-                CONFIG_DRAW_STYLE = -1;
             }
 
             snprintf (text, sizeof (text), "%s", gtk_combo_box_text_get_active_text (GTK_COMBO_BOX_TEXT (gradient_orientation)));
