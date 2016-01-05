@@ -93,7 +93,6 @@ do_fft (w_spectrum_t *w)
     g_return_if_fail (w->samples && w->buffered >= CONFIG_FFT_SIZE);
 
     deadbeef->mutex_lock (w->mutex);
-    double real,imag;
 
     for (int i = 0; i < CONFIG_FFT_SIZE; i++) {
         w->fft_in[i] = w->samples[i] * w->window[i];
@@ -102,8 +101,8 @@ do_fft (w_spectrum_t *w)
     fftw_execute (w->p_r2c);
     for (int i = 0; i < CONFIG_FFT_SIZE/2; i++)
     {
-        real = w->fft_out[i][0];
-        imag = w->fft_out[i][1];
+        const double real = w->fft_out[i][0];
+        const double imag = w->fft_out[i][1];
         w->spectrum_data[i] = (real*real + imag*imag);
     }
     deadbeef->mutex_unlock (w->mutex);
@@ -221,11 +220,13 @@ spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
     const int n = CONFIG_FFT_SIZE - sz;
     memmove (w->samples, w->samples + sz, n * sizeof (double));
 
-    int pos = 0;
-    for (int i = 0; i < sz && pos < nsamples; i++, pos++ ) {
-        w->samples[n+i] = -1000.0;
-        for (int j = 0; j < data->fmt->channels; j++) {
-            w->samples[n + i] = MAX (w->samples[n + i], data->data[ftoi (pos * data->fmt->channels) + j]);
+    const int channels = data->fmt->channels;
+    int data_index = 0;
+    int sample_index = n;
+    for (int i = 0; i < sz; i++, sample_index++, data_index += channels) {
+        w->samples[sample_index] = -1000.0;
+        for (int j = 0; j < channels; j++) {
+            w->samples[sample_index] = MAX (w->samples[sample_index], data->data[data_index + j]);
         }
     }
     deadbeef->mutex_unlock (w->mutex);
@@ -407,9 +408,8 @@ draw_static_content (unsigned char *data, int stride, int bands, int width, int 
     if (CONFIG_ENABLE_OCTAVE_GRID) {
         const int spectrum_width = MIN (barw * bands, width);
         const float octave_width = CLAMP (((float)spectrum_width / 11), 1, spectrum_width);
-        int x = 0;
         for (float i = left; i < spectrum_width - 1 && i < width - 1; i += octave_width) {
-            x = ftoi (i) + (CONFIG_GAPS ? (ftoi (i) % barw) : 0);
+            int x = ftoi (i) + (CONFIG_GAPS ? (ftoi (i) % barw) : 0);
             _draw_vline (data, stride, x, 0, height-1, CONFIG_COLOR_OCTAVE_GRID32);
         }
     }
