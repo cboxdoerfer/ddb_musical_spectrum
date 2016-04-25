@@ -1,0 +1,12 @@
+*.swp
+*.swo
+*.vim
+.tags
+*.pyc
+*.py
+*.tar.gz
+*.xz
+*.user
+gtk2
+gtk3
+
