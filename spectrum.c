@@ -33,6 +33,7 @@
 #include <deadbeef/deadbeef.h>
 #include <deadbeef/gtkui_api.h>
 
+#include "support.h"
 #include "fastftoi.h"
 #include "config.h"
 #include "config_dialog.h"
@@ -50,7 +51,7 @@ struct motion_context {
 
 static struct motion_context motion_ctx;
 
-static enum PLAYBACK_STATUS { STOPPED = 0, PLAYING = 1, PAUSED = 2 };
+enum PLAYBACK_STATUS { STOPPED = 0, PLAYING = 1, PAUSED = 2 };
 static int playback_status = STOPPED;
 
 static char *notes[] = {"C0","C#0","D0","D#0","E0","F0","F#0","G0","G#0","A0","A#0","B0",
@@ -90,7 +91,9 @@ get_align_pos (int width, int bands, int bar_width)
 static void
 do_fft (w_spectrum_t *w)
 {
-    g_return_if_fail (w->samples && w->buffered >= CONFIG_FFT_SIZE);
+    if (!w->samples || w->buffered < CONFIG_FFT_SIZE) {
+        return;
+    }
 
     deadbeef->mutex_lock (w->mutex);
 

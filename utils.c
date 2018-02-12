@@ -31,6 +31,7 @@
 #include <fcntl.h>
 #include <gtk/gtk.h>
 
+#include "support.h"
 #include "fastftoi.h"
 #include "config.h"
 #include "spectrum.h"
