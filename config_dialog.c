@@ -263,6 +263,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     GtkWidget *cancelbutton1;
     GtkWidget *okbutton1;
     spectrum_properties = gtk_dialog_new ();
+    gtk_window_set_transient_for (GTK_WINDOW (spectrum_properties), gtk_widget_get_toplevel (menuitem));
     gtk_window_set_title (GTK_WINDOW (spectrum_properties), "Spectrum Properties");
     gtk_window_set_type_hint (GTK_WINDOW (spectrum_properties), GDK_WINDOW_TYPE_HINT_DIALOG);
     gtk_window_set_resizable (GTK_WINDOW (spectrum_properties), FALSE);

@@ -831,6 +831,7 @@ w_musical_spectrum_create (void) {
     w->base.message = spectrum_message;
     w->drawarea = gtk_drawing_area_new ();
     w->popup = gtk_menu_new ();
+    gtk_menu_attach_to_widget (GTK_MENU (w->popup), w->base.widget, NULL);
     w->popup_item = gtk_menu_item_new_with_mnemonic ("Configure");
     w->mutex = deadbeef->mutex_create ();
 
