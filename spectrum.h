@@ -42,13 +42,26 @@ extern DB_misc_t plugin;
 extern DB_functions_t *deadbeef;
 extern ddb_gtkui_t *gtkui_plugin;
 
+enum PLAYBACK_STATUS { STOPPED = 0, PLAYING = 1, PAUSED = 2 };
+
+struct motion_context {
+    uint8_t entered;
+    double x;
+};
+
+struct spectrum_data_t {
+    int num_channels;
+    double *samples;
+    double *fft_in;
+    double *fft_out;
+    double *spectrum;
+};
+
 typedef struct {
     ddb_gtkui_widget_t base;
     GtkWidget *drawarea;
     GtkWidget *popup;
     GtkWidget *popup_item;
-    cairo_surface_t *surf;
-    unsigned char *surf_data;
     guint drawtimer;
     // spectrum_data: holds amplitude of frequency bins (result of fft)
     double *spectrum_data;
@@ -63,13 +76,24 @@ typedef struct {
     double *fft_in;
     fftw_complex *fft_out;
     fftw_plan p_r2c;
-    int buffered;
     int low_res_end;
-    float bars[MAX_BARS + 1];
-    float peaks[MAX_BARS + 1];
+    int low_res_indices[MAX_BARS + 1];
+    int low_res_indices_num;
+    int need_redraw;
+    enum PLAYBACK_STATUS playback_status;
+    double bars[MAX_BARS + 1];
+    double bars_peak[MAX_BARS + 1];
+    double peaks[MAX_BARS + 1];
     int delay_bars[MAX_BARS + 1];
     int delay_peaks[MAX_BARS + 1];
+    double v_bars[MAX_BARS + 1];
+    double v_peaks[MAX_BARS + 1];
+    struct spectrum_data_t *data;
+    struct motion_context motion_ctx;
     intptr_t mutex;
 } w_spectrum_t;
+
+gboolean
+spectrum_remove_refresh_interval (gpointer user_data);
 
 #endif

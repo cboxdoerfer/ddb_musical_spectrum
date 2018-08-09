@@ -54,8 +54,8 @@ static int fft_sizses_size = 7;
 static GdkColor gradient_colors_temp[MAX_NUM_COLORS];
 static uint32_t colors_temp[GRADIENT_TABLE_SIZE];
 
-static
-void init_gradient_colors ()
+static void
+init_gradient_colors ()
 {
     for (int i = 0; i < CONFIG_NUM_COLORS; i++) {
         gradient_colors_temp[i].red = CONFIG_GRADIENT_COLORS[i].red;
@@ -231,6 +231,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     GtkWidget *num_colors;
     GtkWidget *db_range_label0;
     GtkWidget *db_range;
+    GtkWidget *peaks;
     GtkWidget *hgrid;
     GtkWidget *vgrid;
     GtkWidget *ogrid;
@@ -374,7 +375,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
 
     hbox08 = gtk_hbox_new (FALSE, 8);
     gtk_widget_show (hbox08);
-    gtk_box_pack_start (GTK_BOX (vbox01), hbox08, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox01), hbox08, TRUE, TRUE, 0);
 
     gradient_frame = gtk_frame_new (NULL);
     gtk_frame_set_shadow_type ((GtkFrame *)gradient_frame, GTK_SHADOW_ETCHED_IN);
@@ -388,7 +389,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
 #endif
     g_signal_connect_after ((gpointer) num_colors, "value-changed", G_CALLBACK (on_num_colors_changed), gradient_preview);
     gtk_container_add (GTK_CONTAINER (gradient_frame), gradient_preview);
-    gtk_widget_set_size_request (gradient_preview, 16, 179);
+    gtk_widget_set_size_request (gradient_preview, 16, -1);
     gtk_widget_show (gradient_preview);
 
     GtkWidget* scrolledwindow = gtk_scrolled_window_new(NULL, NULL);
@@ -616,6 +617,10 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT(alignment), STR_ALIGNMENT_RIGHT);
     gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT(alignment), STR_ALIGNMENT_CENTER);
 
+    peaks = gtk_check_button_new_with_label ("Show peaks");
+    gtk_widget_show (peaks);
+    gtk_box_pack_start (GTK_BOX (vbox07), peaks, FALSE, FALSE, 0);
+
     hgrid = gtk_check_button_new_with_label ("Horizontal grid");
     gtk_widget_show (hgrid);
     gtk_box_pack_start (GTK_BOX (vbox07), hgrid, FALSE, FALSE, 0);
@@ -651,6 +656,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
     gtk_dialog_add_action_widget (GTK_DIALOG (spectrum_properties), okbutton1, GTK_RESPONSE_OK);
     gtk_widget_set_can_default (okbutton1, TRUE);
 
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (peaks), CONFIG_ENABLE_PEAKS);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (hgrid), CONFIG_ENABLE_HGRID);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (vgrid), CONFIG_ENABLE_VGRID);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ogrid), CONFIG_ENABLE_OCTAVE_GRID);
@@ -692,6 +698,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
             for (int i = 0; i < CONFIG_NUM_COLORS; i++) {
                 gtk_color_button_get_color (GTK_COLOR_BUTTON (color_gradients[i]), &CONFIG_GRADIENT_COLORS[i]);
             }
+            CONFIG_ENABLE_PEAKS = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (peaks));
             CONFIG_ENABLE_HGRID = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (hgrid));
             CONFIG_ENABLE_VGRID = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (vgrid));
             CONFIG_ENABLE_OCTAVE_GRID = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (ogrid));

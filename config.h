@@ -28,6 +28,7 @@
 #define     CONFSTR_MS_REFRESH_INTERVAL       "musical_spectrum.refresh_interval"
 #define     CONFSTR_MS_FFT_SIZE               "musical_spectrum.fft_size"
 #define     CONFSTR_MS_DB_RANGE               "musical_spectrum.db_range"
+#define     CONFSTR_MS_ENABLE_PEAKS           "musical_spectrum.enable_peaks"
 #define     CONFSTR_MS_ENABLE_HGRID           "musical_spectrum.enable_hgrid"
 #define     CONFSTR_MS_ENABLE_VGRID           "musical_spectrum.enable_vgrid"
 #define     CONFSTR_MS_ENABLE_OCTAVE_GRID     "musical_spectrum.enable_octave_grid"
@@ -57,6 +58,7 @@
 
 extern int CONFIG_REFRESH_INTERVAL;
 extern int CONFIG_DB_RANGE;
+extern int CONFIG_ENABLE_PEAKS;
 extern int CONFIG_ENABLE_HGRID;
 extern int CONFIG_ENABLE_VGRID;
 extern int CONFIG_ENABLE_OCTAVE_GRID;

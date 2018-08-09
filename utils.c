@@ -178,20 +178,53 @@ create_frequency_table (gpointer user_data)
         if (i > 0 && w->keys[i-1] == w->keys[i])
             w->low_res_end = i;
     }
+
+    int last_key = 0;
+    w->low_res_indices_num = 1;
+    w->low_res_indices[0] = 0;
+    for (int i = 0, j = 1; i < num_bars; i++) {
+        int key = w->keys[i];
+        if (key != last_key) {
+            w->low_res_indices[j++] = i;
+            w->low_res_indices_num++;
+        }
+        last_key = key;
+    }
 }
 
-float
-linear_interpolate (float y1, float y2, float mu)
+double
+hermite_interpolate (double *y,
+                     double mu,
+                     int start,
+                     double tension,
+                     double bias)
 {
-       return (y1 * (1 - mu) + y2 * mu);
+    double m0,m1,mu2,mu3;
+    double a0,a1,a2,a3;
+
+    double y0;
+    if (start < 0) {
+        y0 = y[0] - (y[1] - y[0]);
+        start = -1;
+    }
+    else {
+        y0 = y[start];
+    }
+    double y1 = y[start + 1];
+    double y2 = y[start + 2];
+    double y3 = y[start + 3];
+
+    mu2 = mu * mu;
+    mu3 = mu2 * mu;
+    m0  = (y1-y0)*(1+bias)*(1-tension)/2;
+    m0 += (y2-y1)*(1-bias)*(1-tension)/2;
+    m1  = (y2-y1)*(1+bias)*(1-tension)/2;
+    m1 += (y3-y2)*(1-bias)*(1-tension)/2;
+    a0 =  2*mu3 - 3*mu2 + 1;
+    a1 =    mu3 - 2*mu2 + mu;
+    a2 =    mu3 -   mu2;
+    a3 = -2*mu3 + 3*mu2;
+
+    return(a0*y1+a1*m0+a2*m1+a3*y2);
 }
 
-float
-lagrange_interpolate (float y0, float y1, float y2, float y3, float x)
-{
-    const float a0 = ((x - 1) * (x - 2) * (x - 3)) / -6 * y0;
-    const float a1 = ((x - 0) * (x - 2) * (x - 3)) /  2 * y1;
-    const float a2 = ((x - 0) * (x - 1) * (x - 3)) / -2 * y2;
-    const float a3 = ((x - 0) * (x - 1) * (x - 2)) /  6 * y3;
-    return (a0 + a1 + a2 + a3);
-}

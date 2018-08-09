@@ -1,3 +1,5 @@
+#pragma once
+
 #include <gtk/gtk.h>
 
 #if !GTK_CHECK_VERSION(2,14,0)

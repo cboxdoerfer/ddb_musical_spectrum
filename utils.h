@@ -47,9 +47,10 @@ create_window_table (gpointer user_data);
 void
 create_frequency_table (gpointer user_data);
 
-float
-linear_interpolate (float y1, float y2, float mu);
-
-float
-lagrange_interpolate (float y0, float y1, float y2, float y3, float x);
+double
+hermite_interpolate (double *y,
+                     double mu,
+                     int start,
+                     double tension,
+                     double bias);
 #endif

@@ -37,6 +37,7 @@
 
 int CONFIG_REFRESH_INTERVAL = 25;
 int CONFIG_DB_RANGE = 70;
+int CONFIG_ENABLE_PEAKS = 1;
 int CONFIG_ENABLE_HGRID = 1;
 int CONFIG_ENABLE_VGRID = 1;
 int CONFIG_ENABLE_OCTAVE_GRID = 0;
@@ -45,7 +46,7 @@ int CONFIG_ENABLE_BAR_MODE = 0;
 int CONFIG_DISPLAY_OCTAVES = 0;
 int CONFIG_BAR_FALLOFF = -1;
 int CONFIG_BAR_DELAY = 0;
-int CONFIG_PEAK_FALLOFF = 90;
+int CONFIG_PEAK_FALLOFF = 50;
 int CONFIG_PEAK_DELAY = 500;
 int CONFIG_GRADIENT_ORIENTATION = 0;
 int CONFIG_NUM_COLORS = 6;
@@ -81,6 +82,7 @@ save_config (void)
     deadbeef->conf_set_int (CONFSTR_MS_REFRESH_INTERVAL,            CONFIG_REFRESH_INTERVAL);
     deadbeef->conf_set_int (CONFSTR_MS_FFT_SIZE,                    CONFIG_FFT_SIZE);
     deadbeef->conf_set_int (CONFSTR_MS_DB_RANGE,                    CONFIG_DB_RANGE);
+    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_PEAKS,                CONFIG_ENABLE_PEAKS);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_HGRID,                CONFIG_ENABLE_HGRID);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_VGRID,                CONFIG_ENABLE_VGRID);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_OCTAVE_GRID,          CONFIG_ENABLE_OCTAVE_GRID);
@@ -125,6 +127,7 @@ load_config (void)
     CONFIG_FFT_SIZE = deadbeef->conf_get_int (CONFSTR_MS_FFT_SIZE,                        8192);
     FFT_INDEX = log2 (CONFIG_FFT_SIZE) - 9;
     CONFIG_DB_RANGE = deadbeef->conf_get_int (CONFSTR_MS_DB_RANGE,                          70);
+    CONFIG_ENABLE_PEAKS = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_PEAKS,                   1);
     CONFIG_ENABLE_HGRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_HGRID,                   1);
     CONFIG_ENABLE_VGRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_VGRID,                   1);
     CONFIG_ENABLE_OCTAVE_GRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_OCTAVE_GRID,       0);
