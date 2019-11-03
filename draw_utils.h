@@ -30,27 +30,6 @@
 #include <stdlib.h>
 
 void
-_draw_vline (uint8_t *data, int stride, int x0, int y0, int y1, uint32_t color);
-
-void
-_draw_hline (uint8_t *data, int stride, int x0, int y0, int x1, uint32_t color);
-
-void
-_draw_background (uint8_t *data, int w, int h, uint32_t color);
-
-void
-_draw_bar (uint8_t *data, int stride, int x0, int y0, int w, int h, uint32_t color);
-
-void
-_draw_bar_gradient_v (uint32_t *colors, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_h);
-
-void
-_draw_bar_gradient_h (uint32_t *colors, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_w);
-
-void
-_draw_bar_gradient_bar_mode_v (uint32_t *colors, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_h);
-
-void
-_draw_bar_gradient_bar_mode_h (uint32_t *colors, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_w);
+spectrum_gradient_set (cairo_t *cr, float width, float height);
 
 #endif

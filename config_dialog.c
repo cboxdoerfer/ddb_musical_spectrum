@@ -70,24 +70,9 @@ draw_gradient_preview (GtkWidget *widget, cairo_t *cr, gpointer user_data)
 {
     GtkAllocation a;
     gtk_widget_get_allocation (widget, &a);
-    cairo_surface_t *surf = cairo_image_surface_create (CAIRO_FORMAT_RGB24, a.width, a.height);
-
-    unsigned char *data = cairo_image_surface_get_data (surf);
-    if (!data) {
-        return FALSE;
-    }
-    const int stride = cairo_image_surface_get_stride (surf);
-    memset (data, 0, a.height * stride);
-
-    _draw_bar_gradient_v (colors_temp, data, stride, 0, 0, a.width, a.height, a.height);
-
-    cairo_surface_mark_dirty (surf);
-
-    cairo_save (cr);
-    cairo_set_source_surface (cr, surf, 0, 0);
+    spectrum_gradient_set (cr, a.width, a.height);
     cairo_rectangle (cr, 0, 0, a.width, a.height);
     cairo_fill (cr);
-    cairo_restore (cr);
 
     return TRUE;
 }

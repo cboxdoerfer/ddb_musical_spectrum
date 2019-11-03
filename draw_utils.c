@@ -33,131 +33,43 @@
 #include "draw_utils.h"
 #include "spectrum.h"
 #include "utils.h"
+#include "config.h"
 
-void
-_draw_vline (uint8_t *data, int stride, int x0, int y0, int y1, uint32_t color) {
-    if (y0 > y1) {
-        int tmp = y0;
-        y0 = y1;
-        y1 = tmp;
-        y1--;
-    }
-    else if (y0 < y1) {
-        y0++;
-    }
-    uint32_t *ptr = (uint32_t*)&data[y0*stride+x0*4];
-    int line_size = stride/4;
-    while (y0 <= y1) {
-        *ptr = color;
-        ptr += line_size;
-        y0++;
-    }
-}
-
-void
-_draw_hline (uint8_t *data, int stride, int x0, int y0, int x1, uint32_t color) {
-    uint32_t *ptr = (uint32_t*)&data[y0*stride+x0*4];
-    while (x0 <= x1) {
-        *ptr++ = color;
-        x0++;
-    }
-}
-
-void
-_draw_background (uint8_t *data, int w, int h, uint32_t color)
+static cairo_pattern_t *
+spectrum_gradient_pattern_get (cairo_t *cr, float width, float height)
 {
-    //uint32_t *ptr = (uint32_t*)&data[0];
-    //int i = 0;
-    //int size = w * h;
-    //while (i++ < size) {
-    //    *ptr++ = color;
-    //}
-    size_t fillLen = w * h * sizeof (uint32_t);
-    _memset_pattern ((char *)data, &color, fillLen, sizeof (uint32_t));
-}
+    cairo_pattern_t *pat = NULL;
 
-void
-_draw_bar (uint8_t *data, int stride, int x0, int y0, int w, int h, uint32_t color) {
-    int y1 = y0+h-1;
-    int x1 = x0+w-1;
-    uint32_t *ptr = (uint32_t*)&data[y0*stride+x0*4];
-    while (y0 <= y1) {
-        int x = x0;
-        while (x++ <= x1) {
-            *ptr++ = color;
-        }
-        y0++;
-        ptr += stride/4-w;
+    if (CONFIG_GRADIENT_ORIENTATION == 0) {
+        pat = cairo_pattern_create_linear (0, 0, 0, height);
     }
-}
-
-void
-_draw_bar_gradient_v (uint32_t *colors, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_h) {
-    int y1 = y0+h-1;
-    int x1 = x0+w-1;
-    uint32_t *ptr = (uint32_t*)&data[y0*stride+x0*4];
-    while (y0 <= y1) {
-        int x = x0;
-        int index = ftoi(((double)y0/(double)total_h) * (GRADIENT_TABLE_SIZE - 1));
-        index = CLAMP (index, 0, GRADIENT_TABLE_SIZE - 1);
-        while (x++ <= x1) {
-            *ptr++ = colors[index];
-        }
-        y0++;
-        ptr += stride/4-w;
+    else {
+        pat = cairo_pattern_create_linear (0, 0, width, 0);
     }
-}
 
-void
-_draw_bar_gradient_h (uint32_t *colors, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_w) {
-    int y1 = y0+h-1;
-    int x1 = x0+w-1;
-    uint32_t *ptr = (uint32_t*)&data[y0*stride+x0*4];
-    while (y0 <= y1) {
-        int x = x0;
-        while (x++ <= x1) {
-            int index = ftoi(((double)x/(double)total_w) * (GRADIENT_TABLE_SIZE - 1));
-            index = CLAMP (index, 0, GRADIENT_TABLE_SIZE - 1);
-            *ptr++ = colors[index];
-        }
-        y0++;
-        ptr += stride/4-w;
+    const float step = 1.0/(CONFIG_NUM_COLORS - 1);
+    float grad_pos = 0;
+    for (int i = 0; i < CONFIG_NUM_COLORS; i++) {
+        cairo_pattern_add_color_stop_rgb (pat,
+                                          grad_pos,
+                                          CONFIG_GRADIENT_COLORS[i].red/65535.f,
+                                          CONFIG_GRADIENT_COLORS[i].green/65535.f,
+                                          CONFIG_GRADIENT_COLORS[i].blue/65535.f);
+        grad_pos += step;
     }
+    return pat;
 }
 
 void
-_draw_bar_gradient_bar_mode_v (uint32_t *colors, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_h) {
-    int y1 = y0+h-1;
-    int x1 = x0+w-1;
-    y0 -= y0 % 2;
-    uint32_t *ptr = (uint32_t*)&data[y0*stride+x0*4];
-    while (y0 <= y1) {
-        int x = x0;
-        int index = ftoi(((double)y0/(double)total_h) * (GRADIENT_TABLE_SIZE - 1));
-        index = CLAMP (index, 0, GRADIENT_TABLE_SIZE - 1);
-        while (x++ <= x1) {
-            *ptr++ = colors[index];
-        }
-        y0 += 2;
-        ptr += stride/2-w;
+spectrum_gradient_set (cairo_t *cr, float width, float height)
+{
+    if (CONFIG_NUM_COLORS > 1) {
+        cairo_pattern_t *pat = spectrum_gradient_pattern_get (cr, width, height);
+        cairo_set_source (cr, pat);
+        cairo_pattern_destroy (pat);
     }
-}
-
-void
-_draw_bar_gradient_bar_mode_h (uint32_t *colors, uint8_t *data, int stride, int x0, int y0, int w, int h, int total_w) {
-    int y1 = y0+h-1;
-    int x1 = x0+w-1;
-    y0 -= y0 % 2;
-    uint32_t *ptr = (uint32_t*)&data[y0*stride+x0*4];
-    while (y0 <= y1) {
-        int x = x0;
-        while (x++ <= x1) {
-            int index = ftoi(((double)x/(double)total_w) * (GRADIENT_TABLE_SIZE - 1));
-            index = CLAMP (index, 0, GRADIENT_TABLE_SIZE - 1);
-            *ptr++ = colors[index];
-        }
-        y0 += 2;
-        ptr += stride/2-w;
+    else {
+        gdk_cairo_set_source_color (cr, &CONFIG_GRADIENT_COLORS[0]);
     }
 }
 
