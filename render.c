@@ -116,33 +116,6 @@ spectrum_get_value (w_spectrum_t *w, int band, int num_bands)
 }
 
 static void
-spectrum_bands_fill (w_spectrum_t *w, int num_bands)
-{
-    int num_low_res_values = w->low_res_end;
-
-    int *x = w->low_res_indices;
-    double y[num_low_res_values];
-
-    for (int i = 0; i < num_low_res_values; i++) {
-        y[i] = w->data->spectrum[w->keys[x[i]]];
-    }
-
-    // Interpolate
-    for (int i = 0; i < num_low_res_values; i++) {
-        int i_end = MIN (i + 1, num_low_res_values - 1);
-        for (int xx = x[i]; xx < x[i_end]; xx++) {
-            double mu = (double)(xx - x[i]) / (double)(x[i_end] - x[i]);
-            w->bars[xx] = hermite_interpolate (y, mu, i-1, 0.35, 0);
-        }
-    }
-
-    // Fill the rest of the bands which don't need to be interpolated
-    for (int i = num_low_res_values + 1; i < num_bands; ++i) {
-        w->bars[i] = spectrum_get_value (w, i, num_bands);
-    }
-}
-
-static void
 spectrum_band_gravity (double *peaks, double *bars, double *velocities, double d_velocity, int *delays, int delay, int band)
 {
     if (peaks[band] <= bars[band]) {
@@ -162,6 +135,51 @@ spectrum_band_gravity (double *peaks, double *bars, double *velocities, double d
 }
 
 static void
+spectrum_band_set (w_spectrum_t *w, double amplitude, int band)
+{
+    w->bars[band] = CLAMP (amplitude + CONFIG_DB_RANGE, 0, CONFIG_DB_RANGE);
+
+    if (CONFIG_ENABLE_PEAKS && CONFIG_PEAK_FALLOFF != -1) {
+        // peak gravity
+        spectrum_band_gravity (w->peaks, w->bars, w->v_peaks, w->peak_velocity, w->delay_peaks, w->peak_delay, band);
+    }
+    if (!CONFIG_DRAW_STYLE && CONFIG_BAR_FALLOFF != -1) {
+        // bar gravity
+        spectrum_band_gravity (w->bars_peak, w->bars, w->v_bars, w->bar_velocity, w->delay_bars, w->bar_delay, band);
+        w->bars[band] = w->bars_peak[band];
+    }
+}
+
+static void
+spectrum_bands_fill (w_spectrum_t *w, int num_bands)
+{
+    const int num_low_res_values = w->low_res_end;
+
+    int *x = w->low_res_indices;
+    double y[num_low_res_values];
+
+    for (int i = 0; i < num_low_res_values; i++) {
+        y[i] = w->data->spectrum[w->keys[x[i]]];
+    }
+
+    // Interpolate
+    for (int i = 0; i < num_low_res_values; i++) {
+        int i_end = MIN (i + 1, num_low_res_values - 1);
+        for (int xx = x[i]; xx < x[i_end]; xx++) {
+            const double mu = (double)(xx - x[i]) / (double)(x[i_end] - x[i]);
+            const double amp = hermite_interpolate (y, mu, i-1, 0.35, 0);
+            spectrum_band_set (w, amp, xx);
+        }
+    }
+
+    // Fill the rest of the bands which don't need to be interpolated
+    for (int i = num_low_res_values + 1; i < num_bands; ++i) {
+        const double amp = spectrum_get_value (w, i, num_bands);
+        spectrum_band_set (w, amp, i);
+    }
+}
+
+static void
 spectrum_render (w_spectrum_t *w, int height, int num_bands)
 {
     if (w->playback_status != STOPPED) {
@@ -169,30 +187,7 @@ spectrum_render (w_spectrum_t *w, int height, int num_bands)
             spectrum_remove_refresh_interval (w);
         }
         do_fft (w);
-
-        const int peak_delay = ftoi (CONFIG_PEAK_DELAY/CONFIG_REFRESH_INTERVAL);
-        const int bars_delay = ftoi (CONFIG_BAR_DELAY/CONFIG_REFRESH_INTERVAL);
-
-        const double peak_gravity = CONFIG_PEAK_FALLOFF/(1000.0 * 1000.0);
-        const double peak_velocity = peak_gravity * CONFIG_REFRESH_INTERVAL;
-
-        const double bars_gravity = CONFIG_BAR_FALLOFF/(1000.0 * 1000.0);
-        const double bars_velocity = bars_gravity * CONFIG_REFRESH_INTERVAL;
-
         spectrum_bands_fill (w, num_bands);
-        for (int i = 0; i < num_bands; i++) {
-            w->bars[i] = CLAMP (w->bars[i] + CONFIG_DB_RANGE, 0, CONFIG_DB_RANGE);
-
-            if (CONFIG_ENABLE_PEAKS && CONFIG_PEAK_FALLOFF != -1) {
-                // peak gravity
-                spectrum_band_gravity (w->peaks, w->bars, w->v_peaks, peak_velocity, w->delay_peaks, peak_delay, i);
-            }
-            if (!CONFIG_DRAW_STYLE && CONFIG_BAR_FALLOFF != -1) {
-                // bar gravity
-                spectrum_band_gravity (w->bars_peak, w->bars, w->v_bars, bars_velocity, w->delay_bars, bars_delay, i);
-                w->bars[i] = w->bars_peak[i];
-            }
-        }
     }
     else if (w->playback_status == STOPPED) {
         spectrum_remove_refresh_interval (w);

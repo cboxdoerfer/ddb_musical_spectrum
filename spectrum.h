@@ -81,6 +81,7 @@ typedef struct {
     int low_res_indices_num;
     int need_redraw;
     enum PLAYBACK_STATUS playback_status;
+
     double bars[MAX_BARS + 1];
     double bars_peak[MAX_BARS + 1];
     double peaks[MAX_BARS + 1];
@@ -88,6 +89,10 @@ typedef struct {
     int delay_peaks[MAX_BARS + 1];
     double v_bars[MAX_BARS + 1];
     double v_peaks[MAX_BARS + 1];
+    int bar_delay;
+    int peak_delay;
+    double bar_velocity;
+    double peak_velocity;
     struct spectrum_data_t *data;
     struct motion_context motion_ctx;
     intptr_t mutex;

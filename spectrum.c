@@ -83,6 +83,15 @@ on_config_changed (gpointer user_data, uintptr_t ctx)
     create_window_table (w);
     create_frequency_table (w);
 
+    w->peak_delay = ftoi (CONFIG_PEAK_DELAY/CONFIG_REFRESH_INTERVAL);
+    w->bar_delay = ftoi (CONFIG_BAR_DELAY/CONFIG_REFRESH_INTERVAL);
+
+    const double peak_gravity = CONFIG_PEAK_FALLOFF/(1000.0 * 1000.0);
+    w->peak_velocity = peak_gravity * CONFIG_REFRESH_INTERVAL;
+
+    const double bars_gravity = CONFIG_BAR_FALLOFF/(1000.0 * 1000.0);
+    w->bar_velocity = bars_gravity * CONFIG_REFRESH_INTERVAL;
+
     w->p_r2c = fftw_plan_dft_r2c_1d (CLAMP (CONFIG_FFT_SIZE, 512, MAX_FFT_SIZE), w->fft_in, w->fft_out, FFTW_ESTIMATE);
     //memset (w->spectrum_data, 0, sizeof (double) * MAX_FFT_SIZE);
     deadbeef->mutex_unlock (w->mutex);
@@ -316,6 +325,15 @@ spectrum_init (w_spectrum_t *w) {
 
     create_window_table (s);
     create_frequency_table (s);
+
+    w->peak_delay = ftoi (CONFIG_PEAK_DELAY/CONFIG_REFRESH_INTERVAL);
+    w->bar_delay = ftoi (CONFIG_BAR_DELAY/CONFIG_REFRESH_INTERVAL);
+
+    const double peak_gravity = CONFIG_PEAK_FALLOFF/(1000.0 * 1000.0);
+    w->peak_velocity = peak_gravity * CONFIG_REFRESH_INTERVAL;
+
+    const double bars_gravity = CONFIG_BAR_FALLOFF/(1000.0 * 1000.0);
+    w->bar_velocity = bars_gravity * CONFIG_REFRESH_INTERVAL;
 
     if (deadbeef->get_output ()->state () == OUTPUT_STATE_PLAYING) {
         w->playback_status = PLAYING;
