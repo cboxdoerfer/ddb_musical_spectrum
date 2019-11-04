@@ -116,7 +116,13 @@ spectrum_get_value (w_spectrum_t *w, int band, int num_bands)
 }
 
 static void
-spectrum_band_gravity (double *peaks, double *bars, double *velocities, double d_velocity, int *delays, int delay, int band)
+spectrum_band_gravity (double *peaks,
+                       double *bars,
+                       double *velocities,
+                       double d_velocity,
+                       int *delays,
+                       int delay,
+                       int band)
 {
     if (peaks[band] <= bars[band]) {
         peaks[band] = bars[band];
