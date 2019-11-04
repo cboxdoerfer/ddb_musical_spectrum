@@ -143,6 +143,25 @@ spectrum_bands_fill (w_spectrum_t *w, int num_bands)
 }
 
 static void
+spectrum_band_gravity (double *peaks, double *bars, double *velocities, double d_velocity, int *delays, int delay, int band)
+{
+    if (peaks[band] <= bars[band]) {
+        peaks[band] = bars[band];
+        delays[band] = delay;
+        velocities[band] = 0;
+    }
+    else {
+        velocities[band] += d_velocity;
+        if (delays[band] < 0) {
+            peaks[band] -= velocities[band] * CONFIG_REFRESH_INTERVAL;
+        }
+        else {
+            delays[band]--;
+        }
+    }
+}
+
+static void
 spectrum_render (w_spectrum_t *w, int height, int num_bands)
 {
     if (w->playback_status != STOPPED) {
@@ -165,37 +184,12 @@ spectrum_render (w_spectrum_t *w, int height, int num_bands)
             w->bars[i] = CLAMP (w->bars[i] + CONFIG_DB_RANGE, 0, CONFIG_DB_RANGE);
 
             if (CONFIG_ENABLE_PEAKS && CONFIG_PEAK_FALLOFF != -1) {
-                if (w->peaks[i] <= w->bars[i]) {
-                    w->peaks[i] = w->bars[i];
-                    w->delay_peaks[i] = peak_delay;
-                    w->v_peaks[i] = 0;
-                }
-                else {
-                    w->v_peaks[i] += peak_velocity;
-                    if (w->delay_peaks[i] < 0) {
-                        w->peaks[i] -= w->v_peaks[i] * CONFIG_REFRESH_INTERVAL;
-                    }
-                    else {
-                        w->delay_peaks[i]--;
-                    }
-                }
+                // peak gravity
+                spectrum_band_gravity (w->peaks, w->bars, w->v_peaks, peak_velocity, w->delay_peaks, peak_delay, i);
             }
-
             if (!CONFIG_DRAW_STYLE && CONFIG_BAR_FALLOFF != -1) {
-                if (w->bars_peak[i] <= w->bars[i]) {
-                    w->bars_peak[i] = w->bars[i];
-                    w->delay_bars[i] = bars_delay;
-                    w->v_bars[i] = 0;
-                }
-                else {
-                    w->v_bars[i] += bars_velocity;
-                    if (w->delay_bars[i] < 0) {
-                        w->bars_peak[i] -= w->v_bars[i] * CONFIG_REFRESH_INTERVAL;
-                    }
-                    else {
-                        w->delay_bars[i]--;
-                    }
-                }
+                // bar gravity
+                spectrum_band_gravity (w->bars_peak, w->bars, w->v_bars, bars_velocity, w->delay_bars, bars_delay, i);
                 w->bars[i] = w->bars_peak[i];
             }
         }

@@ -26,13 +26,10 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
-#include <fcntl.h>
 #include <gtk/gtk.h>
 
 #include "fastftoi.h"
 #include "draw_utils.h"
-#include "spectrum.h"
-#include "utils.h"
 #include "config.h"
 
 static cairo_pattern_t *

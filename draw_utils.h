@@ -25,9 +25,7 @@
 #ifndef DRAW_UTILS_HEADER
 #define DRAW_UTILS_HEADER
 
-#include <sys/types.h>
-#include <stdint.h>
-#include <stdlib.h>
+#include <cairo.h>
 
 void
 spectrum_gradient_set (cairo_t *cr, float width, float height);

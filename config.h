@@ -25,6 +25,8 @@
 #ifndef CONFIG_HEADER
 #define CONFIG_HEADER
 
+#include <stdint.h>
+
 #define     CONFSTR_MS_REFRESH_INTERVAL       "musical_spectrum.refresh_interval"
 #define     CONFSTR_MS_FFT_SIZE               "musical_spectrum.fft_size"
 #define     CONFSTR_MS_DB_RANGE               "musical_spectrum.db_range"
