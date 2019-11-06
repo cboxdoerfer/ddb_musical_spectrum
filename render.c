@@ -102,14 +102,14 @@ spectrum_get_value (w_spectrum_t *w, int band, int num_bands)
     int k1 = w->keys[band];
     int k2 = w->keys[MIN(band + 1, num_bands -1)];
 
-    int start = floorf((float)(k1 - k0)/2 + k0);
+    int start = ceilf((float)(k1 - k0)/2 + k0);
     int end = ceilf((float)(k2 - k1)/2 + k1);
 
     if (start >= end) {
         return w->data->spectrum[end];
     }
     double value = -DBL_MAX;
-    for (int i = k1; i < k2; i++) {
+    for (int i = start; i < end; i++) {
         value = MAX (w->data->spectrum[i] ,value);
     }
     return value;
@@ -168,10 +168,11 @@ spectrum_bands_fill (w_spectrum_t *w, int num_bands)
         y[i] = w->data->spectrum[w->keys[x[i]]];
     }
 
+    int xx = 0;
     // Interpolate
     for (int i = 0; i < num_low_res_values; i++) {
         int i_end = MIN (i + 1, num_low_res_values - 1);
-        for (int xx = x[i]; xx < x[i_end]; xx++) {
+        for (xx = x[i]; xx < x[i_end]; xx++) {
             const double mu = (double)(xx - x[i]) / (double)(x[i_end] - x[i]);
             const double amp = hermite_interpolate (y, mu, i-1, 0.35, 0);
             spectrum_band_set (w, amp, xx);
@@ -179,7 +180,7 @@ spectrum_bands_fill (w_spectrum_t *w, int num_bands)
     }
 
     // Fill the rest of the bands which don't need to be interpolated
-    for (int i = num_low_res_values + 1; i < num_bands; ++i) {
+    for (int i = xx; i < num_bands; ++i) {
         const double amp = spectrum_get_value (w, i, num_bands);
         spectrum_band_set (w, amp, i);
     }
