@@ -28,6 +28,6 @@
 #include <cairo.h>
 
 void
-spectrum_gradient_set (cairo_t *cr, float width, float height);
+spectrum_gradient_set (cairo_t *cr, double width, double height);
 
 #endif

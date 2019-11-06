@@ -39,7 +39,12 @@ int CONFIG_REFRESH_INTERVAL = 25;
 int CONFIG_DB_RANGE = 70;
 int CONFIG_ENABLE_PEAKS = 1;
 int CONFIG_ENABLE_HGRID = 1;
+int CONFIG_ENABLE_BOTTOM_LABELS = 1;
+int CONFIG_ENABLE_TOP_LABELS = 0;
+int CONFIG_ENABLE_LEFT_LABELS = 0;
+int CONFIG_ENABLE_RIGHT_LABELS = 1;
 int CONFIG_ENABLE_VGRID = 1;
+int CONFIG_ENABLE_TOOLTIP = 1;
 int CONFIG_ENABLE_OCTAVE_GRID = 0;
 int CONFIG_ALIGNMENT = 0;
 int CONFIG_ENABLE_BAR_MODE = 0;
@@ -62,10 +67,6 @@ GdkColor CONFIG_COLOR_VGRID;
 GdkColor CONFIG_COLOR_HGRID;
 GdkColor CONFIG_COLOR_OCTAVE_GRID;
 GdkColor CONFIG_GRADIENT_COLORS[MAX_NUM_COLORS];
-uint32_t CONFIG_COLOR_BG32 = 0xff222222;
-uint32_t CONFIG_COLOR_VGRID32 = 0xff000000;
-uint32_t CONFIG_COLOR_HGRID32 = 0xff666666;
-uint32_t CONFIG_COLOR_OCTAVE_GRID32 = 0xff666666;
 
 int FFT_INDEX = 4;
 
@@ -82,10 +83,15 @@ save_config (void)
     deadbeef->conf_set_int (CONFSTR_MS_REFRESH_INTERVAL,            CONFIG_REFRESH_INTERVAL);
     deadbeef->conf_set_int (CONFSTR_MS_FFT_SIZE,                    CONFIG_FFT_SIZE);
     deadbeef->conf_set_int (CONFSTR_MS_DB_RANGE,                    CONFIG_DB_RANGE);
+    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_TOP_LABELS,           CONFIG_ENABLE_TOP_LABELS);
+    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_BOTTOM_LABELS,        CONFIG_ENABLE_BOTTOM_LABELS);
+    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_LEFT_LABELS,          CONFIG_ENABLE_LEFT_LABELS);
+    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_RIGHT_LABELS,         CONFIG_ENABLE_RIGHT_LABELS);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_PEAKS,                CONFIG_ENABLE_PEAKS);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_HGRID,                CONFIG_ENABLE_HGRID);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_VGRID,                CONFIG_ENABLE_VGRID);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_OCTAVE_GRID,          CONFIG_ENABLE_OCTAVE_GRID);
+    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_TOOLTIP,          CONFIG_ENABLE_TOOLTIP);
     deadbeef->conf_set_int (CONFSTR_MS_ALIGNMENT,                   CONFIG_ALIGNMENT);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_BAR_MODE,             CONFIG_ENABLE_BAR_MODE);
     deadbeef->conf_set_int (CONFSTR_MS_DISPLAY_OCTAVES,             CONFIG_DISPLAY_OCTAVES);
@@ -128,9 +134,14 @@ load_config (void)
     FFT_INDEX = log2 (CONFIG_FFT_SIZE) - 9;
     CONFIG_DB_RANGE = deadbeef->conf_get_int (CONFSTR_MS_DB_RANGE,                          70);
     CONFIG_ENABLE_PEAKS = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_PEAKS,                   1);
+    CONFIG_ENABLE_TOP_LABELS = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_TOP_LABELS,         0);
+    CONFIG_ENABLE_BOTTOM_LABELS = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_BOTTOM_LABELS,   1);
+    CONFIG_ENABLE_LEFT_LABELS = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_LEFT_LABELS,       0);
+    CONFIG_ENABLE_RIGHT_LABELS = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_RIGHT_LABELS,     1);
     CONFIG_ENABLE_HGRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_HGRID,                   1);
     CONFIG_ENABLE_VGRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_VGRID,                   1);
     CONFIG_ENABLE_OCTAVE_GRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_OCTAVE_GRID,       0);
+    CONFIG_ENABLE_TOOLTIP = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_TOOLTIP,       1);
     CONFIG_ALIGNMENT = deadbeef->conf_get_int (CONFSTR_MS_ALIGNMENT,                      LEFT);
     CONFIG_ENABLE_BAR_MODE = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_BAR_MODE,             0);
     CONFIG_DISPLAY_OCTAVES = deadbeef->conf_get_int (CONFSTR_MS_DISPLAY_OCTAVES,             0);
@@ -166,21 +177,6 @@ load_config (void)
         sscanf (color, "%hd %hd %hd", &(CONFIG_GRADIENT_COLORS[i].red), &(CONFIG_GRADIENT_COLORS[i].green), &(CONFIG_GRADIENT_COLORS[i].blue));
     }
 
-    float scale = 255/65535.f;
-    CONFIG_COLOR_BG32 = ((uint32_t)(CONFIG_COLOR_BG.red * scale) & 0xFF) << 16 |
-                        ((uint32_t)(CONFIG_COLOR_BG.green * scale) & 0xFF) << 8 |
-                        ((uint32_t)(CONFIG_COLOR_BG.blue * scale) & 0xFF) << 0;
-
-    CONFIG_COLOR_VGRID32 = ((uint32_t)(CONFIG_COLOR_VGRID.red * scale) & 0xFF) << 16 |
-                        ((uint32_t)(CONFIG_COLOR_VGRID.green * scale) & 0xFF) << 8 |
-                        ((uint32_t)(CONFIG_COLOR_VGRID.blue * scale) & 0xFF) << 0;
-
-    CONFIG_COLOR_HGRID32 = ((uint32_t)(CONFIG_COLOR_HGRID.red * scale) & 0xFF) << 16 |
-                        ((uint32_t)(CONFIG_COLOR_HGRID.green * scale) & 0xFF) << 8 |
-                        ((uint32_t)(CONFIG_COLOR_HGRID.blue * scale) & 0xFF) << 0;
-    CONFIG_COLOR_OCTAVE_GRID32 = ((uint32_t)(CONFIG_COLOR_OCTAVE_GRID.red * scale) & 0xFF) << 16 |
-                        ((uint32_t)(CONFIG_COLOR_OCTAVE_GRID.green * scale) & 0xFF) << 8 |
-                        ((uint32_t)(CONFIG_COLOR_OCTAVE_GRID.blue * scale) & 0xFF) << 0;
     deadbeef->conf_unlock ();
 }
 

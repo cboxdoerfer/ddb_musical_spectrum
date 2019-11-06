@@ -47,14 +47,27 @@ enum PLAYBACK_STATUS { STOPPED = 0, PLAYING = 1, PAUSED = 2 };
 struct motion_context {
     uint8_t entered;
     double x;
+    double y;
 };
 
 struct spectrum_data_t {
     int num_channels;
+    int num_samples;
     double *samples;
-    double *fft_in;
-    double *fft_out;
     double *spectrum;
+    double *window;
+    double *frequency;
+    int *keys;
+    int *low_res_indices;
+
+    int low_res_end;
+    int low_res_indices_num;
+
+    double *fft_in;
+    fftw_complex *fft_out;
+    fftw_plan fft_plan;
+
+    intptr_t mutex;
 };
 
 typedef struct {
@@ -63,39 +76,13 @@ typedef struct {
     GtkWidget *popup;
     GtkWidget *popup_item;
     guint drawtimer;
-    // spectrum_data: holds amplitude of frequency bins (result of fft)
-    double *spectrum_data;
-    double window[MAX_FFT_SIZE];
-    // keys: index of frequencies of musical notes (c0;d0;...;f10) in data
-    int keys[MAX_BARS + 1];
-    // freq: hold frequency values
-    float freq[MAX_BARS + 1];
-    uint32_t colors[GRADIENT_TABLE_SIZE];
     int samplerate;
-    double *samples;
-    double *fft_in;
-    fftw_complex *fft_out;
-    fftw_plan p_r2c;
-    int low_res_end;
-    int low_res_indices[MAX_BARS + 1];
-    int low_res_indices_num;
     int need_redraw;
     enum PLAYBACK_STATUS playback_status;
 
-    double bars[MAX_BARS + 1];
-    double bars_peak[MAX_BARS + 1];
-    double peaks[MAX_BARS + 1];
-    int delay_bars[MAX_BARS + 1];
-    int delay_peaks[MAX_BARS + 1];
-    double v_bars[MAX_BARS + 1];
-    double v_peaks[MAX_BARS + 1];
-    int bar_delay;
-    int peak_delay;
-    double bar_velocity;
-    double peak_velocity;
     struct spectrum_data_t *data;
+    struct spectrum_render_t *render;
     struct motion_context motion_ctx;
-    intptr_t mutex;
 } w_spectrum_t;
 
 gboolean

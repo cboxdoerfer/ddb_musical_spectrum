@@ -11,7 +11,6 @@
 
 #include "render.h"
 #include "support.h"
-#include "fastftoi.h"
 #include "config.h"
 #include "config_dialog.h"
 #include "utils.h"
@@ -20,20 +19,6 @@
 
 DB_functions_t *deadbeef = NULL;
 ddb_gtkui_t *gtkui_plugin = NULL;
-
-static char *notes[] =
-                {"C0","C#0","D0","D#0","E0","F0","F#0","G0","G#0","A0","A#0","B0",
-                 "C1","C#1","D1","D#1","E1","F1","F#1","G1","G#1","A1","A#1","B1",
-                 "C2","C#2","D2","D#2","E2","F2","F#2","G2","G#2","A2","A#2","B2",
-                 "C3","C#3","D3","D#3","E3","F3","F#3","G3","G#3","A3","A#3","B3",
-                 "C4","C#4","D4","D#4","E4","F4","F#4","G4","G#4","A4","A#4","B4",
-                 "C5","C#5","D5","D#5","E5","F5","F#5","G5","G#5","A5","A#5","B5",
-                 "C6","C#6","D6","D#6","E6","F6","F#6","G6","G#6","A6","A#6","B6",
-                 "C7","C#7","D7","D#7","E7","F7","F#7","G7","G#7","A7","A#7","B7",
-                 "C8","C#8","D8","D#8","E8","F8","F#8","G8","G#8","A8","A#8","B8",
-                 "C9","C#9","D9","D#9","E9","F9","F#9","G9","G#9","A9","A#9","B9",
-                 "C10","C#10","D10","D#10","E10","F10","F#10","G10","G#10","A10","A#10","B10"
-                };
 
 static int
 get_align_pos (int width, int bands, int bar_width)
@@ -71,30 +56,20 @@ spectrum_redraw_cb (void *data) {
 }
 
 static int
-on_config_changed (gpointer user_data, uintptr_t ctx)
+on_config_changed (gpointer user_data)
 {
     w_spectrum_t *w = user_data;
     w->need_redraw = 1;
     load_config ();
-    deadbeef->mutex_lock (w->mutex);
-    if (w->p_r2c) {
-        fftw_destroy_plan (w->p_r2c);
+    deadbeef->mutex_lock (w->data->mutex);
+    if (w->data->fft_plan) {
+        fftw_destroy_plan (w->data->fft_plan);
     }
-    create_window_table (w);
-    create_frequency_table (w);
+    window_table_fill (w->data->window);
+    update_gravity (w->render);
 
-    w->peak_delay = ftoi (CONFIG_PEAK_DELAY/CONFIG_REFRESH_INTERVAL);
-    w->bar_delay = ftoi (CONFIG_BAR_DELAY/CONFIG_REFRESH_INTERVAL);
-
-    const double peak_gravity = CONFIG_PEAK_FALLOFF/(1000.0 * 1000.0);
-    w->peak_velocity = peak_gravity * CONFIG_REFRESH_INTERVAL;
-
-    const double bars_gravity = CONFIG_BAR_FALLOFF/(1000.0 * 1000.0);
-    w->bar_velocity = bars_gravity * CONFIG_REFRESH_INTERVAL;
-
-    w->p_r2c = fftw_plan_dft_r2c_1d (CLAMP (CONFIG_FFT_SIZE, 512, MAX_FFT_SIZE), w->fft_in, w->fft_out, FFTW_ESTIMATE);
-    //memset (w->spectrum_data, 0, sizeof (double) * MAX_FFT_SIZE);
-    deadbeef->mutex_unlock (w->mutex);
+    w->data->fft_plan = fftw_plan_dft_r2c_1d (CLAMP (CONFIG_FFT_SIZE, 512, MAX_FFT_SIZE), w->data->fft_in, w->data->fft_out, FFTW_ESTIMATE);
+    deadbeef->mutex_unlock (w->data->mutex);
     g_idle_add (spectrum_redraw_cb, w);
     return 0;
 }
@@ -104,35 +79,15 @@ static void
 w_spectrum_destroy (ddb_gtkui_widget_t *w) {
     w_spectrum_t *s = (w_spectrum_t *)w;
     deadbeef->vis_waveform_unlisten (w);
-    if (s->spectrum_data) {
-        free (s->spectrum_data);
-        s->spectrum_data = NULL;
-    }
-    if (s->samples) {
-        free (s->samples);
-        s->samples = NULL;
-    }
-    if (s->p_r2c) {
-        fftw_destroy_plan (s->p_r2c);
-    }
-    if (s->fft_in) {
-        fftw_free (s->fft_in);
-        s->fft_in = NULL;
-    }
-    if (s->fft_out) {
-        fftw_free (s->fft_out);
-        s->fft_out = NULL;
-    }
     if (s->data) {
         spectrum_data_free (s->data);
+    }
+    if (s->render) {
+        spectrum_render_free (s->render);
     }
     if (s->drawtimer) {
         g_source_remove (s->drawtimer);
         s->drawtimer = 0;
-    }
-    if (s->mutex) {
-        deadbeef->mutex_free (s->mutex);
-        s->mutex = 0;
     }
 }
 
@@ -174,14 +129,6 @@ spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
     for (int i = 0; i < sz; i++, sample_index++) {
         w->data->samples[sample_index] = data->data[i];
     }
-    //int data_index = 0;
-    //int sample_index = n;
-    //for (int i = 0; i < sz; i++, sample_index += channels, data_index += channels) {
-    //    for (int j = 0; j < channels; j++) {
-    //        //w->samples[sample_index] = MAX (w->samples[sample_index], data->data[data_index + j]);
-    //        w->data->samples[sample_index + j] = data->data[data_index + j];
-    //    }
-    //}
 }
 
 static gboolean
@@ -234,32 +181,13 @@ spectrum_motion_notify_event (GtkWidget *widget, GdkEventMotion *event, gpointer
     w_spectrum_t *w = user_data;
     GtkAllocation a;
     gtk_widget_get_allocation (widget, &a);
-    if (CONFIG_DISPLAY_OCTAVES) {
+
+    if (CONFIG_ENABLE_TOOLTIP) {
+        w->motion_ctx.x = event->x - 1;
+        w->motion_ctx.y = event->y - 1;
         gtk_widget_queue_draw (w->drawarea);
     }
 
-    w->motion_ctx.x = event->x - 1;
-
-    const int num_bars = get_num_bars ();
-    int barw;
-
-    if (CONFIG_GAPS && !CONFIG_DRAW_STYLE) {
-        barw = CLAMP (a.width / num_bars, 2, 20);
-    }
-    else {
-        barw = CLAMP (a.width / num_bars, 2, 20) - 1;
-    }
-
-    const int left = get_align_pos (a.width, num_bars, barw);
-
-    if (event->x > left && event->x < left + barw * num_bars) {
-        const int pos = CLAMP ((int)((event->x-1-left)/barw),0,num_bars-1);
-        const int npos = ftoi( pos * 132 / num_bars );
-        char tooltip_text[20];
-        snprintf (tooltip_text, sizeof (tooltip_text), "%5.0f Hz (%s)", w->freq[pos], notes[npos]);
-        gtk_widget_set_tooltip_text (widget, tooltip_text);
-        return TRUE;
-    }
     return FALSE;
 }
 
@@ -275,12 +203,12 @@ spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32
             w->samplerate = deadbeef->get_output ()->fmt.samplerate;
             if (w->samplerate == 0) w->samplerate = 44100;
             if (samplerate_temp != w->samplerate) {
-                create_frequency_table (w);
+                w->need_redraw = 1;
             }
             spectrum_set_refresh_interval (w, CONFIG_REFRESH_INTERVAL);
             break;
         case DB_EV_CONFIGCHANGED:
-            on_config_changed (w, ctx);
+            on_config_changed (w);
             if (deadbeef->get_output ()->state () == OUTPUT_STATE_PLAYING) {
                 spectrum_set_refresh_interval (w, CONFIG_REFRESH_INTERVAL);
             }
@@ -306,41 +234,21 @@ static void
 spectrum_init (w_spectrum_t *w) {
     w_spectrum_t *s = (w_spectrum_t *)w;
     load_config ();
-    deadbeef->mutex_lock (s->mutex);
-    s->samples = malloc (sizeof (double) * MAX_FFT_SIZE * 12);
-    memset (s->samples, 0, sizeof (double) * MAX_FFT_SIZE * 12);
-    s->spectrum_data = malloc (sizeof (double) * MAX_FFT_SIZE * 12);
-    memset (s->spectrum_data, 0, sizeof (double) * MAX_FFT_SIZE * 12);
-
-    s->fft_in = fftw_malloc (sizeof (double) * MAX_FFT_SIZE);
-    memset (s->fft_in, 0, sizeof (double) * MAX_FFT_SIZE);
-    s->fft_out = fftw_malloc (sizeof (fftw_complex) * MAX_FFT_SIZE);
-    memset (s->fft_out, 0, sizeof (double) * MAX_FFT_SIZE);
 
     s->data = spectrum_data_new ();
-    s->p_r2c = fftw_plan_dft_r2c_1d (CONFIG_FFT_SIZE, s->fft_in, s->fft_out, FFTW_ESTIMATE);
+    s->render = spectrum_render_new ();
 
     s->samplerate = deadbeef->get_output ()->fmt.samplerate;
     if (s->samplerate == 0) s->samplerate = 44100;
 
-    create_window_table (s);
-    create_frequency_table (s);
-
-    w->peak_delay = ftoi (CONFIG_PEAK_DELAY/CONFIG_REFRESH_INTERVAL);
-    w->bar_delay = ftoi (CONFIG_BAR_DELAY/CONFIG_REFRESH_INTERVAL);
-
-    const double peak_gravity = CONFIG_PEAK_FALLOFF/(1000.0 * 1000.0);
-    w->peak_velocity = peak_gravity * CONFIG_REFRESH_INTERVAL;
-
-    const double bars_gravity = CONFIG_BAR_FALLOFF/(1000.0 * 1000.0);
-    w->bar_velocity = bars_gravity * CONFIG_REFRESH_INTERVAL;
+    window_table_fill (s->data->window);
+    update_gravity (s->render);
 
     if (deadbeef->get_output ()->state () == OUTPUT_STATE_PLAYING) {
         w->playback_status = PLAYING;
         spectrum_set_refresh_interval (w, CONFIG_REFRESH_INTERVAL);
     }
     deadbeef->vis_waveform_listen (w, spectrum_wavedata_listener);
-    deadbeef->mutex_unlock (s->mutex);
     s->need_redraw = 1;
 }
 
@@ -356,7 +264,6 @@ w_musical_spectrum_create (void) {
     w->popup = gtk_menu_new ();
     gtk_menu_attach_to_widget (GTK_MENU (w->popup), w->base.widget, NULL);
     w->popup_item = gtk_menu_item_new_with_mnemonic ("Configure");
-    w->mutex = deadbeef->mutex_create ();
 
     gtk_container_add (GTK_CONTAINER (w->base.widget), w->drawarea);
     gtk_container_add (GTK_CONTAINER (w->popup), w->popup_item);

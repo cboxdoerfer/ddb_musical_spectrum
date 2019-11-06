@@ -26,26 +26,25 @@
 #define UTILS_HEADER
 
 #include <gtk/gtk.h>
+#include "render.h"
+#include "spectrum.h"
 
 extern int CALCULATED_NUM_BARS;
 
 void
-_memset_pattern (char *data, const void* pattern, size_t data_len, size_t pattern_len);
-
-void
-update_num_bars (gpointer user_data);
+update_num_bars (int width);
 
 int
 get_num_bars ();
 
 void
-create_gradient_table (uint32_t *dest, GdkColor *colors, int num_colors);
+update_gravity (struct spectrum_render_t *render);
 
 void
-create_window_table (gpointer user_data);
+window_table_fill (double *window);
 
 void
-create_frequency_table (gpointer user_data);
+create_frequency_table (struct spectrum_data_t *s, int samplerate, int width);
 
 double
 hermite_interpolate (double *y,

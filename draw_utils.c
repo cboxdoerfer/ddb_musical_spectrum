@@ -28,12 +28,11 @@
 #include <math.h>
 #include <gtk/gtk.h>
 
-#include "fastftoi.h"
 #include "draw_utils.h"
 #include "config.h"
 
 static cairo_pattern_t *
-spectrum_gradient_pattern_get (cairo_t *cr, float width, float height)
+spectrum_gradient_pattern_get (double width, double height)
 {
     cairo_pattern_t *pat = NULL;
 
@@ -44,24 +43,24 @@ spectrum_gradient_pattern_get (cairo_t *cr, float width, float height)
         pat = cairo_pattern_create_linear (0, 0, width, 0);
     }
 
-    const float step = 1.0/(CONFIG_NUM_COLORS - 1);
-    float grad_pos = 0;
+    const double step = 1.0/(CONFIG_NUM_COLORS - 1);
+    double grad_pos = 0;
     for (int i = 0; i < CONFIG_NUM_COLORS; i++) {
         cairo_pattern_add_color_stop_rgb (pat,
                                           grad_pos,
-                                          CONFIG_GRADIENT_COLORS[i].red/65535.f,
-                                          CONFIG_GRADIENT_COLORS[i].green/65535.f,
-                                          CONFIG_GRADIENT_COLORS[i].blue/65535.f);
+                                          CONFIG_GRADIENT_COLORS[i].red/65535.0,
+                                          CONFIG_GRADIENT_COLORS[i].green/65535.0,
+                                          CONFIG_GRADIENT_COLORS[i].blue/65535.0);
         grad_pos += step;
     }
     return pat;
 }
 
 void
-spectrum_gradient_set (cairo_t *cr, float width, float height)
+spectrum_gradient_set (cairo_t *cr, double width, double height)
 {
     if (CONFIG_NUM_COLORS > 1) {
-        cairo_pattern_t *pat = spectrum_gradient_pattern_get (cr, width, height);
+        cairo_pattern_t *pat = spectrum_gradient_pattern_get (width, height);
         cairo_set_source (cr, pat);
         cairo_pattern_destroy (pat);
     }
