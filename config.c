@@ -36,8 +36,12 @@
 #include "config.h"
 
 int CONFIG_REFRESH_INTERVAL = 25;
-int CONFIG_DB_RANGE = 70;
+int CONFIG_NOTE_MIN = 35;
+int CONFIG_NOTE_MAX = 107;
+int CONFIG_AMPLITUDE_MIN = -60;
+int CONFIG_AMPLITUDE_MAX = 0;
 int CONFIG_ENABLE_PEAKS = 1;
+int CONFIG_ENABLE_AMPLITUDES = 0;
 int CONFIG_ENABLE_HGRID = 1;
 int CONFIG_ENABLE_BOTTOM_LABELS = 1;
 int CONFIG_ENABLE_TOP_LABELS = 0;
@@ -45,7 +49,7 @@ int CONFIG_ENABLE_LEFT_LABELS = 0;
 int CONFIG_ENABLE_RIGHT_LABELS = 1;
 int CONFIG_ENABLE_VGRID = 1;
 int CONFIG_ENABLE_TOOLTIP = 1;
-int CONFIG_ENABLE_OCTAVE_GRID = 0;
+int CONFIG_ENABLE_OGRID = 0;
 int CONFIG_ALIGNMENT = 0;
 int CONFIG_ENABLE_BAR_MODE = 0;
 int CONFIG_DISPLAY_OCTAVES = 0;
@@ -60,12 +64,13 @@ int CONFIG_WINDOW = 0;
 int CONFIG_NUM_BARS = 132;
 int CONFIG_BAR_W = 0;
 int CONFIG_GAPS = TRUE;
-int CONFIG_DRAW_STYLE = FALSE;
+int CONFIG_DRAW_STYLE = 0;
 int CONFIG_FILL_SPECTRUM = TRUE;
 GdkColor CONFIG_COLOR_BG;
 GdkColor CONFIG_COLOR_VGRID;
 GdkColor CONFIG_COLOR_HGRID;
-GdkColor CONFIG_COLOR_OCTAVE_GRID;
+GdkColor CONFIG_COLOR_OGRID;
+GdkColor CONFIG_COLOR_TEXT;
 GdkColor CONFIG_GRADIENT_COLORS[MAX_NUM_COLORS];
 
 int FFT_INDEX = 4;
@@ -82,16 +87,20 @@ save_config (void)
 {
     deadbeef->conf_set_int (CONFSTR_MS_REFRESH_INTERVAL,            CONFIG_REFRESH_INTERVAL);
     deadbeef->conf_set_int (CONFSTR_MS_FFT_SIZE,                    CONFIG_FFT_SIZE);
-    deadbeef->conf_set_int (CONFSTR_MS_DB_RANGE,                    CONFIG_DB_RANGE);
+    deadbeef->conf_set_int (CONFSTR_MS_NOTE_MIN,                    CONFIG_NOTE_MIN);
+    deadbeef->conf_set_int (CONFSTR_MS_NOTE_MAX,                    CONFIG_NOTE_MAX);
+    deadbeef->conf_set_int (CONFSTR_MS_AMPLITUDE_MIN,               CONFIG_AMPLITUDE_MIN);
+    deadbeef->conf_set_int (CONFSTR_MS_AMPLITUDE_MAX,               CONFIG_AMPLITUDE_MAX);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_TOP_LABELS,           CONFIG_ENABLE_TOP_LABELS);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_BOTTOM_LABELS,        CONFIG_ENABLE_BOTTOM_LABELS);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_LEFT_LABELS,          CONFIG_ENABLE_LEFT_LABELS);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_RIGHT_LABELS,         CONFIG_ENABLE_RIGHT_LABELS);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_PEAKS,                CONFIG_ENABLE_PEAKS);
+    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_AMPLITUDES,           CONFIG_ENABLE_AMPLITUDES);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_HGRID,                CONFIG_ENABLE_HGRID);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_VGRID,                CONFIG_ENABLE_VGRID);
-    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_OCTAVE_GRID,          CONFIG_ENABLE_OCTAVE_GRID);
-    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_TOOLTIP,          CONFIG_ENABLE_TOOLTIP);
+    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_OGRID,                CONFIG_ENABLE_OGRID);
+    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_TOOLTIP,              CONFIG_ENABLE_TOOLTIP);
     deadbeef->conf_set_int (CONFSTR_MS_ALIGNMENT,                   CONFIG_ALIGNMENT);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_BAR_MODE,             CONFIG_ENABLE_BAR_MODE);
     deadbeef->conf_set_int (CONFSTR_MS_DISPLAY_OCTAVES,             CONFIG_DISPLAY_OCTAVES);
@@ -116,12 +125,14 @@ save_config (void)
     }
     snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_BG.red, CONFIG_COLOR_BG.green, CONFIG_COLOR_BG.blue);
     deadbeef->conf_set_str (CONFSTR_MS_COLOR_BG, color);
+    snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_TEXT.red, CONFIG_COLOR_TEXT.green, CONFIG_COLOR_TEXT.blue);
+    deadbeef->conf_set_str (CONFSTR_MS_COLOR_TEXT, color);
     snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_VGRID.red, CONFIG_COLOR_VGRID.green, CONFIG_COLOR_VGRID.blue);
     deadbeef->conf_set_str (CONFSTR_MS_COLOR_VGRID, color);
     snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_HGRID.red, CONFIG_COLOR_HGRID.green, CONFIG_COLOR_HGRID.blue);
     deadbeef->conf_set_str (CONFSTR_MS_COLOR_HGRID, color);
-    snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_OCTAVE_GRID.red, CONFIG_COLOR_OCTAVE_GRID.green, CONFIG_COLOR_OCTAVE_GRID.blue);
-    deadbeef->conf_set_str (CONFSTR_MS_COLOR_OCTAVE_GRID, color);
+    snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_OGRID.red, CONFIG_COLOR_OGRID.green, CONFIG_COLOR_OGRID.blue);
+    deadbeef->conf_set_str (CONFSTR_MS_COLOR_OGRID, color);
 }
 
 void
@@ -132,16 +143,20 @@ load_config (void)
     CONFIG_WINDOW = deadbeef->conf_get_int (CONFSTR_MS_WINDOW,                 BLACKMAN_HARRIS);
     CONFIG_FFT_SIZE = deadbeef->conf_get_int (CONFSTR_MS_FFT_SIZE,                        8192);
     FFT_INDEX = log2 (CONFIG_FFT_SIZE) - 9;
-    CONFIG_DB_RANGE = deadbeef->conf_get_int (CONFSTR_MS_DB_RANGE,                          70);
+    CONFIG_NOTE_MIN = deadbeef->conf_get_int (CONFSTR_MS_NOTE_MIN,                          35);
+    CONFIG_NOTE_MAX = deadbeef->conf_get_int (CONFSTR_MS_NOTE_MAX,                         107);
+    CONFIG_AMPLITUDE_MIN = deadbeef->conf_get_int (CONFSTR_MS_AMPLITUDE_MIN,               -60);
+    CONFIG_AMPLITUDE_MAX = deadbeef->conf_get_int (CONFSTR_MS_AMPLITUDE_MAX,                 0);
     CONFIG_ENABLE_PEAKS = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_PEAKS,                   1);
+    CONFIG_ENABLE_AMPLITUDES = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_AMPLITUDES,         0);
     CONFIG_ENABLE_TOP_LABELS = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_TOP_LABELS,         0);
     CONFIG_ENABLE_BOTTOM_LABELS = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_BOTTOM_LABELS,   1);
     CONFIG_ENABLE_LEFT_LABELS = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_LEFT_LABELS,       0);
     CONFIG_ENABLE_RIGHT_LABELS = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_RIGHT_LABELS,     1);
     CONFIG_ENABLE_HGRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_HGRID,                   1);
     CONFIG_ENABLE_VGRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_VGRID,                   1);
-    CONFIG_ENABLE_OCTAVE_GRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_OCTAVE_GRID,       0);
-    CONFIG_ENABLE_TOOLTIP = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_TOOLTIP,       1);
+    CONFIG_ENABLE_OGRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_OGRID,                   0);
+    CONFIG_ENABLE_TOOLTIP = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_TOOLTIP,               1);
     CONFIG_ALIGNMENT = deadbeef->conf_get_int (CONFSTR_MS_ALIGNMENT,                      LEFT);
     CONFIG_ENABLE_BAR_MODE = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_BAR_MODE,             0);
     CONFIG_DISPLAY_OCTAVES = deadbeef->conf_get_int (CONFSTR_MS_DISPLAY_OCTAVES,             0);
@@ -149,7 +164,7 @@ load_config (void)
     CONFIG_NUM_BARS = deadbeef->conf_get_int (CONFSTR_MS_NUM_BARS,                         132);
     CONFIG_BAR_W = deadbeef->conf_get_int (CONFSTR_MS_BAR_W,                                 0);
     CONFIG_GAPS = deadbeef->conf_get_int (CONFSTR_MS_GAPS,                                TRUE);
-    CONFIG_DRAW_STYLE = deadbeef->conf_get_int (CONFSTR_MS_DRAW_STYLE,                   FALSE);
+    CONFIG_DRAW_STYLE = deadbeef->conf_get_int (CONFSTR_MS_DRAW_STYLE,                       0);
     CONFIG_FILL_SPECTRUM = deadbeef->conf_get_int (CONFSTR_MS_FILL_SPECTRUM,              TRUE);
     CONFIG_BAR_FALLOFF = deadbeef->conf_get_int (CONFSTR_MS_BAR_FALLOFF,                    -1);
     CONFIG_BAR_DELAY = deadbeef->conf_get_int (CONFSTR_MS_BAR_DELAY,                         0);
@@ -160,12 +175,14 @@ load_config (void)
     char conf_str[100];
     color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_BG,                   "8738 8738 8738");
     sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_BG.red, &CONFIG_COLOR_BG.green, &CONFIG_COLOR_BG.blue);
+    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_TEXT,                 "65535 65535 65535");
+    sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_TEXT.red, &CONFIG_COLOR_TEXT.green, &CONFIG_COLOR_TEXT.blue);
     color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_VGRID,                         "0 0 0");
     sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_VGRID.red, &CONFIG_COLOR_VGRID.green, &CONFIG_COLOR_VGRID.blue);
     color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_HGRID,             "26214 26214 26214");
     sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_HGRID.red, &CONFIG_COLOR_HGRID.green, &CONFIG_COLOR_HGRID.blue);
-    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_OCTAVE_GRID,             "26214 26214 26214");
-    sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_OCTAVE_GRID.red, &CONFIG_COLOR_OCTAVE_GRID.green, &CONFIG_COLOR_OCTAVE_GRID.blue);
+    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_OGRID,             "26214 26214 26214");
+    sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_OGRID.red, &CONFIG_COLOR_OGRID.green, &CONFIG_COLOR_OGRID.blue);
     for (int i = 0; i < CONFIG_NUM_COLORS; i++) {
         snprintf (conf_str, sizeof (conf_str), "%s%02d", CONFSTR_MS_COLOR_GRADIENT, i);
         if (i < NUM_DEFAULT_COLORS) {
