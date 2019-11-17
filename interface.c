@@ -590,9 +590,9 @@ create_config_dialog (void)
 
   font_button = gtk_font_button_new ();
   gtk_widget_show (font_button);
-  gtk_box_pack_start (GTK_BOX (hbox4), font_button, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox4), font_button, TRUE, TRUE, 0);
 
-  hbox5 = gtk_hbox_new (FALSE, 0);
+  hbox5 = gtk_hbox_new (FALSE, 4);
   gtk_widget_show (hbox5);
   gtk_box_pack_start (GTK_BOX (vbox2), hbox5, FALSE, FALSE, 0);
 
@@ -602,7 +602,7 @@ create_config_dialog (void)
 
   alignment_combo = gtk_combo_box_text_new ();
   gtk_widget_show (alignment_combo);
-  gtk_box_pack_start (GTK_BOX (hbox5), alignment_combo, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox5), alignment_combo, TRUE, TRUE, 0);
 
   frame5 = gtk_frame_new (NULL);
   gtk_widget_show (frame5);
@@ -614,7 +614,7 @@ create_config_dialog (void)
   gtk_container_add (GTK_CONTAINER (frame5), alignment13);
   gtk_alignment_set_padding (GTK_ALIGNMENT (alignment13), 0, 0, 12, 0);
 
-  hbox6 = gtk_hbox_new (FALSE, 0);
+  hbox6 = gtk_hbox_new (FALSE, 4);
   gtk_widget_show (hbox6);
   gtk_frame_set_label_widget (GTK_FRAME (frame5), hbox6);
 
@@ -797,7 +797,7 @@ create_config_dialog (void)
   scrolledwindow1 = gtk_scrolled_window_new (NULL, NULL);
   gtk_widget_show (scrolledwindow1);
   gtk_box_pack_start (GTK_BOX (hbox7), scrolledwindow1, TRUE, TRUE, 0);
-  gtk_widget_set_size_request (scrolledwindow1, 60, 200);
+  gtk_widget_set_size_request (scrolledwindow1, 60, 220);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow1), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrolledwindow1), GTK_SHADOW_ETCHED_IN);
 
