@@ -11,6 +11,7 @@
 #define FONT_SIZE 9
 #define FONT_PADDING 8
 #define NUM_OCTAVES 11
+#define NUM_NOTES_FOR_OCTAVE 12
 
 void
 spectrum_data_free (struct spectrum_data_t *data)
@@ -324,13 +325,15 @@ spectrum_draw_cairo_static (w_spectrum_t *w, cairo_t *cr, int barw, int bands, c
 
     // draw octave grid
     if (CONFIG_ENABLE_OGRID) {
+        int offset = CONFIG_NOTE_MIN % NUM_NOTES_FOR_OCTAVE;
         gdk_cairo_set_source_color (cr, &CONFIG_COLOR_OGRID);
-        //const int spectrum_width = MIN (barw * bands, width);
-        const double octave_width = CLAMP ((r->width / NUM_OCTAVES), 1, r->width);
-        for (int i = 1; i < 11; i ++) {
-            cairo_move_to (cr, r->x + i * octave_width, r->y);
+        const double octave_width = barw * NUM_NOTES_FOR_OCTAVE;
+        double x = r->x + (NUM_NOTES_FOR_OCTAVE - offset) * barw;
+        while (x < r->x + r->width) {
+            cairo_move_to (cr, x, r->y);
             cairo_rel_line_to (cr, 0, r->height);
             cairo_stroke (cr);
+            x += octave_width;
         }
     }
 
@@ -391,26 +394,23 @@ spectrum_draw_cairo_bars (struct spectrum_render_t *render, cairo_t *cr, int ban
 
     double x = r->x;
     for (int i = CONFIG_NOTE_MIN; i <= CONFIG_NOTE_MAX; i++, x += barw) {
-        //if (render->bars[i] <= 0) {
-        //    continue;
-        //}
-        //const double y = r->y + CLAMP (r->height - (render->bars[i] * base_s), 0, r->height);
+        if (render->bars[i] <= 0) {
+            continue;
+        }
         cairo_rectangle (cr, x, r->y + r->height - 1, barw - 1, - render->bars[i] * base_s);
     }
     cairo_fill (cr);
 
-    return;
-
     // draw peaks
     if (CONFIG_ENABLE_PEAKS && CONFIG_PEAK_FALLOFF >= 0) {
-        for (gint i = 0; i < bands; i++) {
+        x = r->x;
+        for (gint i = CONFIG_NOTE_MIN; i < CONFIG_NOTE_MAX; i++, x += barw) {
             if (render->peaks[i] <= 0) {
                 continue;
             }
-            const double x = r->x + barw * i;
             const double y = r->y + CLAMP (r->height - render->peaks[i] * base_s, 0, r->height - 1);
             cairo_move_to (cr, x, y); 
-            cairo_rel_line_to (cr, barw, 0);
+            cairo_rel_line_to (cr, barw - 1, 0);
         }
         cairo_stroke (cr);
     }
@@ -515,9 +515,8 @@ spectrum_font_width_max (cairo_t *cr)
 }
 
 static void
-spectrum_draw_labels_freq (cairo_t *cr, cairo_rectangle_t *r)
+spectrum_draw_labels_freq (cairo_t *cr, cairo_rectangle_t *r, int barw)
 {
-    double size = 12;
     cairo_set_source_rgba (cr,
                            CONFIG_COLOR_TEXT.red/65535.0,
                            CONFIG_COLOR_TEXT.green/65535.0,
@@ -529,11 +528,17 @@ spectrum_draw_labels_freq (cairo_t *cr, cairo_rectangle_t *r)
     double y = r->y + y_offset;
     cairo_move_to (cr, r->x, y);
     char s[100] = "";
-    for (int i = 0; i < size; i++) {
-        snprintf (s, sizeof (s), "C%d", i);
+
+    int offset = CONFIG_NOTE_MIN % NUM_NOTES_FOR_OCTAVE;
+    const double octave_width = barw * NUM_NOTES_FOR_OCTAVE;
+    double x = r->x + (NUM_NOTES_FOR_OCTAVE - offset) * barw;
+    int i = CONFIG_NOTE_MIN / NUM_NOTES_FOR_OCTAVE;
+    while (x < r->x + r->width) {
+        snprintf (s, sizeof (s), "C%d", 1 + i++);
         double font_width = spectrum_font_width (cr, s);
-        cairo_move_to (cr, r->x + i/(double)(size - 1) * r->width - font_width/2, y);
+        cairo_move_to (cr, x - font_width/2, y);
         cairo_show_text (cr, s);
+        x += octave_width;
     }
 }
 
@@ -603,14 +608,14 @@ static void
 spectrum_draw_tooltip (struct spectrum_render_t *render, struct spectrum_data_t *data, cairo_t *cr, cairo_rectangle_t *r, struct motion_context *m_ctx, int bands, int barw)
 {
     cairo_save (cr);
-    int x_bar = m_ctx->x - r->x;
-    const int pos = (int)(x_bar/barw);
-    const int npos = (int)floor( pos * spectrum_notes_size / bands );
-    if (pos >= 0 && npos >= 0 && pos < bands && npos < bands) {
+
+    const int x_bar = m_ctx->x - r->x;
+    const int pos = (int)(x_bar/barw) + CONFIG_NOTE_MIN;
+    if (pos >= CONFIG_NOTE_MIN && pos <= CONFIG_NOTE_MAX) {
         char t1[100];
         char t2[100];
-        snprintf (t1, sizeof (t1), "%5.0f Hz (%s)", data->frequency[pos], spectrum_notes[npos]);
-        double amp = render->bars[pos];
+        snprintf (t1, sizeof (t1), "%5.0f Hz (%s)", data->frequency[pos], spectrum_notes[pos]);
+        const double amp = render->bars[pos];
         if (amp > -1000 && amp < 1000) {
             snprintf (t2, sizeof (t2), "%3.2f dB", render->bars[pos] + CONFIG_AMPLITUDE_MIN);
         }
@@ -626,18 +631,18 @@ spectrum_draw_tooltip (struct spectrum_render_t *render, struct spectrum_data_t 
         cairo_text_extents_t ex2 = {0};
         cairo_text_extents (cr, t2, &ex2);
 
-        int text_width = MAX (ex1.width - ex1.x_bearing, ex2.width - ex2.x_bearing);
-        int text_height = ex1.height + ex2.height;
+        const int text_width = MAX (ex1.width - ex1.x_bearing, ex2.width - ex2.x_bearing);
+        const int text_height = ex1.height + ex2.height;
 
         double x = m_ctx->x + 20;
         double y = m_ctx->y + 20;
         const double padding = 5;
-        double w_rect = text_width + 2 * padding + MAX (ex1.x_bearing, ex2.x_bearing);
-        double h_rect = text_height + 2 * padding + 6;
+        const double w_rect = text_width + 2 * padding + MAX (ex1.x_bearing, ex2.x_bearing);
+        const double h_rect = text_height + 2 * padding + 6;
         y = MIN (y, r->height);
         x = CLAMP (x,r->x, r->x + r->width - w_rect);
-        double x_rect = x - padding;
-        double y_rect = y - padding + ex1.y_bearing;
+        const double x_rect = x - padding;
+        const double y_rect = y - padding + ex1.y_bearing;
 
         cairo_set_source_rgba (cr, 0, 0, 0, 1);
         cairo_rectangle (cr, x_rect, y_rect, w_rect, h_rect);
@@ -741,7 +746,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     // draw background
     spectrum_background_draw (cr, width, height);
 
-    spectrum_render (w, r_ctx.num_bands);
+    spectrum_render (w, get_num_bars ());
 
     spectrum_draw_cairo_static (w, cr, r_ctx.band_width, r_ctx.num_bands, &r_ctx.r_s);
     if (!CONFIG_DRAW_STYLE) {
@@ -752,10 +757,10 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     }
 
     if (CONFIG_ENABLE_TOP_LABELS) {
-        spectrum_draw_labels_freq (cr, &r_ctx.r_t);
+        spectrum_draw_labels_freq (cr, &r_ctx.r_t, r_ctx.band_width);
     }
     if (CONFIG_ENABLE_BOTTOM_LABELS) {
-        spectrum_draw_labels_freq (cr, &r_ctx.r_b);
+        spectrum_draw_labels_freq (cr, &r_ctx.r_b, r_ctx.band_width);
     }
     if (CONFIG_ENABLE_LEFT_LABELS) {
         spectrum_draw_labels_db (cr, &r_ctx.r_l);
