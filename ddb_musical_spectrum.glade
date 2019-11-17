@@ -24,7 +24,7 @@
     <widget class="GtkVBox" id="dialog-vbox1">
       <property name="visible">True</property>
       <property name="homogeneous">False</property>
-      <property name="spacing">0</property>
+      <property name="spacing">4</property>
 
       <child internal-child="action_area">
 	<widget class="GtkHButtonBox" id="dialog-action_area1">
@@ -1549,8 +1549,8 @@
 			    </widget>
 			    <packing>
 			      <property name="padding">0</property>
-			      <property name="expand">False</property>
-			      <property name="fill">False</property>
+			      <property name="expand">True</property>
+			      <property name="fill">True</property>
 			    </packing>
 			  </child>
 			</widget>
@@ -1565,7 +1565,7 @@
 			<widget class="GtkHBox" id="hbox5">
 			  <property name="visible">True</property>
 			  <property name="homogeneous">False</property>
-			  <property name="spacing">0</property>
+			  <property name="spacing">4</property>
 
 			  <child>
 			    <widget class="GtkLabel" id="label30">
@@ -1600,8 +1600,8 @@
 			    </widget>
 			    <packing>
 			      <property name="padding">0</property>
-			      <property name="expand">False</property>
-			      <property name="fill">False</property>
+			      <property name="expand">True</property>
+			      <property name="fill">True</property>
 			    </packing>
 			  </child>
 			</widget>
@@ -1641,7 +1641,7 @@
 			    <widget class="GtkHBox" id="hbox6">
 			      <property name="visible">True</property>
 			      <property name="homogeneous">False</property>
-			      <property name="spacing">0</property>
+			      <property name="spacing">4</property>
 
 			      <child>
 				<widget class="GtkLabel" id="label31">
@@ -2234,7 +2234,7 @@
 			  <child>
 			    <widget class="GtkScrolledWindow" id="scrolledwindow1">
 			      <property name="width_request">60</property>
-			      <property name="height_request">200</property>
+			      <property name="height_request">220</property>
 			      <property name="visible">True</property>
 			      <property name="can_focus">True</property>
 			      <property name="hscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
