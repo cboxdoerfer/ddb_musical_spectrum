@@ -46,3 +46,12 @@ gint
 on_notes_max_spin_input                (GtkSpinButton   *spinbutton,
                                         gdouble *new_value,
                                         gpointer         user_data);
+
+gint
+on_fft_spin_input                      (GtkSpinButton   *spinbutton,
+                                        gdouble *new_value,
+                                        gpointer         user_data);
+
+gboolean
+on_fft_spin_output                     (GtkSpinButton   *spinbutton,
+                                        gpointer         user_data);

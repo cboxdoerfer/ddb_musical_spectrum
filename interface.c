@@ -70,7 +70,8 @@ create_config_dialog (void)
   GtkWidget *window_combo;
   GtkWidget *label3;
   GtkWidget *label4;
-  GtkWidget *fft_combo;
+  GObject *fft_spin_adj;
+  GtkWidget *fft_spin;
   GtkWidget *label100;
   GtkWidget *frame2;
   GtkWidget *alignment2;
@@ -376,11 +377,12 @@ create_config_dialog (void)
                     (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label4), 0, 0.5);
 
-  fft_combo = gtk_combo_box_text_new ();
-  gtk_widget_show (fft_combo);
-  gtk_table_attach (GTK_TABLE (table1), fft_combo, 1, 3, 4, 5,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (GTK_FILL), 0, 0);
+  fft_spin_adj = G_OBJECT(gtk_adjustment_new (0, 0, 6, 1, 10, 10));
+  fft_spin = gtk_spin_button_new (GTK_ADJUSTMENT (fft_spin_adj), 1, 0);
+  gtk_widget_show (fft_spin);
+  gtk_table_attach (GTK_TABLE (table1), fft_spin, 1, 3, 4, 5,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
 
   label100 = gtk_label_new (_("<b>Processing</b>"));
   gtk_widget_show (label100);
@@ -843,6 +845,12 @@ create_config_dialog (void)
   g_signal_connect ((gpointer) notes_max_spin, "input",
                     G_CALLBACK (on_notes_max_spin_input),
                     NULL);
+  g_signal_connect ((gpointer) fft_spin, "input",
+                    G_CALLBACK (on_fft_spin_input),
+                    NULL);
+  g_signal_connect ((gpointer) fft_spin, "output",
+                    G_CALLBACK (on_fft_spin_output),
+                    NULL);
   g_signal_connect ((gpointer) color_add, "clicked",
                     G_CALLBACK (on_color_add_clicked),
                     NULL);
@@ -891,7 +899,7 @@ create_config_dialog (void)
   GLADE_HOOKUP_OBJECT (config_dialog, window_combo, "window_combo");
   GLADE_HOOKUP_OBJECT (config_dialog, label3, "label3");
   GLADE_HOOKUP_OBJECT (config_dialog, label4, "label4");
-  GLADE_HOOKUP_OBJECT (config_dialog, fft_combo, "fft_combo");
+  GLADE_HOOKUP_OBJECT (config_dialog, fft_spin, "fft_spin");
   GLADE_HOOKUP_OBJECT (config_dialog, label100, "label100");
   GLADE_HOOKUP_OBJECT (config_dialog, frame2, "frame2");
   GLADE_HOOKUP_OBJECT (config_dialog, alignment2, "alignment2");
