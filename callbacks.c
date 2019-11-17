@@ -213,3 +213,35 @@ on_notes_max_spin_input                (GtkSpinButton   *spinbutton,
     return notes_set_input (spinbutton, new_value, value + 12, spectrum_notes_size - 1);
 }
 
+static const char *fft_sizes[] = {"512", "1024", "2048", "4096", "8192", "16384", "32768"};
+static size_t fft_sizes_size = 7;
+
+gint
+on_fft_spin_input                      (GtkSpinButton   *spinbutton,
+                                        gdouble *new_value,
+                                        gpointer         user_data)
+{
+    GtkAdjustment *adj = gtk_spin_button_get_adjustment (spinbutton);
+    int value = gtk_adjustment_get_value (adj);
+    if (0 <= value && value < fft_sizes_size) {
+        *new_value = value;
+        return TRUE;
+    }
+    return FALSE;
+}
+
+
+gboolean
+on_fft_spin_output                     (GtkSpinButton   *spinbutton,
+                                        gpointer         user_data)
+{
+    GtkAdjustment *adj = gtk_spin_button_get_adjustment (spinbutton);
+    int value = gtk_adjustment_get_value (adj);
+    if (value >= 0 && value < fft_sizes_size) {
+        gtk_entry_set_text (GTK_ENTRY (spinbutton), fft_sizes[value]);
+        return TRUE;
+    }
+
+    return FALSE;
+}
+

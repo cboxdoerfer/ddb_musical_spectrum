@@ -40,8 +40,6 @@
 #include "interface.h"
 #include "callbacks.h"
 
-static const char *fft_sizes[] = {"512", "1024", "2048", "4096", "8192", "16384", "32768"};
-static size_t fft_sizes_size = 7;
 static const char *window_functions[] = {"Blackmann-Harris", "Hanning"};
 static size_t window_functions_size = 2;
 static const char *alignment_title[] = {"Left", "Right", "Center"};
@@ -169,8 +167,8 @@ set_config_values (GtkWidget *w)
     set_spin_button (w, "amplitudes_htime_spin", CONFIG_BAR_DELAY);
     set_spin_button (w, "peaks_gravity_spin", CONFIG_PEAK_FALLOFF);
     set_spin_button (w, "amplitudes_gravity_spin", CONFIG_BAR_FALLOFF);
+    set_spin_button (w, "fft_spin", FFT_INDEX);
 
-    set_combo_box (w, "fft_combo", fft_sizes, fft_sizes_size, FFT_INDEX);
     set_combo_box (w, "window_combo", window_functions, window_functions_size, CONFIG_WINDOW);
     set_combo_box (w, "alignment_combo", alignment_title, alignment_title_size, CONFIG_ALIGNMENT);
     set_combo_box (w, "gradient_combo", grad_orientation, grad_orientation_size, CONFIG_GRADIENT_ORIENTATION);
@@ -213,9 +211,9 @@ get_config_values (GtkWidget *w)
     CONFIG_BAR_DELAY = get_spin_button (w, "amplitudes_htime_spin");
     CONFIG_PEAK_FALLOFF = get_spin_button (w, "peaks_gravity_spin");
     CONFIG_BAR_FALLOFF = get_spin_button (w, "amplitudes_gravity_spin");
-
-    FFT_INDEX = get_combo_box (w, "fft_combo");
+    FFT_INDEX = get_spin_button (w, "fft_spin");
     CONFIG_FFT_SIZE = (int)exp2 (FFT_INDEX + 9);
+
     CONFIG_WINDOW = get_combo_box (w, "window_combo");
     CONFIG_ALIGNMENT = get_combo_box (w, "alignment_combo");
     CONFIG_GRADIENT_ORIENTATION = get_combo_box (w, "gradient_combo");
