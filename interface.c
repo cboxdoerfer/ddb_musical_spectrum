@@ -208,14 +208,14 @@ create_config_dialog (void)
                     (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label2), 0, 0.5);
 
-  notes_min_spin_adj = G_OBJECT(gtk_adjustment_new (0, 0, 143, 1, 1, 1));
+  notes_min_spin_adj = G_OBJECT(gtk_adjustment_new (0, 0, 143, 1, 1, 0));
   notes_min_spin = gtk_spin_button_new (GTK_ADJUSTMENT (notes_min_spin_adj), 1, 0);
   gtk_widget_show (notes_min_spin);
   gtk_table_attach (GTK_TABLE (table1), notes_min_spin, 1, 2, 0, 1,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
 
-  notes_max_spin_adj = G_OBJECT(gtk_adjustment_new (0, 0, 143, 1, 1, 1));
+  notes_max_spin_adj = G_OBJECT(gtk_adjustment_new (0, 0, 144, 1, 1, 0));
   notes_max_spin = gtk_spin_button_new (GTK_ADJUSTMENT (notes_max_spin_adj), 1, 0);
   gtk_widget_show (notes_max_spin);
   gtk_table_attach (GTK_TABLE (table1), notes_max_spin, 3, 4, 0, 1,
@@ -228,7 +228,7 @@ create_config_dialog (void)
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (GTK_FILL), 0, 0);
 
-  amp_min_spin_adj = G_OBJECT(gtk_adjustment_new (-60, -120, -10, 10, 10, 10));
+  amp_min_spin_adj = G_OBJECT(gtk_adjustment_new (-60, -120, -10, 10, 10, 0));
   amp_min_spin = gtk_spin_button_new (GTK_ADJUSTMENT (amp_min_spin_adj), 10, 0);
   gtk_widget_show (amp_min_spin);
   gtk_box_pack_start (GTK_BOX (hbox2), amp_min_spin, TRUE, TRUE, 0);
@@ -245,7 +245,7 @@ create_config_dialog (void)
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (GTK_FILL), 0, 0);
 
-  amp_max_spin_adj = G_OBJECT(gtk_adjustment_new (0, 0, 120, 10, 10, 10));
+  amp_max_spin_adj = G_OBJECT(gtk_adjustment_new (0, 0, 120, 10, 10, 0));
   amp_max_spin = gtk_spin_button_new (GTK_ADJUSTMENT (amp_max_spin_adj), 10, 0);
   gtk_widget_show (amp_max_spin);
   gtk_box_pack_start (GTK_BOX (hbox3), amp_max_spin, TRUE, TRUE, 0);
@@ -284,7 +284,7 @@ create_config_dialog (void)
                     (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label10), 0, 0.5);
 
-  interval_spin_adj = G_OBJECT(gtk_adjustment_new (25, 8, 1000, 1, 10, 10));
+  interval_spin_adj = G_OBJECT(gtk_adjustment_new (25, 8, 1000, 1, 10, 0));
   interval_spin = gtk_spin_button_new (GTK_ADJUSTMENT (interval_spin_adj), 1, 0);
   gtk_widget_show (interval_spin);
   gtk_table_attach (GTK_TABLE (table1), interval_spin, 1, 3, 3, 4,
@@ -299,14 +299,14 @@ create_config_dialog (void)
   gtk_label_set_use_markup (GTK_LABEL (label11), TRUE);
   gtk_misc_set_alignment (GTK_MISC (label11), 0, 0.5);
 
-  pitch_spin_adj = G_OBJECT(gtk_adjustment_new (440, 0, 1000, 1, 10, 10));
+  pitch_spin_adj = G_OBJECT(gtk_adjustment_new (440, 0, 1000, 1, 10, 0));
   pitch_spin = gtk_spin_button_new (GTK_ADJUSTMENT (pitch_spin_adj), 1, 0);
   gtk_widget_show (pitch_spin);
   gtk_table_attach (GTK_TABLE (table1), pitch_spin, 1, 3, 5, 6,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
 
-  transpose_spin_adj = G_OBJECT(gtk_adjustment_new (0, 0, 100, 1, 10, 10));
+  transpose_spin_adj = G_OBJECT(gtk_adjustment_new (0, 0, 100, 1, 10, 0));
   transpose_spin = gtk_spin_button_new (GTK_ADJUSTMENT (transpose_spin_adj), 1, 0);
   gtk_widget_show (transpose_spin);
   gtk_table_attach (GTK_TABLE (table1), transpose_spin, 1, 3, 6, 7,
@@ -377,7 +377,7 @@ create_config_dialog (void)
                     (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label4), 0, 0.5);
 
-  fft_spin_adj = G_OBJECT(gtk_adjustment_new (0, 0, 6, 1, 1, 1));
+  fft_spin_adj = G_OBJECT(gtk_adjustment_new (0, 0, 6, 1, 1, 0));
   fft_spin = gtk_spin_button_new (GTK_ADJUSTMENT (fft_spin_adj), 1, 0);
   gtk_widget_show (fft_spin);
   gtk_table_attach (GTK_TABLE (table1), fft_spin, 1, 3, 4, 5,
