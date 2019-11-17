@@ -184,7 +184,7 @@
 			      <property name="update_policy">GTK_UPDATE_ALWAYS</property>
 			      <property name="snap_to_ticks">False</property>
 			      <property name="wrap">False</property>
-			      <property name="adjustment">0 0 143 1 10 10</property>
+			      <property name="adjustment">0 0 1000 1 10 10</property>
 			      <signal name="output" handler="on_notes_min_spin_output" last_modification_time="Sat, 16 Nov 2019 18:04:17 GMT"/>
 			      <signal name="input" handler="on_notes_min_spin_input" last_modification_time="Sat, 16 Nov 2019 18:53:16 GMT"/>
 			    </widget>
@@ -207,7 +207,7 @@
 			      <property name="update_policy">GTK_UPDATE_ALWAYS</property>
 			      <property name="snap_to_ticks">False</property>
 			      <property name="wrap">False</property>
-			      <property name="adjustment">107 0 143 1 10 10</property>
+			      <property name="adjustment">0 0 1000 1 10 10</property>
 			      <signal name="output" handler="on_notes_max_spin_output" last_modification_time="Sat, 16 Nov 2019 18:04:31 GMT"/>
 			      <signal name="input" handler="on_notes_max_spin_input" last_modification_time="Sat, 16 Nov 2019 18:53:25 GMT"/>
 			    </widget>

@@ -207,14 +207,14 @@ create_config_dialog (void)
                     (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label2), 0, 0.5);
 
-  notes_min_spin_adj = G_OBJECT(gtk_adjustment_new (0, 0, 143, 1, 10, 10));
+  notes_min_spin_adj = G_OBJECT(gtk_adjustment_new (0, 0, 1000, 1, 10, 10));
   notes_min_spin = gtk_spin_button_new (GTK_ADJUSTMENT (notes_min_spin_adj), 1, 0);
   gtk_widget_show (notes_min_spin);
   gtk_table_attach (GTK_TABLE (table1), notes_min_spin, 1, 2, 0, 1,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
 
-  notes_max_spin_adj = G_OBJECT(gtk_adjustment_new (107, 0, 143, 1, 10, 10));
+  notes_max_spin_adj = G_OBJECT(gtk_adjustment_new (0, 0, 1000, 1, 10, 10));
   notes_max_spin = gtk_spin_button_new (GTK_ADJUSTMENT (notes_max_spin_adj), 1, 0);
   gtk_widget_show (notes_max_spin);
   gtk_table_attach (GTK_TABLE (table1), notes_max_spin, 3, 4, 0, 1,
