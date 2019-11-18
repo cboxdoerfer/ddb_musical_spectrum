@@ -27,7 +27,9 @@ on_color_add_clicked                   (GtkButton       *button,
     if (!color_box) {
         return;
     }
+    GdkColor clr = {0};
     GtkWidget *color_button = gtk_color_button_new ();
+    gtk_color_button_set_color (GTK_COLOR_BUTTON (color_button), &clr);
     gtk_box_pack_start (color_box, color_button, TRUE, TRUE, 0);
     gtk_widget_show (color_button);
     gtk_widget_set_size_request (color_button, -1, 30);
