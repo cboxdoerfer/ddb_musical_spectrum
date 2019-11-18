@@ -2218,7 +2218,6 @@
 				    <widget class="GtkDrawingArea" id="gradient_preview">
 				      <property name="width_request">20</property>
 				      <property name="visible">True</property>
-				      <signal name="expose_event" handler="on_gradient_preview_expose_event" last_modification_time="Thu, 14 Nov 2019 10:25:44 GMT"/>
 				    </widget>
 				  </child>
 				</widget>
