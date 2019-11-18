@@ -28,7 +28,7 @@
 #include "config.h"
 
 static cairo_pattern_t *
-spectrum_gradient_pattern_get (GList *colors, double width, double height)
+spectrum_gradient_pattern_get (GList *colors, int num_colors, double width, double height)
 {
     cairo_pattern_t *pat = NULL;
 
@@ -39,8 +39,7 @@ spectrum_gradient_pattern_get (GList *colors, double width, double height)
         pat = cairo_pattern_create_linear (0, 0, width, 0);
     }
 
-    const int n = g_list_length (colors);
-    const double step = 1.0/(n - 1);
+    const double step = 1.0/(num_colors - 1);
     double grad_pos = 0;
     for (GList *c = colors; c != NULL; c= c->next) {
         GdkColor *color = c->data;
@@ -57,8 +56,9 @@ spectrum_gradient_pattern_get (GList *colors, double width, double height)
 void
 spectrum_gradient_set (cairo_t *cr, GList *colors, double width, double height)
 {
-    if (g_list_length (colors) > 1) {
-        cairo_pattern_t *pat = spectrum_gradient_pattern_get (colors, width, height);
+    int num_colors = g_list_length (colors);
+    if (num_colors > 1) {
+        cairo_pattern_t *pat = spectrum_gradient_pattern_get (colors, num_colors, width, height);
         cairo_set_source (cr, pat);
         cairo_pattern_destroy (pat);
     }
