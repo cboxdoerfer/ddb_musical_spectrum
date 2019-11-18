@@ -316,28 +316,29 @@ spectrum_draw_cairo_static (w_spectrum_t *w, cairo_t *cr, int barw, int bands, c
     cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
     cairo_set_line_width (cr, 1);
 
-    if (!CONFIG_DRAW_STYLE && CONFIG_ENABLE_VGRID && CONFIG_GAPS) {
-        const int num_lines = MIN ((int)(r->width/barw), bands);
-        gdk_cairo_set_source_color (cr, &CONFIG_COLOR_VGRID);
-        for (int i = 0; i <= num_lines; i++) {
-            cairo_move_to (cr, r->x + barw * i, r->y);
-            cairo_rel_line_to (cr, 0, r->height);
-        }
-        cairo_stroke (cr);
-    }
+    //if (!CONFIG_DRAW_STYLE && CONFIG_ENABLE_VGRID && CONFIG_GAPS) {
+    //    const int num_lines = MIN ((int)(r->width/barw), bands);
+    //    gdk_cairo_set_source_color (cr, &CONFIG_COLOR_VGRID);
+    //    for (int i = 0; i <= num_lines; i++) {
+    //        cairo_move_to (cr, r->x + barw * i, r->y);
+    //        cairo_rel_line_to (cr, 0, r->height);
+    //    }
+    //    cairo_stroke (cr);
+    //}
+
+    const double octave_width = barw * NUM_NOTES_FOR_OCTAVE;
 
     // draw octave grid
-    if (CONFIG_ENABLE_OGRID) {
+    if (CONFIG_ENABLE_VGRID) {
         int offset = CONFIG_NOTE_MIN % NUM_NOTES_FOR_OCTAVE;
-        gdk_cairo_set_source_color (cr, &CONFIG_COLOR_OGRID);
-        const double octave_width = barw * NUM_NOTES_FOR_OCTAVE;
+        gdk_cairo_set_source_color (cr, &CONFIG_COLOR_VGRID);
         double x = r->x + (NUM_NOTES_FOR_OCTAVE - offset) * barw;
         while (x < r->x + r->width) {
             cairo_move_to (cr, x, r->y);
             cairo_rel_line_to (cr, 0, r->height);
-            cairo_stroke (cr);
             x += octave_width;
         }
+        cairo_stroke (cr);
     }
 
     // draw horizontal grid
@@ -347,22 +348,24 @@ spectrum_draw_cairo_static (w_spectrum_t *w, cairo_t *cr, int barw, int bands, c
         for (int i = 0; i <= hgrid_num; i++) {
             cairo_move_to (cr, r->x - 3, r->y + floor (i/(double)hgrid_num * r->height));
             cairo_rel_line_to (cr, r->width + 6, 0);
-            cairo_stroke (cr);
         }
+        cairo_stroke (cr);
     }
 
     // draw octave grid on hover
-    if (CONFIG_DISPLAY_OCTAVES && w->motion_ctx.entered && bands >= NUM_OCTAVES) {
-        const int band_offset = ((((int)w->motion_ctx.x - (int)r->x) % ((barw * bands) / NUM_OCTAVES)))/barw;
-        cairo_set_source_rgba (cr, 1, 0, 0, 0.5);
-        for (int i = 1; i < bands; i++) {
-            const int octave_enabled  = i % (bands / NUM_OCTAVES) == band_offset ? 1 : 0;
-            const double x = r->x + barw * i;
-            if (octave_enabled) {
+    if (CONFIG_DISPLAY_OCTAVES && w->motion_ctx.entered) {
+        int dx = (int)(w->motion_ctx.x - r->x);
+        if (dx >= 0) {
+            int octave_offset = dx % (int)octave_width;
+            int band_offset = dx % (int)barw;
+            gdk_cairo_set_source_color (cr, &CONFIG_COLOR_OGRID);
+            double x = octave_offset + r->x - band_offset;
+            while (x < r->width + r->x) {
                 cairo_move_to (cr, x, r->y);
                 cairo_rel_line_to (cr, 0, r->height);
-                cairo_stroke (cr);
+                x += octave_width;
             }
+            cairo_stroke (cr);
         }
     }
 }
