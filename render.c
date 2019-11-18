@@ -353,14 +353,14 @@ spectrum_draw_cairo_static (w_spectrum_t *w, cairo_t *cr, int barw, int bands, c
     }
 
     // draw octave grid on hover
-    if (CONFIG_DISPLAY_OCTAVES && w->motion_ctx.entered) {
+    if (CONFIG_ENABLE_OGRID && w->motion_ctx.entered) {
         int dx = (int)(w->motion_ctx.x - r->x);
-        if (dx >= 0) {
+        if (dx >= 0 && dx <= r->width) {
             int octave_offset = dx % (int)octave_width;
             int band_offset = dx % (int)barw;
             gdk_cairo_set_source_color (cr, &CONFIG_COLOR_OGRID);
             double x = octave_offset + r->x - band_offset;
-            while (x < r->width + r->x) {
+            while (x <= r->width + r->x) {
                 cairo_move_to (cr, x, r->y);
                 cairo_rel_line_to (cr, 0, r->height);
                 x += octave_width;
