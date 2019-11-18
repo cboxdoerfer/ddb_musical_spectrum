@@ -299,7 +299,7 @@ create_config_dialog (void)
   gtk_label_set_use_markup (GTK_LABEL (label11), TRUE);
   gtk_misc_set_alignment (GTK_MISC (label11), 0, 0.5);
 
-  pitch_spin_adj = G_OBJECT(gtk_adjustment_new (440, 0, 1000, 1, 10, 0));
+  pitch_spin_adj = G_OBJECT(gtk_adjustment_new (440, 220, 880, 1, 10, 0));
   pitch_spin = gtk_spin_button_new (GTK_ADJUSTMENT (pitch_spin_adj), 1, 0);
   gtk_widget_show (pitch_spin);
   gtk_table_attach (GTK_TABLE (table1), pitch_spin, 1, 3, 5, 6,
