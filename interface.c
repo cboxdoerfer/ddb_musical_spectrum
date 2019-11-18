@@ -306,12 +306,13 @@ create_config_dialog (void)
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
 
-  transpose_spin_adj = G_OBJECT(gtk_adjustment_new (0, 0, 100, 1, 10, 0));
+  transpose_spin_adj = G_OBJECT(gtk_adjustment_new (0, -12, 12, 1, 2, 0));
   transpose_spin = gtk_spin_button_new (GTK_ADJUSTMENT (transpose_spin_adj), 1, 0);
   gtk_widget_show (transpose_spin);
   gtk_table_attach (GTK_TABLE (table1), transpose_spin, 1, 3, 6, 7,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
+  gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (transpose_spin), TRUE);
 
   label12 = gtk_label_new (_("<i>samples</i>"));
   gtk_widget_show (label12);
