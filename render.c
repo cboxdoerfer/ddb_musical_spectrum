@@ -307,9 +307,8 @@ spectrum_render (w_spectrum_t *w, int num_bands)
                 r->delay_peaks[i] = 0;
         }
     }
-
-
 }
+
 static void
 spectrum_draw_cairo_static (w_spectrum_t *w, cairo_t *cr, int barw, int bands, cairo_rectangle_t *r)
 {
@@ -663,7 +662,7 @@ spectrum_get_render_ctx (cairo_t *cr, double width, double height)
     const double label_width = font_width + FONT_PADDING;
 
     //const int num_bands = get_num_bars ();
-    const int num_bands = CONFIG_NOTE_MAX - CONFIG_NOTE_MIN;
+    const int num_bands = CONFIG_DRAW_STYLE ? CONFIG_NOTE_MAX - CONFIG_NOTE_MIN : width;
     double labels_width = (CONFIG_ENABLE_RIGHT_LABELS + CONFIG_ENABLE_LEFT_LABELS) * label_width;
     double labels_height = (CONFIG_ENABLE_TOP_LABELS + CONFIG_ENABLE_BOTTOM_LABELS) * label_height;
     int bar_width = spectrum_bar_width_get (num_bands, width - labels_width);
