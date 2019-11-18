@@ -18,47 +18,6 @@ on_color_changed (GtkWidget *widget, gpointer user_data)
     return TRUE;
 }
 
-gboolean
-on_gradient_preview_expose_event       (GtkWidget       *widget,
-                                        GdkEventExpose  *event,
-                                        gpointer         user_data)
-{
-    GtkWidget *dialog = gtk_widget_get_toplevel (GTK_WIDGET (widget));
-    GtkContainer *color_box = GTK_CONTAINER (lookup_widget (dialog, "color_box"));
-    GList *children = gtk_container_get_children (color_box);
-
-    if (!children) {
-        return FALSE;
-    }
-
-    GList *colors = NULL;
-    for (GList *c = children; c != NULL; c = c->next) {
-        GtkColorButton *button = GTK_COLOR_BUTTON (c->data);
-        GdkColor *clr = malloc (sizeof (GdkColor));
-        gtk_color_button_get_color (button, clr);
-        colors = g_list_append (colors, clr);
-    }
-    g_list_free (children);
-
-    if (!colors) {
-        return FALSE;
-    }
-
-    cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
-
-    GtkAllocation a;
-    gtk_widget_get_allocation (widget, &a);
-    spectrum_gradient_list_set (cr, colors, a.width, a.height);
-    cairo_rectangle (cr, 0, 0, a.width, a.height);
-    cairo_fill (cr);
-
-    cairo_destroy (cr);
-    g_list_free_full (colors, free);
-
-    return FALSE;
-}
-
-
 void
 on_color_add_clicked                   (GtkButton       *button,
                                         gpointer         user_data)

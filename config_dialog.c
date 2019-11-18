@@ -52,6 +52,61 @@ static size_t visual_mode_size = 3;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
+static void
+gradient_draw_generic_event (GtkWidget *widget, cairo_t *cr)
+{
+    GtkWidget *dialog = gtk_widget_get_toplevel (GTK_WIDGET (widget));
+    GtkContainer *color_box = GTK_CONTAINER (lookup_widget (dialog, "color_box"));
+    GList *children = gtk_container_get_children (color_box);
+
+    if (!children) {
+        return;
+    }
+
+    GList *colors = NULL;
+    for (GList *c = children; c != NULL; c = c->next) {
+        GtkColorButton *button = GTK_COLOR_BUTTON (c->data);
+        GdkColor *clr = malloc (sizeof (GdkColor));
+        gtk_color_button_get_color (button, clr);
+        colors = g_list_append (colors, clr);
+    }
+    g_list_free (children);
+
+    if (!colors) {
+        return;
+    }
+
+
+    GtkAllocation a;
+    gtk_widget_get_allocation (widget, &a);
+    spectrum_gradient_list_set (cr, colors, a.width, a.height);
+    cairo_rectangle (cr, 0, 0, a.width, a.height);
+    cairo_fill (cr);
+
+    g_list_free_full (colors, free);
+
+    return;
+}
+
+#if !GTK_CHECK_VERSION(3,0,0)
+static gboolean
+on_gradient_preview_expose_event (GtkWidget *widget, GdkEventExpose *event, gpointer user_data)
+{
+    cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+    gradient_draw_generic_event (widget, cr);
+    cairo_destroy (cr);
+
+    return FALSE;
+}
+#else
+static gboolean
+on_gradient_preview_draw_event (GtkWidget *widget, cairo_t *cr, gpointer user_data)
+{
+    gradient_draw_generic_event (widget, cr);
+    return FALSE;
+}
+#endif
+
 static int
 get_spin_button (GtkWidget *w, const char *w_name) {
     GtkSpinButton *button = GTK_SPIN_BUTTON (lookup_widget (w, w_name));
@@ -228,11 +283,23 @@ get_config_values (GtkWidget *w)
     get_gradient_colors (w);
 }
 
+static void
+set_callbacks (GtkWidget *w)
+{
+    GtkWidget *gradient_preview = GTK_WIDGET (lookup_widget (w, "gradient_preview"));
+#if !GTK_CHECK_VERSION(3,0,0)
+    g_signal_connect_after ((gpointer) gradient_preview, "expose_event", G_CALLBACK (on_gradient_preview_expose_event), NULL);
+#else
+    g_signal_connect_after ((gpointer) gradient_preview, "draw", G_CALLBACK (on_gradient_preview_draw_event), NULL);
+#endif
+}
+
 void
 on_button_config (GtkMenuItem *menuitem, gpointer user_data)
 {
     GtkWidget *dialog = create_config_dialog ();
 
+    set_callbacks (dialog);
     set_config_values (dialog);
 
     while (TRUE) {
