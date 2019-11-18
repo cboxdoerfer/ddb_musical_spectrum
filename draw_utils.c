@@ -28,7 +28,7 @@
 #include "config.h"
 
 static cairo_pattern_t *
-spectrum_gradient_pattern_list_get (GList *colors, double width, double height)
+spectrum_gradient_pattern_get (GList *colors, double width, double height)
 {
     cairo_pattern_t *pat = NULL;
 
@@ -55,10 +55,10 @@ spectrum_gradient_pattern_list_get (GList *colors, double width, double height)
 }
 
 void
-spectrum_gradient_list_set (cairo_t *cr, GList *colors, double width, double height)
+spectrum_gradient_set (cairo_t *cr, GList *colors, double width, double height)
 {
     if (g_list_length (colors) > 1) {
-        cairo_pattern_t *pat = spectrum_gradient_pattern_list_get (colors, width, height);
+        cairo_pattern_t *pat = spectrum_gradient_pattern_get (colors, width, height);
         cairo_set_source (cr, pat);
         cairo_pattern_destroy (pat);
     }
