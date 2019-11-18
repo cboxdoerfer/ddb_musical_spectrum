@@ -76,6 +76,10 @@ static void
 w_spectrum_destroy (ddb_gtkui_widget_t *w) {
     w_spectrum_t *s = (w_spectrum_t *)w;
     deadbeef->vis_waveform_unlisten (w);
+    if (CONFIG_GRADIENT_COLORS) {
+        g_list_free_full (CONFIG_GRADIENT_COLORS, g_free);
+        CONFIG_GRADIENT_COLORS = NULL;
+    }
     if (s->data) {
         spectrum_data_free (s->data);
     }
