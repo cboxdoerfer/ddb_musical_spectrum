@@ -29,6 +29,7 @@
 
 #define     CONFSTR_MS_REFRESH_INTERVAL       "musical_spectrum.refresh_interval"
 #define     CONFSTR_MS_FFT_SIZE               "musical_spectrum.fft_size"
+#define     CONFSTR_MS_TRANSPOSE              "musical_spectrum.transpose"
 #define     CONFSTR_MS_NOTE_MIN               "musical_spectrum.note_min"
 #define     CONFSTR_MS_NOTE_MAX               "musical_spectrum.note_max"
 #define     CONFSTR_MS_AMPLITUDE_MIN          "musical_spectrum.amplitude_min"
@@ -69,6 +70,7 @@
 #define NUM_DEFAULT_COLORS 6
 
 extern int CONFIG_REFRESH_INTERVAL;
+extern int CONFIG_TRANSPOSE;
 extern int CONFIG_NOTE_MIN;
 extern int CONFIG_NOTE_MAX;
 extern int CONFIG_AMPLITUDE_MIN;
