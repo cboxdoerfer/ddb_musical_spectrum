@@ -36,6 +36,7 @@
 #include "config.h"
 
 int CONFIG_REFRESH_INTERVAL = 25;
+int CONFIG_TRANSPOSE = 0;
 int CONFIG_NOTE_MIN = 35;
 int CONFIG_NOTE_MAX = 107;
 int CONFIG_AMPLITUDE_MIN = -60;
@@ -87,6 +88,7 @@ save_config (void)
 {
     deadbeef->conf_set_int (CONFSTR_MS_REFRESH_INTERVAL,            CONFIG_REFRESH_INTERVAL);
     deadbeef->conf_set_int (CONFSTR_MS_FFT_SIZE,                    CONFIG_FFT_SIZE);
+    deadbeef->conf_set_int (CONFSTR_MS_TRANSPOSE,                   CONFIG_TRANSPOSE);
     deadbeef->conf_set_int (CONFSTR_MS_NOTE_MIN,                    CONFIG_NOTE_MIN);
     deadbeef->conf_set_int (CONFSTR_MS_NOTE_MAX,                    CONFIG_NOTE_MAX);
     deadbeef->conf_set_int (CONFSTR_MS_AMPLITUDE_MIN,               CONFIG_AMPLITUDE_MIN);
@@ -144,6 +146,7 @@ load_config (void)
     CONFIG_FFT_SIZE = deadbeef->conf_get_int (CONFSTR_MS_FFT_SIZE,                        8192);
     CONFIG_FFT_SIZE = CLAMP (CONFIG_FFT_SIZE, 512, 32768);
     FFT_INDEX = log2 (CONFIG_FFT_SIZE) - 9;
+    CONFIG_TRANSPOSE = deadbeef->conf_get_int (CONFSTR_MS_TRANSPOSE,                         0);
     CONFIG_NOTE_MIN = deadbeef->conf_get_int (CONFSTR_MS_NOTE_MIN,                          35);
     CONFIG_NOTE_MAX = deadbeef->conf_get_int (CONFSTR_MS_NOTE_MAX,                         107);
     CONFIG_AMPLITUDE_MIN = deadbeef->conf_get_int (CONFSTR_MS_AMPLITUDE_MIN,               -60);

@@ -213,6 +213,7 @@ set_config_values (GtkWidget *w)
     set_toggle_button (w, "peaks_check", CONFIG_ENABLE_PEAKS);
     set_toggle_button (w, "amplitudes_check", CONFIG_ENABLE_AMPLITUDES);
 
+    set_spin_button (w, "transpose_spin", CONFIG_TRANSPOSE);
     set_spin_button (w, "notes_max_spin", CONFIG_NOTE_MAX);
     set_spin_button (w, "notes_min_spin", CONFIG_NOTE_MIN);
     set_spin_button (w, "amp_max_spin", CONFIG_AMPLITUDE_MAX);
@@ -257,6 +258,7 @@ get_config_values (GtkWidget *w)
     CONFIG_ENABLE_PEAKS = get_toggle_button (w, "peaks_check");
     CONFIG_ENABLE_AMPLITUDES = get_toggle_button (w, "amplitudes_check");
 
+    CONFIG_TRANSPOSE = get_spin_button (w, "transpose_spin");
     CONFIG_NOTE_MIN = get_spin_button (w, "notes_min_spin");
     CONFIG_NOTE_MAX = get_spin_button (w, "notes_max_spin");
     CONFIG_AMPLITUDE_MIN = get_spin_button (w, "amp_min_spin");
