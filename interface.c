@@ -860,9 +860,6 @@ create_config_dialog (void)
   g_signal_connect ((gpointer) color_reverse, "clicked",
                     G_CALLBACK (on_color_reverse_clicked),
                     NULL);
-  g_signal_connect ((gpointer) gradient_preview, "expose_event",
-                    G_CALLBACK (on_gradient_preview_expose_event),
-                    NULL);
 
   /* Store pointers to all widgets, for use by lookup_widget(). */
   GLADE_HOOKUP_OBJECT_NO_REF (config_dialog, config_dialog, "config_dialog");
