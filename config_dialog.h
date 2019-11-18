@@ -1,11 +1,7 @@
 /*
     Musical Spectrum plugin for the DeaDBeeF audio player
 
-    Copyright (C) 2015 Christian Boxdörfer <christian.boxdoerfer@posteo.de>
-
-    Based on DeaDBeeFs stock spectrum.
-    Copyright (c) 2009-2015 Alexey Yakovenko <waker@users.sourceforge.net>
-    Copyright (c) 2011 William Pitcock <nenolod@dereferenced.org>
+    Copyright (C) 2019 Christian Boxdörfer <christian.boxdoerfer@posteo.de>
 
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
@@ -22,10 +18,9 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef CONFIG_DIALOG_HEADER
-#define CONFIG_DIALOG_HEADER
+#pragma once
+
+#include <gtk/gtk.h>
 
 void
 on_button_config (GtkMenuItem *menuitem, gpointer user_data);
-
-#endif

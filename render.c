@@ -343,11 +343,7 @@ spectrum_draw_cairo_static (w_spectrum_t *w, cairo_t *cr, int barw, int bands, c
     // draw horizontal grid
     const int hgrid_num = get_db_range()/10;
     if (CONFIG_ENABLE_HGRID && r->height > 2*hgrid_num && r->width > 1) {
-        cairo_set_source_rgba (cr,
-                               CONFIG_COLOR_HGRID.red/65535.0,
-                               CONFIG_COLOR_HGRID.green/65535.0,
-                               CONFIG_COLOR_HGRID.blue/65535.0,
-                               1);
+        gdk_cairo_set_source_color (cr, &CONFIG_COLOR_HGRID);
         for (int i = 0; i <= hgrid_num; i++) {
             cairo_move_to (cr, r->x - 3, r->y + floor (i/(double)hgrid_num * r->height));
             cairo_rel_line_to (cr, r->width + 6, 0);
@@ -520,11 +516,7 @@ spectrum_font_width_max (cairo_t *cr)
 static void
 spectrum_draw_labels_freq (cairo_t *cr, cairo_rectangle_t *r, int barw)
 {
-    cairo_set_source_rgba (cr,
-                           CONFIG_COLOR_TEXT.red/65535.0,
-                           CONFIG_COLOR_TEXT.green/65535.0,
-                           CONFIG_COLOR_TEXT.blue/65535.0,
-                           1);
+    gdk_cairo_set_source_color (cr, &CONFIG_COLOR_TEXT);
     cairo_set_font_size (cr, FONT_SIZE);
     double f_h = spectrum_font_height_max (cr);
     double y_offset = 3 * f_h/2;
@@ -551,11 +543,7 @@ spectrum_draw_labels_db (cairo_t *cr, cairo_rectangle_t *r)
     const int hgrid_num = get_db_range ()/10;
     const double f_h = spectrum_font_height_max (cr);
     if (CONFIG_ENABLE_HGRID && r->height > 2*hgrid_num && r->width > 1) {
-        cairo_set_source_rgba (cr,
-                               CONFIG_COLOR_TEXT.red/65535.0,
-                               CONFIG_COLOR_TEXT.green/65535.0,
-                               CONFIG_COLOR_TEXT.blue/65535.0,
-                               1);
+        gdk_cairo_set_source_color (cr, &CONFIG_COLOR_TEXT);
         cairo_set_font_size (cr, FONT_SIZE);
         cairo_move_to (cr, r->x, r->y);
         char s[100] = "";
@@ -654,11 +642,7 @@ spectrum_draw_tooltip (struct spectrum_render_t *render, struct spectrum_data_t 
         cairo_set_line_width (cr, 2.0);
         cairo_rectangle (cr, x_rect, y_rect, w_rect, h_rect);
         cairo_stroke (cr);
-        cairo_set_source_rgba (cr,
-                               CONFIG_COLOR_TEXT.red/65535.0,
-                               CONFIG_COLOR_TEXT.green/65535.0,
-                               CONFIG_COLOR_TEXT.blue/65535.0,
-                               1);
+        gdk_cairo_set_source_color (cr, &CONFIG_COLOR_TEXT);
         cairo_move_to (cr, x - ex1.x_bearing, y);
         cairo_show_text (cr, t1);
         cairo_move_to (cr, x - ex2.x_bearing, y + ex1.height + 3);
