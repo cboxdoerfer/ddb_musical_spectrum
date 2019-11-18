@@ -75,7 +75,7 @@ gradient_draw_generic_event (GtkWidget *widget, cairo_t *cr)
 
     GtkAllocation a;
     gtk_widget_get_allocation (widget, &a);
-    spectrum_gradient_list_set (cr, colors, a.width, a.height);
+    spectrum_gradient_set (cr, colors, a.width, a.height);
     cairo_rectangle (cr, 0, 0, a.width, a.height);
     cairo_fill (cr);
 
