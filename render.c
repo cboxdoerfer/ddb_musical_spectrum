@@ -191,9 +191,9 @@ static inline double
 spectrum_get_value (w_spectrum_t *w, int band, int num_bands)
 {
     band = MAX (band, 1);
-    int k0 = w->data->keys[MAX(band - 1, w->data->low_res_end)];
-    int k1 = w->data->keys[band];
-    int k2 = w->data->keys[MIN(band + 1, num_bands -1)];
+    const int k0 = w->data->keys[MAX(band - 1, w->data->low_res_end)];
+    const int k1 = w->data->keys[band];
+    const int k2 = w->data->keys[MIN(band + 1, num_bands -1)];
 
     int start = ceil((double)(k1 - k0)/2 + k0);
     int end = ceil((double)(k2 - k1)/2 + k1);
