@@ -108,7 +108,7 @@ create_frequency_table (struct spectrum_data_t *s, int samplerate, int width)
     //const int num_bars = get_num_bars ();
     const int num_bars = get_num_bars ();
     const double ratio = num_bars / (double)spectrum_notes_size;
-    const double a4pos = 57.0 * ratio;
+    const double a4pos = (57.0 + CONFIG_TRANSPOSE) * ratio;
     const double octave = 12.0 * ratio;
 
     for (int i = 0; i < spectrum_notes_size; i++) {
