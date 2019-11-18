@@ -37,13 +37,11 @@ int CALCULATED_NUM_BARS = 136;
 int
 get_num_bars ()
 {
-    return spectrum_notes_size;
-
     if (CONFIG_DRAW_STYLE == 1 || CONFIG_BAR_W > 0) {
         return CALCULATED_NUM_BARS;
     }
 
-    return CONFIG_NUM_BARS;
+    return spectrum_notes_size;
 }
 
 void
@@ -107,7 +105,7 @@ create_frequency_table (struct spectrum_data_t *s, int samplerate, int width)
     const double a4pos = (57.0 + CONFIG_TRANSPOSE) * ratio;
     const double octave = 12.0 * ratio;
 
-    for (int i = 0; i < spectrum_notes_size; i++) {
+    for (int i = 0; i < num_bars; i++) {
         s->frequency[i] = (double)CONFIG_PITCH * pow (2.0, (double)(i-a4pos)/octave);
         s->keys[i] = (int)floor (s->frequency[i] * CONFIG_FFT_SIZE/(double)samplerate);
         if (i > 0 && s->keys[i-1] == s->keys[i])
@@ -117,7 +115,7 @@ create_frequency_table (struct spectrum_data_t *s, int samplerate, int width)
     int last_key = 0;
     s->low_res_indices_num = 1;
     s->low_res_indices[0] = 0;
-    for (int i = 0, j = 1; i < spectrum_notes_size; i++) {
+    for (int i = 0, j = 1; i < num_bars; i++) {
         int key = s->keys[i];
         if (key != last_key) {
             s->low_res_indices[j++] = i;
