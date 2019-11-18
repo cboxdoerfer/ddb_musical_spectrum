@@ -388,7 +388,7 @@ spectrum_draw_cairo_bars (struct spectrum_render_t *render, cairo_t *cr, int ban
 
     // draw bars
     cairo_set_line_width (cr, 1);
-    spectrum_gradient_set (cr, r->width, r->height);
+    spectrum_gradient_list_set (cr, CONFIG_GRADIENT_COLORS, r->width, r->height);
 
 
     double x = r->x;
@@ -434,7 +434,7 @@ spectrum_draw_cairo (struct spectrum_render_t *render, cairo_t *cr, int bands, c
     const int barw = CLAMP (floor(r->width / bands), 2, 20) - 1;
 
     // draw spectrum
-    spectrum_gradient_set (cr, r->width, r->height);
+    spectrum_gradient_list_set (cr, CONFIG_GRADIENT_COLORS, r->width, r->height);
 
     cairo_set_antialias (cr, CAIRO_ANTIALIAS_BEST);
     cairo_set_line_width (cr, 1);

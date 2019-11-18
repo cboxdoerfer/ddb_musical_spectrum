@@ -21,10 +21,8 @@
 #pragma once
 
 #include <cairo.h>
+#include <gdk/gdk.h>
 
 void
 spectrum_gradient_list_set (cairo_t *cr, GList *colors, double width, double height);
-
-void
-spectrum_gradient_set (cairo_t *cr, double width, double height);
 

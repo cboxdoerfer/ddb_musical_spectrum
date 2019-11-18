@@ -69,7 +69,7 @@ GdkColor CONFIG_COLOR_VGRID;
 GdkColor CONFIG_COLOR_HGRID;
 GdkColor CONFIG_COLOR_OGRID;
 GdkColor CONFIG_COLOR_TEXT;
-GdkColor CONFIG_GRADIENT_COLORS[MAX_NUM_COLORS];
+GList *CONFIG_GRADIENT_COLORS = NULL;
 
 int FFT_INDEX = 4;
 
@@ -118,8 +118,10 @@ save_config (void)
     deadbeef->conf_set_int (CONFSTR_MS_NUM_COLORS,                  CONFIG_NUM_COLORS);
     char color[100];
     char conf_str[100];
-    for (int i = 0; i < CONFIG_NUM_COLORS; i++) {
-        snprintf (color, sizeof (color), "%d %d %d", CONFIG_GRADIENT_COLORS[i].red, CONFIG_GRADIENT_COLORS[i].green, CONFIG_GRADIENT_COLORS[i].blue);
+    GList *c = CONFIG_GRADIENT_COLORS;
+    for (int i = 0; c != NULL; c = c->next, i++) {
+        GdkColor *clr = c->data;
+        snprintf (color, sizeof (color), "%d %d %d", clr->red, clr->green, clr->blue);
         snprintf (conf_str, sizeof (conf_str), "%s%02d", CONFSTR_MS_COLOR_GRADIENT, i);
         deadbeef->conf_set_str (conf_str, color);
     }
@@ -186,6 +188,9 @@ load_config (void)
     sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_HGRID.red, &CONFIG_COLOR_HGRID.green, &CONFIG_COLOR_HGRID.blue);
     color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_OGRID,             "26214 26214 26214");
     sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_OGRID.red, &CONFIG_COLOR_OGRID.green, &CONFIG_COLOR_OGRID.blue);
+
+    g_list_free_full (CONFIG_GRADIENT_COLORS, g_free);
+    CONFIG_GRADIENT_COLORS = NULL;
     for (int i = 0; i < CONFIG_NUM_COLORS; i++) {
         snprintf (conf_str, sizeof (conf_str), "%s%02d", CONFSTR_MS_COLOR_GRADIENT, i);
         if (i < NUM_DEFAULT_COLORS) {
@@ -194,7 +199,13 @@ load_config (void)
         else {
             color = deadbeef->conf_get_str_fast (conf_str, "0 0 0");
         }
-        sscanf (color, "%hd %hd %hd", &(CONFIG_GRADIENT_COLORS[i].red), &(CONFIG_GRADIENT_COLORS[i].green), &(CONFIG_GRADIENT_COLORS[i].blue));
+        int red, green, blue;
+        sscanf (color, "%d %d %d", &red, &green, &blue);
+        GdkColor *clr = g_new0 (GdkColor, 1);
+        clr->red = red;
+        clr->green = green;
+        clr->blue = blue;
+        CONFIG_GRADIENT_COLORS = g_list_append (CONFIG_GRADIENT_COLORS, clr);
     }
 
     deadbeef->conf_unlock ();

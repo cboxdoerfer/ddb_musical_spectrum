@@ -103,7 +103,7 @@ extern GdkColor CONFIG_COLOR_TEXT;
 extern GdkColor CONFIG_COLOR_VGRID;
 extern GdkColor CONFIG_COLOR_HGRID;
 extern GdkColor CONFIG_COLOR_OGRID;
-extern GdkColor CONFIG_GRADIENT_COLORS[];
+extern GList *CONFIG_GRADIENT_COLORS;
 
 extern int FFT_INDEX;
 

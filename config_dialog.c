@@ -161,13 +161,18 @@ set_color_button (GtkWidget *w, const char *w_name, GdkColor *color)
 static void
 get_gradient_colors (GtkWidget *w)
 {
+    g_list_free_full (CONFIG_GRADIENT_COLORS, g_free);
+    CONFIG_GRADIENT_COLORS = NULL;
+
     GtkContainer *color_box = GTK_CONTAINER (lookup_widget (w, "color_box"));
     GList *children = gtk_container_get_children (color_box);
 
     int i = 0;
     for (GList *c = children; c != NULL; c = c->next, i++) {
         GtkColorButton *button = GTK_COLOR_BUTTON (c->data);
-        gtk_color_button_get_color (button, &CONFIG_GRADIENT_COLORS[i]);
+        GdkColor *clr = g_new0 (GdkColor, 1);
+        gtk_color_button_get_color (button, clr);
+        CONFIG_GRADIENT_COLORS = g_list_append (CONFIG_GRADIENT_COLORS, clr);
     }
     CONFIG_NUM_COLORS = i;
     g_list_free (children);
@@ -178,13 +183,15 @@ set_gradient_colors (GtkWidget *w)
 {
     GtkContainer *color_box = GTK_CONTAINER (lookup_widget (w, "color_box"));
 
-    for (int i = 0; i < CONFIG_NUM_COLORS; i++) {
+    for (GList *c = CONFIG_GRADIENT_COLORS; c != NULL; c = c->next) {
+
         GtkWidget *button = gtk_color_button_new ();
         gtk_color_button_set_use_alpha (GTK_COLOR_BUTTON (button), TRUE);
         gtk_box_pack_start (GTK_BOX (color_box), button, TRUE, TRUE, 0);
         gtk_widget_show (button);
         gtk_widget_set_size_request (button, -1, 30);
-        gtk_color_button_set_color (GTK_COLOR_BUTTON (button), &(CONFIG_GRADIENT_COLORS[i]));
+        GdkColor *clr = c->data;
+        gtk_color_button_set_color (GTK_COLOR_BUTTON (button), clr);
         g_signal_connect_after ((gpointer)button, "color-set", G_CALLBACK (on_color_changed), w);
     }
 }
