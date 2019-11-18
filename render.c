@@ -310,7 +310,7 @@ spectrum_render (w_spectrum_t *w, int num_bands)
 }
 
 static void
-spectrum_draw_cairo_static (w_spectrum_t *w, cairo_t *cr, int barw, int bands, cairo_rectangle_t *r)
+spectrum_draw_cairo_static (w_spectrum_t *w, cairo_t *cr, double barw, int bands, cairo_rectangle_t *r)
 {
     cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
     cairo_set_line_width (cr, 1);
@@ -516,7 +516,7 @@ spectrum_font_width_max (cairo_t *cr)
 }
 
 static void
-spectrum_draw_labels_freq (cairo_t *cr, cairo_rectangle_t *r, int barw)
+spectrum_draw_labels_freq (cairo_t *cr, cairo_rectangle_t *r, double barw)
 {
     gdk_cairo_set_source_color (cr, &CONFIG_COLOR_TEXT);
     cairo_set_font_size (cr, FONT_SIZE);
@@ -575,7 +575,7 @@ spectrum_bar_width_get (int num_bands, double width)
 
 struct spectrum_render_ctx_t {
     int num_bands;
-    int band_width;
+    double band_width;
     // Spectrum rectangle
     cairo_rectangle_t r_s;
     // Left labels rectangle
@@ -598,7 +598,7 @@ spectrum_width_max (cairo_t *cr, double width)
 }
 
 static void
-spectrum_draw_tooltip (struct spectrum_render_t *render, struct spectrum_data_t *data, cairo_t *cr, cairo_rectangle_t *r, struct motion_context *m_ctx, int bands, int barw)
+spectrum_draw_tooltip (struct spectrum_render_t *render, struct spectrum_data_t *data, cairo_t *cr, cairo_rectangle_t *r, struct motion_context *m_ctx, int bands, double barw)
 {
     cairo_save (cr);
 
@@ -661,8 +661,7 @@ spectrum_get_render_ctx (cairo_t *cr, double width, double height)
     const double label_height = font_height + FONT_PADDING;
     const double label_width = font_width + FONT_PADDING;
 
-    //const int num_bands = get_num_bars ();
-    const int num_bands = CONFIG_DRAW_STYLE ? CONFIG_NOTE_MAX - CONFIG_NOTE_MIN : width;
+    const int num_bands = !CONFIG_DRAW_STYLE ? CONFIG_NOTE_MAX - CONFIG_NOTE_MIN : get_num_bars ();
     double labels_width = (CONFIG_ENABLE_RIGHT_LABELS + CONFIG_ENABLE_LEFT_LABELS) * label_width;
     double labels_height = (CONFIG_ENABLE_TOP_LABELS + CONFIG_ENABLE_BOTTOM_LABELS) * label_height;
     int bar_width = spectrum_bar_width_get (num_bands, width - labels_width);
@@ -704,13 +703,14 @@ spectrum_get_render_ctx (cairo_t *cr, double width, double height)
 
     struct spectrum_render_ctx_t r_ctx = {
         .num_bands = num_bands,
-        .band_width = bar_width,
+        .band_width = (double)spectrum_width / (double)(CONFIG_NOTE_MAX - CONFIG_NOTE_MIN),
         .r_r = r_r,
         .r_l = r_l,
         .r_t = r_t,
         .r_b = r_b,
         .r_s = r_s,
     };
+    printf("%f\n", r_ctx.band_width);
     return r_ctx;
 }
 
