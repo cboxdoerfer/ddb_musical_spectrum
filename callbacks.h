@@ -3,11 +3,6 @@
 gboolean
 on_color_changed (GtkWidget *widget, gpointer user_data);
 
-gboolean
-on_gradient_preview_expose_event       (GtkWidget       *widget,
-                                        GdkEventExpose  *event,
-                                        gpointer         user_data);
-
 void
 on_color_add_clicked                   (GtkButton       *button,
                                         gpointer         user_data);
