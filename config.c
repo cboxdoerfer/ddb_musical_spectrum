@@ -142,6 +142,7 @@ load_config (void)
     CONFIG_GRADIENT_ORIENTATION = deadbeef->conf_get_int (CONFSTR_MS_GRADIENT_ORIENTATION,   0);
     CONFIG_WINDOW = deadbeef->conf_get_int (CONFSTR_MS_WINDOW,                 BLACKMAN_HARRIS);
     CONFIG_FFT_SIZE = deadbeef->conf_get_int (CONFSTR_MS_FFT_SIZE,                        8192);
+    CONFIG_FFT_SIZE = CLAMP (CONFIG_FFT_SIZE, 512, 32768);
     FFT_INDEX = log2 (CONFIG_FFT_SIZE) - 9;
     CONFIG_NOTE_MIN = deadbeef->conf_get_int (CONFSTR_MS_NOTE_MIN,                          35);
     CONFIG_NOTE_MAX = deadbeef->conf_get_int (CONFSTR_MS_NOTE_MAX,                         107);
