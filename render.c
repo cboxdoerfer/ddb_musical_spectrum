@@ -710,7 +710,6 @@ spectrum_get_render_ctx (cairo_t *cr, double width, double height)
         .r_b = r_b,
         .r_s = r_s,
     };
-    printf("%f\n", r_ctx.band_width);
     return r_ctx;
 }
 
