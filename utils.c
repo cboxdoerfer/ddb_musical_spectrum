@@ -41,7 +41,7 @@ get_num_bars ()
         return CALCULATED_NUM_BARS;
     }
 
-    return spectrum_notes_size;
+    return 1 + CONFIG_NOTE_MAX - CONFIG_NOTE_MIN;
 }
 
 void
@@ -93,6 +93,12 @@ update_gravity (struct spectrum_render_t *render)
     render->bar_velocity = bars_gravity * CONFIG_REFRESH_INTERVAL;
 }
 
+int
+get_num_notes ()
+{
+    return CONFIG_NOTE_MAX - CONFIG_NOTE_MIN + 1;
+}
+
 void
 create_frequency_table (struct spectrum_data_t *s, int samplerate, int width)
 {
@@ -101,21 +107,22 @@ create_frequency_table (struct spectrum_data_t *s, int samplerate, int width)
     update_num_bars (width);
     //const int num_bars = get_num_bars ();
     const int num_bars = get_num_bars ();
-    const double ratio = num_bars / (double)spectrum_notes_size;
-    const double a4pos = (57.0 + CONFIG_TRANSPOSE) * ratio;
-    const double octave = 12.0 * ratio;
+    const double note_size = num_bars / (double)(get_num_notes ());
+    const double a4pos = (57.0 + 1 + CONFIG_TRANSPOSE - CONFIG_NOTE_MIN) * note_size;
+    const double octave = 12.0 * note_size;
 
     for (int i = 0; i < num_bars; i++) {
         s->frequency[i] = (double)CONFIG_PITCH * pow (2.0, (double)(i-a4pos)/octave);
         s->keys[i] = (int)floor (s->frequency[i] * CONFIG_FFT_SIZE/(double)samplerate);
-        if (i > 0 && s->keys[i-1] == s->keys[i])
+        if (i > 0 && s->keys[i] > 0 && s->keys[i-1] == s->keys[i]) {
             s->low_res_end = i;
+        }
     }
 
     int last_key = 0;
     s->low_res_indices_num = 1;
     s->low_res_indices[0] = 0;
-    for (int i = 0, j = 1; i < num_bars; i++) {
+    for (int i = 0, j = 1; i < s->low_res_end; i++) {
         int key = s->keys[i];
         if (key != last_key) {
             s->low_res_indices[j++] = i;

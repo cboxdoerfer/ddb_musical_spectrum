@@ -32,6 +32,9 @@ update_num_bars (int width);
 int
 get_num_bars ();
 
+int
+get_num_notes ();
+
 void
 update_gravity (struct spectrum_render_t *render);
 
