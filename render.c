@@ -257,19 +257,19 @@ spectrum_band_set (struct spectrum_render_t *r, int playback_status, double ampl
 static void
 spectrum_bands_fill (w_spectrum_t *w, int num_bands, int playback_status)
 {
-    const int num_low_res_values = w->data->low_res_end;
+    const int low_res_end = w->data->low_res_indices_num;
 
     int *x = w->data->low_res_indices;
-    double y[num_low_res_values];
+    double y[low_res_end];
 
-    for (int i = 0; i < num_low_res_values; i++) {
+    for (int i = 0; i < low_res_end; i++) {
         y[i] = w->data->spectrum[w->data->keys[x[i]]];
     }
 
     int xx = 0;
     // Interpolate
-    for (int i = 0; i < num_low_res_values; i++) {
-        int i_end = MIN (i + 1, num_low_res_values - 1);
+    for (int i = 0; i < low_res_end; i++) {
+        int i_end = MIN (i + 1, low_res_end - 1);
         for (xx = x[i]; xx < x[i_end]; xx++) {
             const double mu = (double)(xx - x[i]) / (double)(x[i_end] - x[i]);
             const double amp = hermite_interpolate (y, mu, i-1, 0.35, 0);
@@ -378,7 +378,7 @@ spectrum_background_draw (cairo_t *cr, double width, double height)
 }
 
 static void
-spectrum_draw_cairo_bars (struct spectrum_render_t *render, cairo_t *cr, int bands, int barw, cairo_rectangle_t *r)
+spectrum_draw_cairo_bars (struct spectrum_render_t *render, cairo_t *cr, int num_bars, int barw, cairo_rectangle_t *r)
 {
     if (r->height <= 0) {
         return;
@@ -394,7 +394,7 @@ spectrum_draw_cairo_bars (struct spectrum_render_t *render, cairo_t *cr, int ban
 
 
     double x = r->x;
-    for (int i = CONFIG_NOTE_MIN; i <= CONFIG_NOTE_MAX; i++, x += barw) {
+    for (int i = 0; i < num_bars; i++, x += barw) {
         if (render->bars[i] <= 0) {
             continue;
         }
@@ -405,7 +405,7 @@ spectrum_draw_cairo_bars (struct spectrum_render_t *render, cairo_t *cr, int ban
     // draw peaks
     if (CONFIG_ENABLE_PEAKS && CONFIG_PEAK_FALLOFF >= 0) {
         x = r->x;
-        for (gint i = CONFIG_NOTE_MIN; i < CONFIG_NOTE_MAX; i++, x += barw) {
+        for (gint i = 0; i < num_bars; i++, x += barw) {
             if (render->peaks[i] <= 0) {
                 continue;
             }
@@ -455,7 +455,7 @@ spectrum_draw_cairo (struct spectrum_render_t *render, cairo_t *cr, int bands, c
         py = y;
     }
     if (CONFIG_FILL_SPECTRUM) {
-        cairo_move_to (cr, r->x + barw * bands, 0);
+        cairo_line_to (cr, r->x + r->width, r->height);
         cairo_line_to (cr, r->x, r->height);
 
         cairo_close_path (cr);
@@ -661,7 +661,7 @@ spectrum_get_render_ctx (cairo_t *cr, double width, double height)
     const double label_height = font_height + FONT_PADDING;
     const double label_width = font_width + FONT_PADDING;
 
-    const int num_bands = !CONFIG_DRAW_STYLE ? CONFIG_NOTE_MAX - CONFIG_NOTE_MIN : get_num_bars ();
+    const int num_bands = !CONFIG_DRAW_STYLE ? get_num_notes () : get_num_bars ();
     double labels_width = (CONFIG_ENABLE_RIGHT_LABELS + CONFIG_ENABLE_LEFT_LABELS) * label_width;
     double labels_height = (CONFIG_ENABLE_TOP_LABELS + CONFIG_ENABLE_BOTTOM_LABELS) * label_height;
     int bar_width = spectrum_bar_width_get (num_bands, width - labels_width);
@@ -703,7 +703,7 @@ spectrum_get_render_ctx (cairo_t *cr, double width, double height)
 
     struct spectrum_render_ctx_t r_ctx = {
         .num_bands = num_bands,
-        .band_width = (double)spectrum_width / (double)(CONFIG_NOTE_MAX - CONFIG_NOTE_MIN),
+        .band_width = (double)spectrum_width / (double)(get_num_notes ()),
         .r_r = r_r,
         .r_l = r_l,
         .r_t = r_t,
