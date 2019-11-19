@@ -400,7 +400,12 @@ spectrum_draw_cairo_bars (struct spectrum_render_t *render, cairo_t *cr, int num
         }
         cairo_rectangle (cr, x, r->y + r->height - 1, barw - 1, - render->bars[i] * base_s);
     }
-    cairo_fill (cr);
+    if (CONFIG_FILL_SPECTRUM) {
+        cairo_fill (cr);
+    }
+    else {
+        cairo_stroke (cr);
+    }
 
     // draw peaks
     if (CONFIG_ENABLE_PEAKS && CONFIG_PEAK_FALLOFF >= 0) {
