@@ -440,9 +440,9 @@ spectrum_draw_cairo (struct spectrum_render_t *render, cairo_t *cr, int bands, c
 
     cairo_set_antialias (cr, CAIRO_ANTIALIAS_BEST);
     cairo_set_line_width (cr, 1);
-    cairo_line_to (cr, r->x, r->height);
+    cairo_move_to (cr, r->x, r->height);
     double py = r->height - base_s * render->bars[0];
-    cairo_line_to (cr, r->x, py);
+    cairo_rel_line_to (cr, 0, py);
     for (gint i = 0; i < bands; i++)
     {
         const double x = r->x + barw * i;
@@ -456,7 +456,7 @@ spectrum_draw_cairo (struct spectrum_render_t *render, cairo_t *cr, int bands, c
     }
     if (CONFIG_FILL_SPECTRUM) {
         cairo_line_to (cr, r->x + r->width, r->height);
-        cairo_line_to (cr, r->x, r->height);
+        cairo_rel_line_to (cr, r->width, 0);
 
         cairo_close_path (cr);
         cairo_fill (cr);
@@ -470,7 +470,7 @@ spectrum_draw_cairo (struct spectrum_render_t *render, cairo_t *cr, int bands, c
             const double x = r->x + barw * i;
             const double y = CLAMP (r->height - render->peaks[i] * base_s, 0, r->height);
             cairo_move_to (cr, x, y); 
-            cairo_line_to (cr, x + barw, y);
+            cairo_rel_line_to (cr, barw, 0);
         }
         cairo_stroke (cr);
     }
