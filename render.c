@@ -187,19 +187,49 @@ do_fft (struct spectrum_data_t *s)
     deadbeef->mutex_unlock (s->mutex);
 }
 
+//static inline double
+//spectrum_get_value (w_spectrum_t *w, int band, int num_bands)
+//{
+//    band = MAX (band, 1);
+//    //const int k0 = w->data->keys[MAX(band - 1, w->data->low_res_end)];
+//    const int k0 = w->data->keys[band - 1];
+//    const int k1 = w->data->keys[band];
+//    const int k2 = w->data->keys[MIN(band + 1, num_bands -1)];
+//
+//    int start = ceil((double)(k1 - k0)/2 + k0);
+//    int end = ceil((double)(k2 - k1)/2 + k1);
+//
+//    if (band == 25 || band == 26) {
+//        printf("%d: low res = %d -> %d/%d/%d\n", band, w->data->low_res_end, k0, k1, k2);
+//        printf("%d -> %d\n", start, end);
+//    }
+//    start = CLAMP (start, 0, MAX_FFT_SIZE - 1);
+//    end = CLAMP (end, 0, MAX_FFT_SIZE - 1);
+//
+//    if (start >= end) {
+//        return w->data->spectrum[end];
+//    }
+//    double value = -DBL_MAX;
+//    for (int i = start; i < end; i++) {
+//        value = MAX (w->data->spectrum[i] ,value);
+//    }
+//    return value;
+//}
+
 static inline double
 spectrum_get_value (w_spectrum_t *w, int band, int num_bands)
 {
     band = MAX (band, 1);
-    const int k0 = w->data->keys[MAX(band - 1, w->data->low_res_end)];
-    const int k1 = w->data->keys[band];
-    const int k2 = w->data->keys[MIN(band + 1, num_bands -1)];
+    //const int k0 = w->data->keys[MAX(band - 1, w->data->low_res_end)];
+    const int k0 = w->data->keys[band];
+    const int k1 = w->data->keys[MIN(band + 1, num_bands -1)];
 
-    int start = ceil((double)(k1 - k0)/2 + k0);
-    int end = ceil((double)(k2 - k1)/2 + k1);
-
-    start = CLAMP (start, 0, MAX_FFT_SIZE - 1);
-    end = CLAMP (end, 0, MAX_FFT_SIZE - 1);
+    int start = CLAMP (k0, 0, MAX_FFT_SIZE - 1);
+    int end = CLAMP (k1, 0, MAX_FFT_SIZE - 1);
+    if (band == 25 || band == 26) {
+        printf("%d: low res = %d -> %d/%d\n", band, w->data->low_res_end, k0, k1);
+        printf("%d -> %d\n", start, end);
+    }
 
     if (start >= end) {
         return w->data->spectrum[end];
@@ -260,7 +290,7 @@ spectrum_bands_fill (w_spectrum_t *w, int num_bands, int playback_status)
     const int low_res_end = w->data->low_res_indices_num;
 
     int *x = w->data->low_res_indices;
-    double y[low_res_end];
+    double y[low_res_end + 1];
 
     for (int i = 0; i < low_res_end; i++) {
         y[i] = w->data->spectrum[w->data->keys[x[i]]];
@@ -269,14 +299,13 @@ spectrum_bands_fill (w_spectrum_t *w, int num_bands, int playback_status)
     int xx = 0;
     // Interpolate
     for (int i = 0; i < low_res_end; i++) {
-        int i_end = MIN (i + 1, low_res_end - 1);
+        int i_end = MIN (i + 1, low_res_end);
         for (xx = x[i]; xx < x[i_end]; xx++) {
             const double mu = (double)(xx - x[i]) / (double)(x[i_end] - x[i]);
             const double amp = hermite_interpolate (y, mu, i-1, 0.35, 0);
             spectrum_band_set (w->render, playback_status, amp, xx);
         }
     }
-
     // Fill the rest of the bands which don't need to be interpolated
     for (int i = xx; i < num_bands; ++i) {
         const double amp = spectrum_get_value (w, i, num_bands);
@@ -570,10 +599,10 @@ spectrum_bar_width_get (int num_bands, double width)
         barw = 1;
     }
     else if (CONFIG_GAPS || CONFIG_BAR_W > 1) {
-        barw = CLAMP (width / num_bands, 2, 20);
+        barw = CLAMP (width / num_bands, 2, 100);
     }
     else {
-        barw = CLAMP (width / num_bands, 2, 20) - 1;
+        barw = CLAMP (width / num_bands, 2, 100) - 1;
     }
     return barw;
 }
