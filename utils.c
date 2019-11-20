@@ -122,7 +122,7 @@ create_frequency_table (struct spectrum_data_t *s, int samplerate, int width)
     int last_key = 0;
     s->low_res_indices_num = 1;
     s->low_res_indices[0] = 0;
-    for (int i = 0, j = 1; i < s->low_res_end; i++) {
+    for (int i = 0, j = 1; i <= s->low_res_end; i++) {
         int key = s->keys[i];
         if (key != last_key) {
             s->low_res_indices[j++] = i;
@@ -130,6 +130,8 @@ create_frequency_table (struct spectrum_data_t *s, int samplerate, int width)
         }
         last_key = key;
     }
+    s->low_res_indices[s->low_res_indices_num++] = s->low_res_end + 1;
+
 }
 
 double
