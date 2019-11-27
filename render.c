@@ -299,7 +299,7 @@ spectrum_bands_fill (w_spectrum_t *w, int num_bands, int playback_status)
     int xx = 0;
     // Interpolate
     for (int i = 0; i < low_res_end; i++) {
-        int i_end = MIN (i + 1, low_res_end);
+        int i_end = MIN (i + 1, low_res_end - 1);
         for (xx = x[i]; xx < x[i_end]; xx++) {
             const double mu = (double)(xx - x[i]) / (double)(x[i_end] - x[i]);
             const double amp = hermite_interpolate (y, mu, i-1, 0.35, 0);
