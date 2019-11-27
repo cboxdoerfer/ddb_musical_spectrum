@@ -226,10 +226,6 @@ spectrum_get_value (w_spectrum_t *w, int band, int num_bands)
 
     int start = CLAMP (k0, 0, MAX_FFT_SIZE - 1);
     int end = CLAMP (k1, 0, MAX_FFT_SIZE - 1);
-    if (band == 25 || band == 26) {
-        printf("%d: low res = %d -> %d/%d\n", band, w->data->low_res_end, k0, k1);
-        printf("%d -> %d\n", start, end);
-    }
 
     if (start >= end) {
         return w->data->spectrum[end];
