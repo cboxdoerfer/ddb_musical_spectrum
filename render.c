@@ -544,27 +544,67 @@ spectrum_font_width_max (cairo_t *cr)
     return w_max;
 }
 
-static void
-spectrum_draw_labels_freq (cairo_t *cr, cairo_rectangle_t *r, double barw)
+static int
+is_full_step (int r)
 {
-    gdk_cairo_set_source_color (cr, &CONFIG_COLOR_TEXT);
+    switch (r) {
+        case 2:
+        case 4:
+        case 5:
+        case 7:
+        case 9:
+        case 11:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+static void
+spectrum_draw_labels_freq (cairo_t *cr, cairo_rectangle_t *r, double note_width)
+{
     cairo_set_font_size (cr, FONT_SIZE);
     double f_h = spectrum_font_height_max (cr);
+    double f_w_full = spectrum_font_width (cr, "D") + 2;
+    double f_w_half = spectrum_font_width (cr, "C#") + 2;
     double y_offset = 3 * f_h/2;
     double y = r->y + y_offset;
     cairo_move_to (cr, r->x, y);
     char s[100] = "";
 
-    int offset = CONFIG_NOTE_MIN % NUM_NOTES_FOR_OCTAVE;
-    const double octave_width = barw * NUM_NOTES_FOR_OCTAVE;
-    double x = r->x + (NUM_NOTES_FOR_OCTAVE - offset) * barw;
-    int i = CONFIG_NOTE_MIN / NUM_NOTES_FOR_OCTAVE;
-    while (x < r->x + r->width) {
-        snprintf (s, sizeof (s), "C%d", 1 + i++);
+    char *note_array[] = {
+        "C","C#","D","D#","E","F","F#","G","G#","A","A#","B",
+    };
+
+
+    double x = r->x + note_width/2;
+    double x_end = r->x + r->width;
+
+    double octave_width = note_width * NUM_NOTES_FOR_OCTAVE;
+    int show_full_steps = octave_width > 7 * f_w_full && note_width > f_w_full ? 1 : 0;
+    int show_half_steps = note_width > f_w_half && note_width > f_w_half ? 1 : 0;
+    for (int i = CONFIG_NOTE_MIN; i <= CONFIG_NOTE_MAX && x < x_end; i++, x += note_width) {
+        int r = i % 12; 
+        if (i == 0 || r == 0) {
+            snprintf (s, sizeof (s), "%s", spectrum_notes[i]);
+            gdk_cairo_set_source_color (cr, &CONFIG_COLOR_TEXT);
+        }
+        else if (show_full_steps && is_full_step (r)) {
+            snprintf (s, sizeof (s), "%s", note_array[r]);
+            cairo_set_source_rgba (cr, 0.6, 0.6, 0.6, 1);
+        }
+        else if (show_half_steps) {
+            snprintf (s, sizeof (s), "%s", note_array[r]);
+            cairo_set_source_rgba (cr, 0.3, 0.3, 0.3, 1);
+        }
+        else {
+            continue;
+        }
+
         double font_width = spectrum_font_width (cr, s);
-        cairo_move_to (cr, x - font_width/2, y);
+        double xx = x - font_width/2;
+        cairo_move_to (cr, xx, y);
         cairo_show_text (cr, s);
-        x += octave_width;
     }
 }
 
