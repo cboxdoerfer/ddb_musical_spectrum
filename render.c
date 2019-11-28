@@ -605,6 +605,7 @@ spectrum_bar_width_get (int num_bands, double width)
 struct spectrum_render_ctx_t {
     int num_bands;
     double band_width;
+    double note_width;
     // Spectrum rectangle
     cairo_rectangle_t r_s;
     // Left labels rectangle
@@ -627,19 +628,29 @@ spectrum_width_max (cairo_t *cr, double width)
 }
 
 static void
-spectrum_draw_tooltip (struct spectrum_render_t *render, struct spectrum_data_t *data, cairo_t *cr, cairo_rectangle_t *r, struct motion_context *m_ctx, int bands, double barw)
+spectrum_draw_tooltip (struct spectrum_render_t *render,
+                       struct spectrum_data_t *data,
+                       cairo_t *cr,
+                       struct spectrum_render_ctx_t *r_ctx,
+                       struct motion_context *m_ctx)
 {
+    cairo_rectangle_t *r = &r_ctx->r_s;
 
-    const int x_bar = m_ctx->x - r->x;
-    const int pos = (int)(x_bar/barw) + CONFIG_NOTE_MIN;
+    const double band_width = r_ctx->band_width;
+    const double note_width = r_ctx->note_width;
 
-    if (pos < CONFIG_NOTE_MIN || pos > CONFIG_NOTE_MAX) {
+    const double x_bar = m_ctx->x - r->x;
+    const int pos = (int)(x_bar/note_width + CONFIG_NOTE_MIN);
+    const int freq_pos = (int)(x_bar/band_width);
+
+    if (pos < CONFIG_NOTE_MIN || pos > CONFIG_NOTE_MAX
+        || freq_pos < 0 || freq_pos >= r_ctx->num_bands) {
         return;
     }
 
     char t1[100];
     char t2[100];
-    snprintf (t1, sizeof (t1), "%5.0f Hz (%s)", data->frequency[pos], spectrum_notes[pos]);
+    snprintf (t1, sizeof (t1), "%5.0f Hz (%s)", data->frequency[freq_pos], spectrum_notes[pos]);
     const double amp = render->bars[pos];
     if (amp > -1000 && amp < 1000) {
         snprintf (t2, sizeof (t2), "%3.2f dB", render->bars[pos] + CONFIG_AMPLITUDE_MIN);
@@ -740,7 +751,8 @@ spectrum_get_render_ctx (cairo_t *cr, double width, double height)
 
     struct spectrum_render_ctx_t r_ctx = {
         .num_bands = num_bands,
-        .band_width = (double)spectrum_width / (double)(get_num_notes ()),
+        .band_width = (double)spectrum_width / num_bands,
+        .note_width = (double)spectrum_width / (double)(get_num_notes ()),
         .r_r = r_r,
         .r_l = r_l,
         .r_t = r_t,
@@ -773,19 +785,19 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
 
     spectrum_render (w, get_num_bars ());
 
-    spectrum_draw_cairo_static (w, cr, r_ctx.band_width, r_ctx.num_bands, &r_ctx.r_s);
+    spectrum_draw_cairo_static (w, cr, r_ctx.note_width, r_ctx.num_bands, &r_ctx.r_s);
     if (!CONFIG_DRAW_STYLE) {
-        spectrum_draw_cairo_bars (w->render, cr, r_ctx.num_bands, r_ctx.band_width, &r_ctx.r_s);
+        spectrum_draw_cairo_bars (w->render, cr, r_ctx.num_bands, r_ctx.note_width, &r_ctx.r_s);
     }
     else {
         spectrum_draw_cairo (w->render, cr, r_ctx.num_bands, &r_ctx.r_s);
     }
 
     if (CONFIG_ENABLE_TOP_LABELS) {
-        spectrum_draw_labels_freq (cr, &r_ctx.r_t, r_ctx.band_width);
+        spectrum_draw_labels_freq (cr, &r_ctx.r_t, r_ctx.note_width);
     }
     if (CONFIG_ENABLE_BOTTOM_LABELS) {
-        spectrum_draw_labels_freq (cr, &r_ctx.r_b, r_ctx.band_width);
+        spectrum_draw_labels_freq (cr, &r_ctx.r_b, r_ctx.note_width);
     }
     if (CONFIG_ENABLE_LEFT_LABELS) {
         spectrum_draw_labels_db (cr, &r_ctx.r_l);
@@ -795,7 +807,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     }
 
     if (CONFIG_ENABLE_TOOLTIP && w->motion_ctx.entered) {
-        spectrum_draw_tooltip (w->render, w->data, cr, &r_ctx.r_s, &w->motion_ctx, r_ctx.num_bands, r_ctx.band_width);
+        spectrum_draw_tooltip (w->render, w->data, cr, &r_ctx, &w->motion_ctx);
     }
 
     return FALSE;
