@@ -10,7 +10,8 @@
 #include "spectrum.h"
 
 #define FONT_SIZE 9
-#define FONT_PADDING 8
+#define FONT_PADDING_HORIZONTAL 8
+#define FONT_PADDING_VERTICAL 0
 #define NUM_NOTES_FOR_OCTAVE 12
 
 struct spectrum_render_ctx_t {
@@ -204,35 +205,6 @@ do_fft (struct spectrum_data_t *s)
     }
     deadbeef->mutex_unlock (s->mutex);
 }
-
-//static inline double
-//spectrum_get_value (w_spectrum_t *w, int band, int num_bands)
-//{
-//    band = MAX (band, 1);
-//    //const int k0 = w->data->keys[MAX(band - 1, w->data->low_res_end)];
-//    const int k0 = w->data->keys[band - 1];
-//    const int k1 = w->data->keys[band];
-//    const int k2 = w->data->keys[MIN(band + 1, num_bands -1)];
-//
-//    int start = ceil((double)(k1 - k0)/2 + k0);
-//    int end = ceil((double)(k2 - k1)/2 + k1);
-//
-//    if (band == 25 || band == 26) {
-//        printf("%d: low res = %d -> %d/%d/%d\n", band, w->data->low_res_end, k0, k1, k2);
-//        printf("%d -> %d\n", start, end);
-//    }
-//    start = CLAMP (start, 0, MAX_FFT_SIZE - 1);
-//    end = CLAMP (end, 0, MAX_FFT_SIZE - 1);
-//
-//    if (start >= end) {
-//        return w->data->spectrum[end];
-//    }
-//    double value = -DBL_MAX;
-//    for (int i = start; i < end; i++) {
-//        value = MAX (w->data->spectrum[i] ,value);
-//    }
-//    return value;
-//}
 
 static inline double
 spectrum_get_value (w_spectrum_t *w, int band, int num_bands)
@@ -526,44 +498,6 @@ spectrum_draw_cairo (struct spectrum_render_t *render, cairo_t *cr, int bands, c
 }
 
 static double
-spectrum_font_height (cairo_t *cr, const char *text)
-{
-    cairo_text_extents_t ex;
-    cairo_text_extents (cr, text, &ex);
-    return ex.height;
-}
-
-static double
-spectrum_font_height_max (cairo_t *cr)
-{
-    cairo_set_font_size (cr, FONT_SIZE);
-    return spectrum_pango_font_height (cr, "C11");
-}
-
-static double
-spectrum_font_width (cairo_t *cr, const char *text)
-{
-    cairo_text_extents_t ex;
-    cairo_text_extents (cr, text, &ex);
-    return ex.width;
-}
-
-static double
-spectrum_font_width_max (cairo_t *cr)
-{
-    const int hgrid_num = get_db_range ()/10;
-    cairo_set_font_size (cr, FONT_SIZE);
-    char s[100] = "";
-    double w_max = 0;
-    for (int i = 1; i < hgrid_num; i++) {
-        snprintf (s, sizeof (s), "%ddB", CONFIG_AMPLITUDE_MAX - i * 10);
-        w_max = MAX (w_max, spectrum_font_width (cr, s));
-    }
-
-    return w_max;
-}
-
-static double
 spectrum_pango_font_height (PangoLayout *layout, const char *text)
 {
     int f_h = 0;
@@ -579,6 +513,26 @@ spectrum_pango_font_width (PangoLayout *layout, const char *text)
     pango_layout_set_text (layout, text, -1);
     pango_layout_get_size (layout, &f_w, NULL);
     return (double)f_w/PANGO_SCALE;
+}
+
+static double
+spectrum_font_height_max (PangoLayout *layout)
+{
+    return spectrum_pango_font_height (layout, "C#11");
+}
+
+static double
+spectrum_font_width_max (PangoLayout *layout)
+{
+    const int hgrid_num = get_db_range ()/10;
+    char s[100] = "";
+    double w_max = 0;
+    for (int i = 1; i < hgrid_num; i++) {
+        snprintf (s, sizeof (s), "%ddB", CONFIG_AMPLITUDE_MAX - i * 10);
+        w_max = MAX (w_max, spectrum_pango_font_width (layout, s));
+    }
+
+    return w_max;
 }
 
 static int
@@ -603,7 +557,7 @@ spectrum_draw_labels_freq (cairo_t *cr, struct spectrum_render_ctx_t *r_ctx, cai
     const double note_width = r_ctx->note_width;
     const double f_w_full = spectrum_pango_font_width (r_ctx->font_layout, "D") + 2;
     const double f_w_half = spectrum_pango_font_width (r_ctx->font_layout, "C#") + 2;
-    const double y = r->y;
+    const double y = r->y + FONT_PADDING_VERTICAL/2;
     cairo_move_to (cr, r->x, y);
     char s[100] = "";
 
@@ -655,7 +609,7 @@ spectrum_draw_labels_db (cairo_t *cr, struct spectrum_render_ctx_t *r_ctx, cairo
         char s[100] = "";
         for (int i = 0; i <= hgrid_num; i++) {
             snprintf (s, sizeof (s), "%ddB", CONFIG_AMPLITUDE_MAX - i * 10);
-            cairo_move_to (cr, r->x + FONT_PADDING/2, r->y + i/(double)hgrid_num * r->height - font_height/2);
+            cairo_move_to (cr, r->x + FONT_PADDING_HORIZONTAL/2, r->y + i/(double)hgrid_num * r->height - font_height/2);
             pango_layout_set_text (r_ctx->font_layout, s, -1);
             pango_cairo_show_layout (cr, r_ctx->font_layout);
         }
@@ -679,10 +633,10 @@ spectrum_bar_width_get (int num_bands, double width)
 }
 
 static int
-spectrum_width_max (cairo_t *cr, double width)
+spectrum_width_max (PangoLayout *layout, double width)
 {
-    const double font_width = spectrum_font_width_max (cr);
-    const double label_width = font_width + FONT_PADDING;
+    const double font_width = spectrum_font_width_max (layout);
+    const double label_width = font_width + FONT_PADDING_HORIZONTAL;
     const double labels_width = 2 * label_width;
     return MAX (width - labels_width, 0);
 }
@@ -752,10 +706,16 @@ spectrum_draw_tooltip (struct spectrum_render_t *render,
 struct spectrum_render_ctx_t
 spectrum_get_render_ctx (cairo_t *cr, double width, double height)
 {
-    const double font_width = spectrum_font_width_max (cr);
-    const double font_height = spectrum_font_height_max (cr);
-    const double label_height = font_height + FONT_PADDING;
-    const double label_width = font_width + FONT_PADDING;
+    PangoLayout *layout = pango_cairo_create_layout (cr);
+
+    PangoFontDescription *desc = pango_font_description_from_string ("Source Sans Pro 8");
+    pango_layout_set_font_description (layout, desc);
+    pango_font_description_free (desc);
+
+    const double font_width = spectrum_font_width_max (layout);
+    const double font_height = spectrum_font_height_max (layout);
+    const double label_height = font_height + FONT_PADDING_VERTICAL;
+    const double label_width = font_width + FONT_PADDING_HORIZONTAL;
 
     const int num_bands = !CONFIG_DRAW_STYLE ? get_num_notes () : get_num_bars ();
     double labels_width = (CONFIG_ENABLE_RIGHT_LABELS + CONFIG_ENABLE_LEFT_LABELS) * label_width;
@@ -806,12 +766,8 @@ spectrum_get_render_ctx (cairo_t *cr, double width, double height)
         .r_t = r_t,
         .r_b = r_b,
         .r_s = r_s,
-        .font_layout = pango_cairo_create_layout (cr),
+        .font_layout = layout,
     };
-
-    PangoFontDescription *desc = pango_font_description_from_string ("Source Sans Pro 8");
-    pango_layout_set_font_description (r_ctx.font_layout, desc);
-    pango_font_description_free (desc);
 
     return r_ctx;
 }
@@ -826,13 +782,14 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     const int height = a.height;
 
     static int last_bar_w = -1;
-    if (width != last_bar_w || w->need_redraw) {
-        w->need_redraw = 0;
-        create_frequency_table(w->data, w->samplerate, spectrum_width_max (cr, width));
-    }
-    last_bar_w = a.width;
 
     struct spectrum_render_ctx_t r_ctx = spectrum_get_render_ctx (cr, width, height);
+
+    if (width != last_bar_w || w->need_redraw) {
+        w->need_redraw = 0;
+        create_frequency_table(w->data, w->samplerate, spectrum_width_max (r_ctx.font_layout, width));
+    }
+    last_bar_w = a.width;
 
     // draw background
     spectrum_background_draw (cr, width, height);
