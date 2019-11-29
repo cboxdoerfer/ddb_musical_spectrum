@@ -324,6 +324,23 @@ spectrum_render (w_spectrum_t *w, int num_bands)
     }
 }
 
+static int
+is_full_step (int r)
+{
+    switch (r) {
+        case 0:
+        case 2:
+        case 4:
+        case 5:
+        case 7:
+        case 9:
+        case 11:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
 static void
 spectrum_draw_cairo_static (w_spectrum_t *w, cairo_t *cr, double barw, int bands, cairo_rectangle_t *r)
 {
@@ -339,6 +356,21 @@ spectrum_draw_cairo_static (w_spectrum_t *w, cairo_t *cr, double barw, int bands
     //    }
     //    cairo_stroke (cr);
     //}
+
+    double y = r->y;
+    double x = r->x;
+    double height = r->height;
+    for (int i = 0; i < bands; i++, x += barw) {
+        int r = (CONFIG_NOTE_MIN + i) % 12;
+        if (is_full_step (r)) {
+            cairo_set_source_rgba (cr, 0.1, 0.1, 0.1, 1);
+        }
+        else {
+            cairo_set_source_rgba (cr, 0, 0, 0, 1);
+        }
+        cairo_rectangle (cr, x, y, barw - 1, height);
+        cairo_fill (cr);
+    }
 
     const double octave_width = barw * NUM_NOTES_FOR_OCTAVE;
 
@@ -399,16 +431,18 @@ spectrum_draw_cairo_bars (struct spectrum_render_t *render, cairo_t *cr, int num
         return;
     }
     cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
+    cairo_set_line_width (cr, 1);
     const double base_s = (r->height / (double)get_db_range ());
 
     // draw spectrum
+    //
+    double x = r->x;
 
     // draw bars
-    cairo_set_line_width (cr, 1);
     spectrum_gradient_set (cr, CONFIG_GRADIENT_COLORS, r->width, r->height);
 
 
-    double x = r->x;
+    x = r->x;
     for (int i = 0; i < num_bars; i++, x += barw) {
         if (render->bars[i] <= 0) {
             continue;
@@ -533,22 +567,6 @@ spectrum_font_width_max (PangoLayout *layout)
     }
 
     return w_max;
-}
-
-static int
-is_full_step (int r)
-{
-    switch (r) {
-        case 2:
-        case 4:
-        case 5:
-        case 7:
-        case 9:
-        case 11:
-            return 1;
-        default:
-            return 0;
-    }
 }
 
 static void
