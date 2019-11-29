@@ -537,7 +537,7 @@ static double
 spectrum_font_height_max (cairo_t *cr)
 {
     cairo_set_font_size (cr, FONT_SIZE);
-    return spectrum_font_height (cr, "C11");
+    return spectrum_pango_font_height (cr, "C11");
 }
 
 static double
@@ -709,38 +709,28 @@ spectrum_draw_tooltip (struct spectrum_render_t *render,
     }
 
     char t1[100];
-    char t2[100];
-    snprintf (t1, sizeof (t1), "%5.0f Hz (%s)", data->frequency[freq_pos], spectrum_notes[pos]);
     const double amp = render->bars[pos];
     if (amp > -1000 && amp < 1000) {
-        snprintf (t2, sizeof (t2), "%3.2f dB", render->bars[pos] + CONFIG_AMPLITUDE_MIN);
+        snprintf (t1, sizeof (t1), "%.0f Hz (%s)\n%3.2f dB", data->frequency[freq_pos], spectrum_notes[pos], render->bars[pos] + CONFIG_AMPLITUDE_MIN);
     }
     else {
-        snprintf (t2, sizeof (t2), "-inf dB");
+        snprintf (t1, sizeof (t1), "%.0f Hz (%s)\n-inf dB", data->frequency[freq_pos], spectrum_notes[pos]);
     }
 
     cairo_save (cr);
-    cairo_set_antialias (cr, CAIRO_ANTIALIAS_BEST);
-    cairo_set_font_size (cr, 13);
 
-    cairo_text_extents_t ex1 = {0};
-    cairo_text_extents (cr, t1, &ex1);
+    double text_width = spectrum_pango_font_width (r_ctx->font_layout, t1);
+    double text_height = spectrum_pango_font_height (r_ctx->font_layout, t1);
 
-    cairo_text_extents_t ex2 = {0};
-    cairo_text_extents (cr, t2, &ex2);
-
-    const int text_width = MAX (ex1.width - ex1.x_bearing, ex2.width - ex2.x_bearing);
-    const int text_height = ex1.height + ex2.height;
-
+    const double padding = 5;
     double x = m_ctx->x + 20;
     double y = m_ctx->y + 20;
-    const double padding = 5;
-    const double w_rect = text_width + 2 * padding + MAX (ex1.x_bearing, ex2.x_bearing);
-    const double h_rect = text_height + 2 * padding + 6;
-    y = MIN (y, r->height);
-    x = CLAMP (x,r->x, r->x + r->width - w_rect);
+    const double w_rect = text_width + 2 * padding;
+    const double h_rect = text_height + 2 * padding;
+    y = CLAMP (y, r->y, r->y + r->height - h_rect);
+    x = CLAMP (x, r->x, r->x + r->width - w_rect);
     const double x_rect = x - padding;
-    const double y_rect = y - padding + ex1.y_bearing;
+    const double y_rect = y - padding;
 
     cairo_set_source_rgba (cr, 0, 0, 0, 1);
     cairo_rectangle (cr, x_rect, y_rect, w_rect, h_rect);
@@ -752,11 +742,9 @@ spectrum_draw_tooltip (struct spectrum_render_t *render,
     cairo_stroke (cr);
 
     gdk_cairo_set_source_color (cr, &CONFIG_COLOR_TEXT);
-    cairo_move_to (cr, x - ex1.x_bearing, y);
-    cairo_show_text (cr, t1);
-
-    cairo_move_to (cr, x - ex2.x_bearing, y + ex1.height + 3);
-    cairo_show_text (cr, t2);
+    cairo_move_to (cr, x, y);
+    pango_layout_set_text (r_ctx->font_layout, t1, -1);
+    pango_cairo_show_layout (cr, r_ctx->font_layout);
 
     cairo_restore (cr);
 }
@@ -821,7 +809,7 @@ spectrum_get_render_ctx (cairo_t *cr, double width, double height)
         .font_layout = pango_cairo_create_layout (cr),
     };
 
-    PangoFontDescription *desc = pango_font_description_from_string ("Source Code Pro 8");
+    PangoFontDescription *desc = pango_font_description_from_string ("Source Sans Pro 8");
     pango_layout_set_font_description (r_ctx.font_layout, desc);
     pango_font_description_free (desc);
 
