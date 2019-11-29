@@ -580,9 +580,8 @@ spectrum_draw_labels_freq (cairo_t *cr, cairo_rectangle_t *r, double note_width)
     double x = r->x + note_width/2;
     double x_end = r->x + r->width;
 
-    double octave_width = note_width * NUM_NOTES_FOR_OCTAVE;
-    int show_full_steps = octave_width > 7 * f_w_full && note_width > f_w_full ? 1 : 0;
-    int show_half_steps = note_width > f_w_half && note_width > f_w_half ? 1 : 0;
+    int show_full_steps = note_width > f_w_full ? 1 : 0;
+    int show_half_steps = note_width > f_w_half ? 1 : 0;
     for (int i = CONFIG_NOTE_MIN; i <= CONFIG_NOTE_MAX && x < x_end; i++, x += note_width) {
         int r = i % 12; 
         if (i == 0 || r == 0) {
