@@ -158,6 +158,20 @@ set_color_button (GtkWidget *w, const char *w_name, GdkColor *color)
     gtk_color_button_set_color (button, color);
 }
 
+static const char *
+get_font_button (GtkWidget *w, const char *w_name)
+{
+    GtkFontButton *button = GTK_FONT_BUTTON (lookup_widget (w, w_name));
+    return gtk_font_button_get_font_name (button);
+}
+
+static void
+set_font_button (GtkWidget *w, const char *w_name, const char *font)
+{
+    GtkFontButton *button = GTK_FONT_BUTTON (lookup_widget (w, w_name));
+    gtk_font_button_set_font_name (button, font);
+}
+
 static void
 get_gradient_colors (GtkWidget *w)
 {
@@ -240,6 +254,8 @@ set_config_values (GtkWidget *w)
     set_color_button (w, "ogrid_color", &CONFIG_COLOR_OGRID);
     set_color_button (w, "text_color", &CONFIG_COLOR_TEXT);
 
+    set_font_button (w, "font_button", CONFIG_FONT);
+
     set_gradient_colors (w);
 }
 
@@ -286,6 +302,8 @@ get_config_values (GtkWidget *w)
     get_color_button (w, "hgrid_color", &CONFIG_COLOR_HGRID);
     get_color_button (w, "ogrid_color", &CONFIG_COLOR_OGRID);
     get_color_button (w, "text_color", &CONFIG_COLOR_TEXT);
+
+    CONFIG_FONT = get_font_button (w, "font_button");
 
     get_gradient_colors (w);
 }

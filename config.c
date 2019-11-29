@@ -64,6 +64,7 @@ int CONFIG_BAR_W = 0;
 int CONFIG_GAPS = TRUE;
 int CONFIG_DRAW_STYLE = 0;
 int CONFIG_FILL_SPECTRUM = TRUE;
+const char *CONFIG_FONT = NULL;
 GdkColor CONFIG_COLOR_BG;
 GdkColor CONFIG_COLOR_VGRID;
 GdkColor CONFIG_COLOR_HGRID;
@@ -116,6 +117,7 @@ save_config (void)
     deadbeef->conf_set_int (CONFSTR_MS_GRADIENT_ORIENTATION,        CONFIG_GRADIENT_ORIENTATION);
     deadbeef->conf_set_int (CONFSTR_MS_WINDOW,                      CONFIG_WINDOW);
     deadbeef->conf_set_int (CONFSTR_MS_NUM_COLORS,                  CONFIG_NUM_COLORS);
+    deadbeef->conf_set_str (CONFSTR_MS_FONT,                        CONFIG_FONT);
     char color[100];
     char conf_str[100];
     GList *c = CONFIG_GRADIENT_COLORS;
@@ -176,6 +178,8 @@ load_config (void)
     CONFIG_PEAK_FALLOFF = deadbeef->conf_get_int (CONFSTR_MS_PEAK_FALLOFF,                  90);
     CONFIG_PEAK_DELAY = deadbeef->conf_get_int (CONFSTR_MS_PEAK_DELAY,                     500);
     CONFIG_NUM_COLORS = deadbeef->conf_get_int (CONFSTR_MS_NUM_COLORS,                       6);
+    CONFIG_FONT = deadbeef->conf_get_str_fast (CONFSTR_MS_FONT,                       "Sans 7");
+
     const char *color;
     char conf_str[100];
     color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_BG,                   "8738 8738 8738");

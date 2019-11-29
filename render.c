@@ -708,7 +708,7 @@ spectrum_get_render_ctx (cairo_t *cr, double width, double height)
 {
     PangoLayout *layout = pango_cairo_create_layout (cr);
 
-    PangoFontDescription *desc = pango_font_description_from_string ("Source Sans Pro 8");
+    PangoFontDescription *desc = pango_font_description_from_string (CONFIG_FONT);
     pango_layout_set_font_description (layout, desc);
     pango_font_description_free (desc);
 

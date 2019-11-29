@@ -60,6 +60,7 @@
 #define     CONFSTR_MS_COLOR_HGRID            "musical_spectrum.color.hgrid"
 #define     CONFSTR_MS_COLOR_OGRID      "musical_spectrum.color.octave_grid"
 #define     CONFSTR_MS_NUM_COLORS             "musical_spectrum.num_colors"
+#define     CONFSTR_MS_FONT                   "musical_spectrum.font.labels"
 #define     CONFSTR_MS_COLOR_GRADIENT         "musical_spectrum.color.gradient_"
 
 #define MAX_NUM_COLORS 16
@@ -98,6 +99,7 @@ extern int CONFIG_BAR_W;
 extern int CONFIG_GAPS;
 extern int CONFIG_DRAW_STYLE;
 extern int CONFIG_FILL_SPECTRUM;
+extern const char *CONFIG_FONT;
 extern GdkColor CONFIG_COLOR_BG;
 extern GdkColor CONFIG_COLOR_TEXT;
 extern GdkColor CONFIG_COLOR_VGRID;
