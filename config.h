@@ -45,6 +45,7 @@
 #define     CONFSTR_MS_NUM_BARS               "musical_spectrum.num_bars"
 #define     CONFSTR_MS_BAR_W                  "musical_spectrum.bar_w"
 #define     CONFSTR_MS_GAPS                   "musical_spectrum.gaps"
+#define     CONFSTR_MS_SPACING                "musical_spectrum.spacing"
 #define     CONFSTR_MS_DRAW_STYLE             "musical_spectrum.draw_style"
 #define     CONFSTR_MS_FILL_SPECTRUM          "musical_spectrum.fill_spectrum"
 #define     CONFSTR_MS_BAR_FALLOFF            "musical_spectrum.bar_falloff"
@@ -99,6 +100,7 @@ extern int CONFIG_WINDOW;
 extern int CONFIG_NUM_BARS;
 extern int CONFIG_BAR_W;
 extern int CONFIG_GAPS;
+extern int CONFIG_SPACING;
 extern int CONFIG_DRAW_STYLE;
 extern int CONFIG_FILL_SPECTRUM;
 extern const char *CONFIG_FONT;
