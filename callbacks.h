@@ -50,3 +50,7 @@ on_fft_spin_input                      (GtkSpinButton   *spinbutton,
 gboolean
 on_fft_spin_output                     (GtkSpinButton   *spinbutton,
                                         gpointer         user_data);
+
+void
+on_mode_combo_changed                  (GtkComboBox     *combobox,
+                                        gpointer         user_data);
