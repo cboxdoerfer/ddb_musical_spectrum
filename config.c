@@ -69,6 +69,8 @@ GdkColor CONFIG_COLOR_BG;
 GdkColor CONFIG_COLOR_VGRID;
 GdkColor CONFIG_COLOR_HGRID;
 GdkColor CONFIG_COLOR_OGRID;
+GdkColor CONFIG_COLOR_BLACK_KEYS;
+GdkColor CONFIG_COLOR_WHITE_KEYS;
 GdkColor CONFIG_COLOR_TEXT;
 GList *CONFIG_GRADIENT_COLORS = NULL;
 
@@ -137,6 +139,10 @@ save_config (void)
     deadbeef->conf_set_str (CONFSTR_MS_COLOR_HGRID, color);
     snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_OGRID.red, CONFIG_COLOR_OGRID.green, CONFIG_COLOR_OGRID.blue);
     deadbeef->conf_set_str (CONFSTR_MS_COLOR_OGRID, color);
+    snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_BLACK_KEYS.red, CONFIG_COLOR_BLACK_KEYS.green, CONFIG_COLOR_BLACK_KEYS.blue);
+    deadbeef->conf_set_str (CONFSTR_MS_COLOR_BLACK_KEYS, color);
+    snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_WHITE_KEYS.red, CONFIG_COLOR_WHITE_KEYS.green, CONFIG_COLOR_WHITE_KEYS.blue);
+    deadbeef->conf_set_str (CONFSTR_MS_COLOR_WHITE_KEYS, color);
 }
 
 void
@@ -192,6 +198,10 @@ load_config (void)
     sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_HGRID.red, &CONFIG_COLOR_HGRID.green, &CONFIG_COLOR_HGRID.blue);
     color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_OGRID,             "26214 26214 26214");
     sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_OGRID.red, &CONFIG_COLOR_OGRID.green, &CONFIG_COLOR_OGRID.blue);
+    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_BLACK_KEYS,           "8738 8738 8738");
+    sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_BLACK_KEYS.red, &CONFIG_COLOR_BLACK_KEYS.green, &CONFIG_COLOR_BLACK_KEYS.blue);
+    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_WHITE_KEYS,           "8738 8738 8738");
+    sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_WHITE_KEYS.red, &CONFIG_COLOR_WHITE_KEYS.green, &CONFIG_COLOR_WHITE_KEYS.blue);
 
     g_list_free_full (CONFIG_GRADIENT_COLORS, g_free);
     CONFIG_GRADIENT_COLORS = NULL;

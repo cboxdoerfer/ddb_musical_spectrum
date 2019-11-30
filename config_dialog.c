@@ -253,6 +253,8 @@ set_config_values (GtkWidget *w)
     set_color_button (w, "hgrid_color", &CONFIG_COLOR_HGRID);
     set_color_button (w, "ogrid_color", &CONFIG_COLOR_OGRID);
     set_color_button (w, "text_color", &CONFIG_COLOR_TEXT);
+    set_color_button (w, "wkeys_color", &CONFIG_COLOR_WHITE_KEYS);
+    set_color_button (w, "bkeys_color", &CONFIG_COLOR_BLACK_KEYS);
 
     set_font_button (w, "font_button", CONFIG_FONT);
 
@@ -302,6 +304,8 @@ get_config_values (GtkWidget *w)
     get_color_button (w, "hgrid_color", &CONFIG_COLOR_HGRID);
     get_color_button (w, "ogrid_color", &CONFIG_COLOR_OGRID);
     get_color_button (w, "text_color", &CONFIG_COLOR_TEXT);
+    get_color_button (w, "wkeys_color", &CONFIG_COLOR_WHITE_KEYS);
+    get_color_button (w, "bkeys_color", &CONFIG_COLOR_BLACK_KEYS);
 
     CONFIG_FONT = get_font_button (w, "font_button");
 
