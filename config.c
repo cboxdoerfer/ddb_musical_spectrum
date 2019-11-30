@@ -88,6 +88,14 @@ static char *default_colors[] = {"65535 0 0",
                                  "0 38036 41120",
                                  "0 8224 25700" };
 
+static void
+set_color (const char *name, GdkColor *color)
+{
+    char color_formated[100] = {};
+    snprintf (color_formated, sizeof (color_formated), "%d %d %d", color->red, color->green, color->blue);
+    deadbeef->conf_set_str (name, color_formated);
+}
+
 void
 save_config (void)
 {
@@ -138,22 +146,21 @@ save_config (void)
         snprintf (conf_str, sizeof (conf_str), "%s%02d", CONFSTR_MS_COLOR_GRADIENT, i);
         deadbeef->conf_set_str (conf_str, color);
     }
-    snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_BG.red, CONFIG_COLOR_BG.green, CONFIG_COLOR_BG.blue);
-    deadbeef->conf_set_str (CONFSTR_MS_COLOR_BG, color);
-    snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_TEXT.red, CONFIG_COLOR_TEXT.green, CONFIG_COLOR_TEXT.blue);
-    deadbeef->conf_set_str (CONFSTR_MS_COLOR_TEXT, color);
-    snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_VGRID.red, CONFIG_COLOR_VGRID.green, CONFIG_COLOR_VGRID.blue);
-    deadbeef->conf_set_str (CONFSTR_MS_COLOR_VGRID, color);
-    snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_HGRID.red, CONFIG_COLOR_HGRID.green, CONFIG_COLOR_HGRID.blue);
-    deadbeef->conf_set_str (CONFSTR_MS_COLOR_HGRID, color);
-    snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_OGRID.red, CONFIG_COLOR_OGRID.green, CONFIG_COLOR_OGRID.blue);
-    deadbeef->conf_set_str (CONFSTR_MS_COLOR_OGRID, color);
-    snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_BLACK_KEYS.red, CONFIG_COLOR_BLACK_KEYS.green, CONFIG_COLOR_BLACK_KEYS.blue);
-    deadbeef->conf_set_str (CONFSTR_MS_COLOR_BLACK_KEYS, color);
-    snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_WHITE_KEYS.red, CONFIG_COLOR_WHITE_KEYS.green, CONFIG_COLOR_WHITE_KEYS.blue);
-    deadbeef->conf_set_str (CONFSTR_MS_COLOR_WHITE_KEYS, color);
-    snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_PEAKS.red, CONFIG_COLOR_PEAKS.green, CONFIG_COLOR_PEAKS.blue);
-    deadbeef->conf_set_str (CONFSTR_MS_COLOR_PEAKS, color);
+    set_color (CONFSTR_MS_COLOR_BG,         &CONFIG_COLOR_BG);
+    set_color (CONFSTR_MS_COLOR_TEXT,       &CONFIG_COLOR_TEXT);
+    set_color (CONFSTR_MS_COLOR_VGRID,      &CONFIG_COLOR_VGRID);
+    set_color (CONFSTR_MS_COLOR_HGRID,      &CONFIG_COLOR_HGRID);
+    set_color (CONFSTR_MS_COLOR_OGRID,      &CONFIG_COLOR_OGRID);
+    set_color (CONFSTR_MS_COLOR_BLACK_KEYS, &CONFIG_COLOR_BLACK_KEYS);
+    set_color (CONFSTR_MS_COLOR_WHITE_KEYS, &CONFIG_COLOR_WHITE_KEYS);
+    set_color (CONFSTR_MS_COLOR_PEAKS,      &CONFIG_COLOR_PEAKS);
+}
+
+static void
+get_color (const char *name, GdkColor *color, const char *color_default_formated)
+{
+    const char *color_formated = deadbeef->conf_get_str_fast (name, color_default_formated);
+    sscanf (color_formated, "%hd %hd %hd", &color->red, &color->green, &color->blue);
 }
 
 void
@@ -201,25 +208,17 @@ load_config (void)
     CONFIG_NUM_COLORS = deadbeef->conf_get_int (CONFSTR_MS_NUM_COLORS,                       6);
     CONFIG_FONT = deadbeef->conf_get_str_fast (CONFSTR_MS_FONT,                       "Sans 7");
 
-    const char *color;
-    char conf_str[100];
-    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_BG,                   "8738 8738 8738");
-    sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_BG.red, &CONFIG_COLOR_BG.green, &CONFIG_COLOR_BG.blue);
-    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_TEXT,                 "65535 65535 65535");
-    sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_TEXT.red, &CONFIG_COLOR_TEXT.green, &CONFIG_COLOR_TEXT.blue);
-    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_VGRID,                         "0 0 0");
-    sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_VGRID.red, &CONFIG_COLOR_VGRID.green, &CONFIG_COLOR_VGRID.blue);
-    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_HGRID,             "26214 26214 26214");
-    sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_HGRID.red, &CONFIG_COLOR_HGRID.green, &CONFIG_COLOR_HGRID.blue);
-    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_OGRID,             "26214 26214 26214");
-    sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_OGRID.red, &CONFIG_COLOR_OGRID.green, &CONFIG_COLOR_OGRID.blue);
-    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_BLACK_KEYS,           "8738 8738 8738");
-    sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_BLACK_KEYS.red, &CONFIG_COLOR_BLACK_KEYS.green, &CONFIG_COLOR_BLACK_KEYS.blue);
-    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_WHITE_KEYS,           "8738 8738 8738");
-    sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_WHITE_KEYS.red, &CONFIG_COLOR_WHITE_KEYS.green, &CONFIG_COLOR_WHITE_KEYS.blue);
-    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_PEAKS,           "65535 0 0");
-    sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_PEAKS.red, &CONFIG_COLOR_PEAKS.green, &CONFIG_COLOR_PEAKS.blue);
+    get_color (CONFSTR_MS_COLOR_BG,         &CONFIG_COLOR_BG,         "8738 8738 8738");
+    get_color (CONFSTR_MS_COLOR_TEXT,       &CONFIG_COLOR_TEXT,       "65535 65535 65535");
+    get_color (CONFSTR_MS_COLOR_VGRID,      &CONFIG_COLOR_VGRID,      "0 0 0");
+    get_color (CONFSTR_MS_COLOR_HGRID,      &CONFIG_COLOR_HGRID,      "26214 26214 26214");
+    get_color (CONFSTR_MS_COLOR_OGRID,      &CONFIG_COLOR_OGRID,      "26214 26214 26214");
+    get_color (CONFSTR_MS_COLOR_BLACK_KEYS, &CONFIG_COLOR_BLACK_KEYS, "8738 8738 8738");
+    get_color (CONFSTR_MS_COLOR_WHITE_KEYS, &CONFIG_COLOR_WHITE_KEYS, "8738 8738 8738");
+    get_color (CONFSTR_MS_COLOR_PEAKS,      &CONFIG_COLOR_PEAKS,      "65535 0 0");
 
+    const char *color = NULL;
+    char conf_str[100] = {};
     g_list_free_full (CONFIG_GRADIENT_COLORS, g_free);
     CONFIG_GRADIENT_COLORS = NULL;
     for (int i = 0; i < CONFIG_NUM_COLORS; i++) {
