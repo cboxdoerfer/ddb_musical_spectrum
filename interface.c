@@ -111,6 +111,7 @@ create_config_dialog (void)
   GtkWidget *vgrid_check;
   GtkWidget *ogrid_check;
   GtkWidget *spacing_check;
+  GtkWidget *gaps_check;
   GtkWidget *fill_spectrum_check;
   GtkWidget *tooltip_check;
   GtkWidget *hbox4;
@@ -573,6 +574,10 @@ create_config_dialog (void)
   gtk_widget_show (spacing_check);
   gtk_box_pack_start (GTK_BOX (vbox2), spacing_check, FALSE, FALSE, 0);
 
+  gaps_check = gtk_check_button_new_with_mnemonic (_("Bar gaps"));
+  gtk_widget_show (gaps_check);
+  gtk_box_pack_start (GTK_BOX (vbox2), gaps_check, FALSE, FALSE, 0);
+
   fill_spectrum_check = gtk_check_button_new_with_mnemonic (_("Fill spectrum"));
   gtk_widget_show (fill_spectrum_check);
   gtk_box_pack_start (GTK_BOX (vbox2), fill_spectrum_check, FALSE, FALSE, 0);
@@ -933,6 +938,7 @@ create_config_dialog (void)
   GLADE_HOOKUP_OBJECT (config_dialog, vgrid_check, "vgrid_check");
   GLADE_HOOKUP_OBJECT (config_dialog, ogrid_check, "ogrid_check");
   GLADE_HOOKUP_OBJECT (config_dialog, spacing_check, "spacing_check");
+  GLADE_HOOKUP_OBJECT (config_dialog, gaps_check, "gaps_check");
   GLADE_HOOKUP_OBJECT (config_dialog, fill_spectrum_check, "fill_spectrum_check");
   GLADE_HOOKUP_OBJECT (config_dialog, tooltip_check, "tooltip_check");
   GLADE_HOOKUP_OBJECT (config_dialog, hbox4, "hbox4");
