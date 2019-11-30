@@ -181,11 +181,11 @@ get_align_pos (int width, int spectrum_width)
 static void
 do_fft (struct spectrum_data_t *s)
 {
-    deadbeef->mutex_lock (s->mutex);
     if (!s->samples || !s->fft_plan) {
         return;
     }
 
+    deadbeef->mutex_lock (s->mutex);
     for (int i = 0; i < MAX_FFT_SIZE; ++i) {
         s->spectrum[i] = -DBL_MAX;
     }
@@ -351,7 +351,8 @@ spectrum_draw_cairo_static (w_spectrum_t *w, cairo_t *cr, double barw, int bands
     double x = r->x;
     double height = r->height;
     if (CONFIG_ENABLE_WHITE_KEYS || CONFIG_ENABLE_BLACK_KEYS) {
-        for (int i = 0; i < bands; i++, x += barw) {
+        int num_notes = get_num_notes ();
+        for (int i = 0; i < num_notes; i++, x += barw) {
             int r = (CONFIG_NOTE_MIN + i) % 12;
             if (is_full_step (r)) {
                 if (!CONFIG_ENABLE_WHITE_KEYS) {
