@@ -224,7 +224,7 @@
 			    <widget class="GtkHBox" id="hbox2">
 			      <property name="visible">True</property>
 			      <property name="homogeneous">False</property>
-			      <property name="spacing">0</property>
+			      <property name="spacing">4</property>
 
 			      <child>
 				<widget class="GtkSpinButton" id="amp_min_spin">
@@ -284,7 +284,7 @@
 			    <widget class="GtkHBox" id="hbox3">
 			      <property name="visible">True</property>
 			      <property name="homogeneous">False</property>
-			      <property name="spacing">0</property>
+			      <property name="spacing">4</property>
 
 			      <child>
 				<widget class="GtkSpinButton" id="amp_max_spin">
