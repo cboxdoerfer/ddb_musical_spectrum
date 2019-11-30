@@ -39,6 +39,8 @@
 #define     CONFSTR_MS_ENABLE_HGRID           "musical_spectrum.enable_hgrid"
 #define     CONFSTR_MS_ENABLE_VGRID           "musical_spectrum.enable_vgrid"
 #define     CONFSTR_MS_ENABLE_OGRID           "musical_spectrum.enable_octave_grid"
+#define     CONFSTR_MS_ENABLE_WHITE_KEYS      "musical_spectrum.enable_white_keys"
+#define     CONFSTR_MS_ENABLE_BLACK_KEYS      "musical_spectrum.enable_black_keys"
 #define     CONFSTR_MS_ENABLE_TOOLTIP         "musical_spectrum.enable_tooltip"
 #define     CONFSTR_MS_ENABLE_BAR_MODE        "musical_spectrum.enable_bar_mode"
 #define     CONFSTR_MS_DISPLAY_OCTAVES        "musical_spectrum.display_octaves_on_hover"
@@ -85,6 +87,8 @@ extern int CONFIG_ENABLE_RIGHT_LABELS;
 extern int CONFIG_ENABLE_HGRID;
 extern int CONFIG_ENABLE_VGRID;
 extern int CONFIG_ENABLE_OGRID;
+extern int CONFIG_ENABLE_WHITE_KEYS;
+extern int CONFIG_ENABLE_BLACK_KEYS;
 extern int CONFIG_ENABLE_TOOLTIP;
 extern int CONFIG_ALIGNMENT;
 extern int CONFIG_ENABLE_BAR_MODE;

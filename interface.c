@@ -110,6 +110,9 @@ create_config_dialog (void)
   GtkWidget *hgrid_check;
   GtkWidget *vgrid_check;
   GtkWidget *ogrid_check;
+  GtkWidget *vbox7;
+  GtkWidget *white_keys_check;
+  GtkWidget *black_keys_check;
   GtkWidget *spacing_check;
   GtkWidget *gaps_check;
   GtkWidget *fill_spectrum_check;
@@ -132,12 +135,7 @@ create_config_dialog (void)
   GtkWidget *label33;
   GtkWidget *label34;
   GtkWidget *background_color;
-  GtkWidget *wkeys_color_check;
-  GtkWidget *bkeys_color_check;
   GtkWidget *peaks_color_check;
-  GtkWidget *hgrid_color_check;
-  GtkWidget *vgrid_color_check;
-  GtkWidget *ogrid_color_check;
   GtkWidget *wkeys_color;
   GtkWidget *bkeys_color;
   GtkWidget *peaks_color;
@@ -158,6 +156,11 @@ create_config_dialog (void)
   GtkWidget *scrolledwindow1;
   GtkWidget *viewport1;
   GtkWidget *color_box;
+  GtkWidget *label101;
+  GtkWidget *label102;
+  GtkWidget *label103;
+  GtkWidget *label104;
+  GtkWidget *label105;
   GtkWidget *label32;
   GtkWidget *dialog_action_area1;
   GtkWidget *applybutton1;
@@ -556,7 +559,7 @@ create_config_dialog (void)
 
   vbox5 = gtk_vbox_new (FALSE, 0);
   gtk_widget_show (vbox5);
-  gtk_box_pack_start (GTK_BOX (vbox2), vbox5, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (vbox2), vbox5, FALSE, TRUE, 0);
 
   hgrid_check = gtk_check_button_new_with_mnemonic (_("Horizontal gridlines"));
   gtk_widget_show (hgrid_check);
@@ -569,6 +572,18 @@ create_config_dialog (void)
   ogrid_check = gtk_check_button_new_with_mnemonic (_("Octave gridlines"));
   gtk_widget_show (ogrid_check);
   gtk_box_pack_start (GTK_BOX (vbox5), ogrid_check, FALSE, FALSE, 0);
+
+  vbox7 = gtk_vbox_new (FALSE, 0);
+  gtk_widget_show (vbox7);
+  gtk_box_pack_start (GTK_BOX (vbox2), vbox7, FALSE, TRUE, 0);
+
+  white_keys_check = gtk_check_button_new_with_mnemonic (_("White keys"));
+  gtk_widget_show (white_keys_check);
+  gtk_box_pack_start (GTK_BOX (vbox7), white_keys_check, FALSE, FALSE, 0);
+
+  black_keys_check = gtk_check_button_new_with_mnemonic (_("Black keys"));
+  gtk_widget_show (black_keys_check);
+  gtk_box_pack_start (GTK_BOX (vbox7), black_keys_check, FALSE, FALSE, 0);
 
   spacing_check = gtk_check_button_new_with_mnemonic (_("Bar spacing"));
   gtk_widget_show (spacing_check);
@@ -672,39 +687,9 @@ create_config_dialog (void)
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
 
-  wkeys_color_check = gtk_check_button_new_with_mnemonic (_("White keys:"));
-  gtk_widget_show (wkeys_color_check);
-  gtk_table_attach (GTK_TABLE (table4), wkeys_color_check, 0, 1, 2, 3,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-
-  bkeys_color_check = gtk_check_button_new_with_mnemonic (_("Black keys:"));
-  gtk_widget_show (bkeys_color_check);
-  gtk_table_attach (GTK_TABLE (table4), bkeys_color_check, 0, 1, 3, 4,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-
   peaks_color_check = gtk_check_button_new_with_mnemonic (_("Peaks:"));
   gtk_widget_show (peaks_color_check);
   gtk_table_attach (GTK_TABLE (table4), peaks_color_check, 0, 1, 4, 5,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-
-  hgrid_color_check = gtk_check_button_new_with_mnemonic (_("Horizontal gridlines:"));
-  gtk_widget_show (hgrid_color_check);
-  gtk_table_attach (GTK_TABLE (table4), hgrid_color_check, 0, 1, 5, 6,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-
-  vgrid_color_check = gtk_check_button_new_with_mnemonic (_("Vertical gridlines:"));
-  gtk_widget_show (vgrid_color_check);
-  gtk_table_attach (GTK_TABLE (table4), vgrid_color_check, 0, 1, 6, 7,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-
-  ogrid_color_check = gtk_check_button_new_with_mnemonic (_("Octave gridlines:"));
-  gtk_widget_show (ogrid_color_check);
-  gtk_table_attach (GTK_TABLE (table4), ogrid_color_check, 0, 1, 7, 8,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
 
@@ -814,6 +799,41 @@ create_config_dialog (void)
   color_box = gtk_vbox_new (TRUE, 0);
   gtk_widget_show (color_box);
   gtk_container_add (GTK_CONTAINER (viewport1), color_box);
+
+  label101 = gtk_label_new (_("Horizontal gridlines:"));
+  gtk_widget_show (label101);
+  gtk_table_attach (GTK_TABLE (table4), label101, 0, 1, 5, 6,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label101), 0, 0.5);
+
+  label102 = gtk_label_new (_("Vertical gridlines:"));
+  gtk_widget_show (label102);
+  gtk_table_attach (GTK_TABLE (table4), label102, 0, 1, 6, 7,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label102), 0, 0.5);
+
+  label103 = gtk_label_new (_("Octave gridlines:"));
+  gtk_widget_show (label103);
+  gtk_table_attach (GTK_TABLE (table4), label103, 0, 1, 7, 8,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label103), 0, 0.5);
+
+  label104 = gtk_label_new (_("White keys:"));
+  gtk_widget_show (label104);
+  gtk_table_attach (GTK_TABLE (table4), label104, 0, 1, 2, 3,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label104), 0, 0.5);
+
+  label105 = gtk_label_new (_("Black keys:"));
+  gtk_widget_show (label105);
+  gtk_table_attach (GTK_TABLE (table4), label105, 0, 1, 3, 4,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label105), 0, 0.5);
 
   label32 = gtk_label_new (_("<b>Colors</b>"));
   gtk_widget_show (label32);
@@ -937,6 +957,9 @@ create_config_dialog (void)
   GLADE_HOOKUP_OBJECT (config_dialog, hgrid_check, "hgrid_check");
   GLADE_HOOKUP_OBJECT (config_dialog, vgrid_check, "vgrid_check");
   GLADE_HOOKUP_OBJECT (config_dialog, ogrid_check, "ogrid_check");
+  GLADE_HOOKUP_OBJECT (config_dialog, vbox7, "vbox7");
+  GLADE_HOOKUP_OBJECT (config_dialog, white_keys_check, "white_keys_check");
+  GLADE_HOOKUP_OBJECT (config_dialog, black_keys_check, "black_keys_check");
   GLADE_HOOKUP_OBJECT (config_dialog, spacing_check, "spacing_check");
   GLADE_HOOKUP_OBJECT (config_dialog, gaps_check, "gaps_check");
   GLADE_HOOKUP_OBJECT (config_dialog, fill_spectrum_check, "fill_spectrum_check");
@@ -959,12 +982,7 @@ create_config_dialog (void)
   GLADE_HOOKUP_OBJECT (config_dialog, label33, "label33");
   GLADE_HOOKUP_OBJECT (config_dialog, label34, "label34");
   GLADE_HOOKUP_OBJECT (config_dialog, background_color, "background_color");
-  GLADE_HOOKUP_OBJECT (config_dialog, wkeys_color_check, "wkeys_color_check");
-  GLADE_HOOKUP_OBJECT (config_dialog, bkeys_color_check, "bkeys_color_check");
   GLADE_HOOKUP_OBJECT (config_dialog, peaks_color_check, "peaks_color_check");
-  GLADE_HOOKUP_OBJECT (config_dialog, hgrid_color_check, "hgrid_color_check");
-  GLADE_HOOKUP_OBJECT (config_dialog, vgrid_color_check, "vgrid_color_check");
-  GLADE_HOOKUP_OBJECT (config_dialog, ogrid_color_check, "ogrid_color_check");
   GLADE_HOOKUP_OBJECT (config_dialog, wkeys_color, "wkeys_color");
   GLADE_HOOKUP_OBJECT (config_dialog, bkeys_color, "bkeys_color");
   GLADE_HOOKUP_OBJECT (config_dialog, peaks_color, "peaks_color");
@@ -985,6 +1003,11 @@ create_config_dialog (void)
   GLADE_HOOKUP_OBJECT (config_dialog, scrolledwindow1, "scrolledwindow1");
   GLADE_HOOKUP_OBJECT (config_dialog, viewport1, "viewport1");
   GLADE_HOOKUP_OBJECT (config_dialog, color_box, "color_box");
+  GLADE_HOOKUP_OBJECT (config_dialog, label101, "label101");
+  GLADE_HOOKUP_OBJECT (config_dialog, label102, "label102");
+  GLADE_HOOKUP_OBJECT (config_dialog, label103, "label103");
+  GLADE_HOOKUP_OBJECT (config_dialog, label104, "label104");
+  GLADE_HOOKUP_OBJECT (config_dialog, label105, "label105");
   GLADE_HOOKUP_OBJECT (config_dialog, label32, "label32");
   GLADE_HOOKUP_OBJECT_NO_REF (config_dialog, dialog_action_area1, "dialog_action_area1");
   GLADE_HOOKUP_OBJECT (config_dialog, applybutton1, "applybutton1");
