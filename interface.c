@@ -228,7 +228,7 @@ create_config_dialog (void)
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
 
-  hbox2 = gtk_hbox_new (FALSE, 0);
+  hbox2 = gtk_hbox_new (FALSE, 4);
   gtk_widget_show (hbox2);
   gtk_table_attach (GTK_TABLE (table1), hbox2, 1, 2, 1, 2,
                     (GtkAttachOptions) (GTK_FILL),
@@ -245,7 +245,7 @@ create_config_dialog (void)
   gtk_box_pack_start (GTK_BOX (hbox2), label5, FALSE, FALSE, 0);
   gtk_label_set_use_markup (GTK_LABEL (label5), TRUE);
 
-  hbox3 = gtk_hbox_new (FALSE, 0);
+  hbox3 = gtk_hbox_new (FALSE, 4);
   gtk_widget_show (hbox3);
   gtk_table_attach (GTK_TABLE (table1), hbox3, 3, 4, 1, 2,
                     (GtkAttachOptions) (GTK_FILL),
