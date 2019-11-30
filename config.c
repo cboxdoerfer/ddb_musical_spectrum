@@ -48,6 +48,8 @@ int CONFIG_ENABLE_RIGHT_LABELS = 1;
 int CONFIG_ENABLE_VGRID = 1;
 int CONFIG_ENABLE_TOOLTIP = 1;
 int CONFIG_ENABLE_OGRID = 0;
+int CONFIG_ENABLE_WHITE_KEYS = 0;
+int CONFIG_ENABLE_BLACK_KEYS = 1;
 int CONFIG_ALIGNMENT = 0;
 int CONFIG_ENABLE_BAR_MODE = 0;
 int CONFIG_DISPLAY_OCTAVES = 0;
@@ -104,6 +106,8 @@ save_config (void)
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_HGRID,                CONFIG_ENABLE_HGRID);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_VGRID,                CONFIG_ENABLE_VGRID);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_OGRID,                CONFIG_ENABLE_OGRID);
+    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_WHITE_KEYS,           CONFIG_ENABLE_WHITE_KEYS);
+    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_BLACK_KEYS,           CONFIG_ENABLE_BLACK_KEYS);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_TOOLTIP,              CONFIG_ENABLE_TOOLTIP);
     deadbeef->conf_set_int (CONFSTR_MS_ALIGNMENT,                   CONFIG_ALIGNMENT);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_BAR_MODE,             CONFIG_ENABLE_BAR_MODE);
@@ -171,6 +175,8 @@ load_config (void)
     CONFIG_ENABLE_HGRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_HGRID,                   1);
     CONFIG_ENABLE_VGRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_VGRID,                   1);
     CONFIG_ENABLE_OGRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_OGRID,                   0);
+    CONFIG_ENABLE_WHITE_KEYS = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_WHITE_KEYS,         0);
+    CONFIG_ENABLE_BLACK_KEYS = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_BLACK_KEYS,         1);
     CONFIG_ENABLE_TOOLTIP = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_TOOLTIP,               1);
     CONFIG_ALIGNMENT = deadbeef->conf_get_int (CONFSTR_MS_ALIGNMENT,                      LEFT);
     CONFIG_ENABLE_BAR_MODE = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_BAR_MODE,             0);

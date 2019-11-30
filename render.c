@@ -360,16 +360,24 @@ spectrum_draw_cairo_static (w_spectrum_t *w, cairo_t *cr, double barw, int bands
     double y = r->y;
     double x = r->x;
     double height = r->height;
-    for (int i = 0; i < bands; i++, x += barw) {
-        int r = (CONFIG_NOTE_MIN + i) % 12;
-        if (is_full_step (r)) {
-            gdk_cairo_set_source_color (cr, &CONFIG_COLOR_WHITE_KEYS);
+    if (CONFIG_ENABLE_WHITE_KEYS || CONFIG_ENABLE_BLACK_KEYS) {
+        for (int i = 0; i < bands; i++, x += barw) {
+            int r = (CONFIG_NOTE_MIN + i) % 12;
+            if (is_full_step (r)) {
+                if (!CONFIG_ENABLE_WHITE_KEYS) {
+                    continue;
+                }
+                gdk_cairo_set_source_color (cr, &CONFIG_COLOR_WHITE_KEYS);
+            }
+            else {
+                if (!CONFIG_ENABLE_BLACK_KEYS) {
+                    continue;
+                }
+                gdk_cairo_set_source_color (cr, &CONFIG_COLOR_BLACK_KEYS);
+            }
+            cairo_rectangle (cr, x, y, barw - 1, height);
+            cairo_fill (cr);
         }
-        else {
-            gdk_cairo_set_source_color (cr, &CONFIG_COLOR_BLACK_KEYS);
-        }
-        cairo_rectangle (cr, x, y, barw - 1, height);
-        cairo_fill (cr);
     }
 
     const double octave_width = barw * NUM_NOTES_FOR_OCTAVE;

@@ -222,6 +222,9 @@ set_config_values (GtkWidget *w)
     set_toggle_button (w, "vgrid_check", CONFIG_ENABLE_VGRID);
     set_toggle_button (w, "ogrid_check", CONFIG_ENABLE_OGRID);
 
+    set_toggle_button (w, "white_keys_check", CONFIG_ENABLE_WHITE_KEYS);
+    set_toggle_button (w, "black_keys_check", CONFIG_ENABLE_BLACK_KEYS);
+
     set_toggle_button (w, "fill_spectrum_check", CONFIG_FILL_SPECTRUM);
 
     set_toggle_button (w, "tooltip_check", CONFIG_ENABLE_TOOLTIP);
@@ -273,6 +276,9 @@ get_config_values (GtkWidget *w)
     CONFIG_ENABLE_HGRID = get_toggle_button (w, "hgrid_check");
     CONFIG_ENABLE_VGRID = get_toggle_button (w, "vgrid_check");
     CONFIG_ENABLE_OGRID = get_toggle_button (w, "ogrid_check");
+
+    CONFIG_ENABLE_WHITE_KEYS = get_toggle_button (w, "white_keys_check");
+    CONFIG_ENABLE_BLACK_KEYS = get_toggle_button (w, "black_keys_check");
 
     CONFIG_FILL_SPECTRUM = get_toggle_button (w, "fill_spectrum_check");
     CONFIG_ENABLE_TOOLTIP = get_toggle_button (w, "tooltip_check");
