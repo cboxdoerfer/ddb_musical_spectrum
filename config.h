@@ -38,7 +38,7 @@
 #define     CONFSTR_MS_ENABLE_AMPLITUDES      "musical_spectrum.enable_amplitudes"
 #define     CONFSTR_MS_ENABLE_HGRID           "musical_spectrum.enable_hgrid"
 #define     CONFSTR_MS_ENABLE_VGRID           "musical_spectrum.enable_vgrid"
-#define     CONFSTR_MS_ENABLE_OGRID     "musical_spectrum.enable_octave_grid"
+#define     CONFSTR_MS_ENABLE_OGRID           "musical_spectrum.enable_octave_grid"
 #define     CONFSTR_MS_ENABLE_TOOLTIP         "musical_spectrum.enable_tooltip"
 #define     CONFSTR_MS_ENABLE_BAR_MODE        "musical_spectrum.enable_bar_mode"
 #define     CONFSTR_MS_DISPLAY_OCTAVES        "musical_spectrum.display_octaves_on_hover"
@@ -58,7 +58,9 @@
 #define     CONFSTR_MS_COLOR_TEXT             "musical_spectrum.color.text"
 #define     CONFSTR_MS_COLOR_VGRID            "musical_spectrum.color.vgrid"
 #define     CONFSTR_MS_COLOR_HGRID            "musical_spectrum.color.hgrid"
-#define     CONFSTR_MS_COLOR_OGRID      "musical_spectrum.color.octave_grid"
+#define     CONFSTR_MS_COLOR_OGRID            "musical_spectrum.color.octave_grid"
+#define     CONFSTR_MS_COLOR_WHITE_KEYS       "musical_spectrum.color.white_keys"
+#define     CONFSTR_MS_COLOR_BLACK_KEYS       "musical_spectrum.color.black_keys"
 #define     CONFSTR_MS_NUM_COLORS             "musical_spectrum.num_colors"
 #define     CONFSTR_MS_FONT                   "musical_spectrum.font.labels"
 #define     CONFSTR_MS_COLOR_GRADIENT         "musical_spectrum.color.gradient_"
@@ -105,6 +107,8 @@ extern GdkColor CONFIG_COLOR_TEXT;
 extern GdkColor CONFIG_COLOR_VGRID;
 extern GdkColor CONFIG_COLOR_HGRID;
 extern GdkColor CONFIG_COLOR_OGRID;
+extern GdkColor CONFIG_COLOR_BLACK_KEYS;
+extern GdkColor CONFIG_COLOR_WHITE_KEYS;
 extern GList *CONFIG_GRADIENT_COLORS;
 
 extern int FFT_INDEX;

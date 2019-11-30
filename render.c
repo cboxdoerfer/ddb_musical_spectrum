@@ -363,10 +363,10 @@ spectrum_draw_cairo_static (w_spectrum_t *w, cairo_t *cr, double barw, int bands
     for (int i = 0; i < bands; i++, x += barw) {
         int r = (CONFIG_NOTE_MIN + i) % 12;
         if (is_full_step (r)) {
-            cairo_set_source_rgba (cr, 0.1, 0.1, 0.1, 1);
+            gdk_cairo_set_source_color (cr, &CONFIG_COLOR_WHITE_KEYS);
         }
         else {
-            cairo_set_source_rgba (cr, 0, 0, 0, 1);
+            gdk_cairo_set_source_color (cr, &CONFIG_COLOR_BLACK_KEYS);
         }
         cairo_rectangle (cr, x, y, barw - 1, height);
         cairo_fill (cr);
@@ -435,14 +435,12 @@ spectrum_draw_cairo_bars (struct spectrum_render_t *render, cairo_t *cr, int num
     const double base_s = (r->height / (double)get_db_range ());
 
     // draw spectrum
-    //
-    double x = r->x;
 
     // draw bars
     spectrum_gradient_set (cr, CONFIG_GRADIENT_COLORS, r->width, r->height);
 
 
-    x = r->x;
+    double x = r->x;
     for (int i = 0; i < num_bars; i++, x += barw) {
         if (render->bars[i] <= 0) {
             continue;
