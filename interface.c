@@ -113,8 +113,6 @@ create_config_dialog (void)
   GtkWidget *vbox7;
   GtkWidget *white_keys_check;
   GtkWidget *black_keys_check;
-  GtkWidget *spacing_check;
-  GtkWidget *gaps_check;
   GtkWidget *fill_spectrum_check;
   GtkWidget *tooltip_check;
   GtkWidget *hbox4;
@@ -125,6 +123,10 @@ create_config_dialog (void)
   GtkWidget *alignment_combo;
   GtkWidget *frame5;
   GtkWidget *alignment13;
+  GtkWidget *vbox8;
+  GtkWidget *musical_box;
+  GtkWidget *spacing_check;
+  GtkWidget *gaps_check;
   GtkWidget *hbox6;
   GtkWidget *label31;
   GtkWidget *mode_combo;
@@ -585,14 +587,6 @@ create_config_dialog (void)
   gtk_widget_show (black_keys_check);
   gtk_box_pack_start (GTK_BOX (vbox7), black_keys_check, FALSE, FALSE, 0);
 
-  spacing_check = gtk_check_button_new_with_mnemonic (_("Bar spacing"));
-  gtk_widget_show (spacing_check);
-  gtk_box_pack_start (GTK_BOX (vbox2), spacing_check, FALSE, FALSE, 0);
-
-  gaps_check = gtk_check_button_new_with_mnemonic (_("Bar gaps"));
-  gtk_widget_show (gaps_check);
-  gtk_box_pack_start (GTK_BOX (vbox2), gaps_check, FALSE, FALSE, 0);
-
   fill_spectrum_check = gtk_check_button_new_with_mnemonic (_("Fill spectrum"));
   gtk_widget_show (fill_spectrum_check);
   gtk_box_pack_start (GTK_BOX (vbox2), fill_spectrum_check, FALSE, FALSE, 0);
@@ -627,13 +621,29 @@ create_config_dialog (void)
 
   frame5 = gtk_frame_new (NULL);
   gtk_widget_show (frame5);
-  gtk_box_pack_start (GTK_BOX (vbox2), frame5, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (vbox2), frame5, FALSE, TRUE, 0);
   gtk_frame_set_shadow_type (GTK_FRAME (frame5), GTK_SHADOW_NONE);
 
   alignment13 = gtk_alignment_new (0.5, 0.5, 1, 1);
   gtk_widget_show (alignment13);
   gtk_container_add (GTK_CONTAINER (frame5), alignment13);
   gtk_alignment_set_padding (GTK_ALIGNMENT (alignment13), 0, 0, 12, 0);
+
+  vbox8 = gtk_vbox_new (FALSE, 0);
+  gtk_widget_show (vbox8);
+  gtk_container_add (GTK_CONTAINER (alignment13), vbox8);
+
+  musical_box = gtk_vbox_new (FALSE, 0);
+  gtk_widget_show (musical_box);
+  gtk_box_pack_start (GTK_BOX (vbox8), musical_box, TRUE, TRUE, 0);
+
+  spacing_check = gtk_check_button_new_with_mnemonic (_("Bar spacing"));
+  gtk_widget_show (spacing_check);
+  gtk_box_pack_start (GTK_BOX (musical_box), spacing_check, FALSE, FALSE, 0);
+
+  gaps_check = gtk_check_button_new_with_mnemonic (_("Bar gaps"));
+  gtk_widget_show (gaps_check);
+  gtk_box_pack_start (GTK_BOX (musical_box), gaps_check, FALSE, FALSE, 0);
 
   hbox6 = gtk_hbox_new (FALSE, 4);
   gtk_widget_show (hbox6);
@@ -877,6 +887,9 @@ create_config_dialog (void)
   g_signal_connect ((gpointer) fft_spin, "output",
                     G_CALLBACK (on_fft_spin_output),
                     NULL);
+  g_signal_connect ((gpointer) mode_combo, "changed",
+                    G_CALLBACK (on_mode_combo_changed),
+                    NULL);
   g_signal_connect ((gpointer) color_add, "clicked",
                     G_CALLBACK (on_color_add_clicked),
                     NULL);
@@ -960,8 +973,6 @@ create_config_dialog (void)
   GLADE_HOOKUP_OBJECT (config_dialog, vbox7, "vbox7");
   GLADE_HOOKUP_OBJECT (config_dialog, white_keys_check, "white_keys_check");
   GLADE_HOOKUP_OBJECT (config_dialog, black_keys_check, "black_keys_check");
-  GLADE_HOOKUP_OBJECT (config_dialog, spacing_check, "spacing_check");
-  GLADE_HOOKUP_OBJECT (config_dialog, gaps_check, "gaps_check");
   GLADE_HOOKUP_OBJECT (config_dialog, fill_spectrum_check, "fill_spectrum_check");
   GLADE_HOOKUP_OBJECT (config_dialog, tooltip_check, "tooltip_check");
   GLADE_HOOKUP_OBJECT (config_dialog, hbox4, "hbox4");
@@ -972,6 +983,10 @@ create_config_dialog (void)
   GLADE_HOOKUP_OBJECT (config_dialog, alignment_combo, "alignment_combo");
   GLADE_HOOKUP_OBJECT (config_dialog, frame5, "frame5");
   GLADE_HOOKUP_OBJECT (config_dialog, alignment13, "alignment13");
+  GLADE_HOOKUP_OBJECT (config_dialog, vbox8, "vbox8");
+  GLADE_HOOKUP_OBJECT (config_dialog, musical_box, "musical_box");
+  GLADE_HOOKUP_OBJECT (config_dialog, spacing_check, "spacing_check");
+  GLADE_HOOKUP_OBJECT (config_dialog, gaps_check, "gaps_check");
   GLADE_HOOKUP_OBJECT (config_dialog, hbox6, "hbox6");
   GLADE_HOOKUP_OBJECT (config_dialog, label31, "label31");
   GLADE_HOOKUP_OBJECT (config_dialog, mode_combo, "mode_combo");

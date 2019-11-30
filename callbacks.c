@@ -206,3 +206,20 @@ on_fft_spin_output                     (GtkSpinButton   *spinbutton,
     return FALSE;
 }
 
+
+void
+on_mode_combo_changed                  (GtkComboBox     *combobox,
+                                        gpointer         user_data)
+{
+    GtkWidget *dialog = gtk_widget_get_toplevel (GTK_WIDGET (combobox));
+    GtkWidget *musical_box = GTK_WIDGET (lookup_widget (dialog, "musical_box"));
+    int mode = gtk_combo_box_get_active (combobox);
+    switch (mode) {
+        case 0:
+            gtk_widget_show (musical_box);
+            break;
+        default:
+            gtk_widget_hide (musical_box);
+    }
+}
+
