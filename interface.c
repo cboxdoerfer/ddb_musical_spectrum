@@ -67,11 +67,11 @@ create_config_dialog (void)
   GtkWidget *label15;
   GtkWidget *channel_button;
   GtkWidget *label16;
-  GtkWidget *window_combo;
   GtkWidget *label3;
   GtkWidget *label4;
   GObject *fft_spin_adj;
   GtkWidget *fft_spin;
+  GtkWidget *window_combo;
   GtkWidget *label100;
   GtkWidget *frame2;
   GtkWidget *alignment2;
@@ -118,7 +118,7 @@ create_config_dialog (void)
   GtkWidget *fill_spectrum_check;
   GtkWidget *tooltip_check;
   GtkWidget *hbox4;
-  GtkWidget *font_check;
+  GtkWidget *label106;
   GtkWidget *font_button;
   GtkWidget *hbox5;
   GtkWidget *label30;
@@ -362,12 +362,6 @@ create_config_dialog (void)
                     (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label16), 0, 0.5);
 
-  window_combo = gtk_combo_box_text_new ();
-  gtk_widget_show (window_combo);
-  gtk_table_attach (GTK_TABLE (table1), window_combo, 1, 4, 7, 8,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (GTK_FILL), 0, 0);
-
   label3 = gtk_label_new (_("-"));
   gtk_widget_show (label3);
   gtk_table_attach (GTK_TABLE (table1), label3, 2, 3, 0, 1,
@@ -388,6 +382,12 @@ create_config_dialog (void)
   gtk_table_attach (GTK_TABLE (table1), fft_spin, 1, 3, 4, 5,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
+
+  window_combo = gtk_combo_box_text_new ();
+  gtk_widget_show (window_combo);
+  gtk_table_attach (GTK_TABLE (table1), window_combo, 1, 4, 7, 8,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (GTK_FILL), 0, 0);
 
   label100 = gtk_label_new (_("<b>Processing</b>"));
   gtk_widget_show (label100);
@@ -601,13 +601,13 @@ create_config_dialog (void)
   gtk_widget_show (tooltip_check);
   gtk_box_pack_start (GTK_BOX (vbox2), tooltip_check, FALSE, FALSE, 0);
 
-  hbox4 = gtk_hbox_new (FALSE, 0);
+  hbox4 = gtk_hbox_new (FALSE, 4);
   gtk_widget_show (hbox4);
   gtk_box_pack_start (GTK_BOX (vbox2), hbox4, FALSE, FALSE, 0);
 
-  font_check = gtk_check_button_new_with_mnemonic (_("Font:"));
-  gtk_widget_show (font_check);
-  gtk_box_pack_start (GTK_BOX (hbox4), font_check, FALSE, FALSE, 0);
+  label106 = gtk_label_new (_("Font:"));
+  gtk_widget_show (label106);
+  gtk_box_pack_start (GTK_BOX (hbox4), label106, FALSE, FALSE, 0);
 
   font_button = gtk_font_button_new ();
   gtk_widget_show (font_button);
@@ -919,10 +919,10 @@ create_config_dialog (void)
   GLADE_HOOKUP_OBJECT (config_dialog, label15, "label15");
   GLADE_HOOKUP_OBJECT (config_dialog, channel_button, "channel_button");
   GLADE_HOOKUP_OBJECT (config_dialog, label16, "label16");
-  GLADE_HOOKUP_OBJECT (config_dialog, window_combo, "window_combo");
   GLADE_HOOKUP_OBJECT (config_dialog, label3, "label3");
   GLADE_HOOKUP_OBJECT (config_dialog, label4, "label4");
   GLADE_HOOKUP_OBJECT (config_dialog, fft_spin, "fft_spin");
+  GLADE_HOOKUP_OBJECT (config_dialog, window_combo, "window_combo");
   GLADE_HOOKUP_OBJECT (config_dialog, label100, "label100");
   GLADE_HOOKUP_OBJECT (config_dialog, frame2, "frame2");
   GLADE_HOOKUP_OBJECT (config_dialog, alignment2, "alignment2");
@@ -965,7 +965,7 @@ create_config_dialog (void)
   GLADE_HOOKUP_OBJECT (config_dialog, fill_spectrum_check, "fill_spectrum_check");
   GLADE_HOOKUP_OBJECT (config_dialog, tooltip_check, "tooltip_check");
   GLADE_HOOKUP_OBJECT (config_dialog, hbox4, "hbox4");
-  GLADE_HOOKUP_OBJECT (config_dialog, font_check, "font_check");
+  GLADE_HOOKUP_OBJECT (config_dialog, label106, "label106");
   GLADE_HOOKUP_OBJECT (config_dialog, font_button, "font_button");
   GLADE_HOOKUP_OBJECT (config_dialog, hbox5, "hbox5");
   GLADE_HOOKUP_OBJECT (config_dialog, label30, "label30");
