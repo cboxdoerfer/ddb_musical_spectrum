@@ -441,7 +441,10 @@ spectrum_draw_cairo_bars (struct spectrum_render_t *render, cairo_t *cr, int num
 
 
     double x = r->x;
-    double bar_width = barw - 1;
+    double bar_width = barw;
+    if (CONFIG_GAPS && barw > 1) {
+        bar_width -= 1;
+    }
     double bar_offset = 0;
     if (CONFIG_SPACING && bar_width > 4) {
         bar_offset = 1;
