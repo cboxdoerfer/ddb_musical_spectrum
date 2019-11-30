@@ -35,6 +35,7 @@
 #define     CONFSTR_MS_ENABLE_LEFT_LABELS     "musical_spectrum.enable_left_labels"
 #define     CONFSTR_MS_ENABLE_RIGHT_LABELS    "musical_spectrum.enable_right_labels"
 #define     CONFSTR_MS_ENABLE_PEAKS           "musical_spectrum.enable_peaks"
+#define     CONFSTR_MS_ENABLE_PEAKS_COLOR     "musical_spectrum.enable_peaks_color"
 #define     CONFSTR_MS_ENABLE_AMPLITUDES      "musical_spectrum.enable_amplitudes"
 #define     CONFSTR_MS_ENABLE_HGRID           "musical_spectrum.enable_hgrid"
 #define     CONFSTR_MS_ENABLE_VGRID           "musical_spectrum.enable_vgrid"
@@ -64,6 +65,7 @@
 #define     CONFSTR_MS_COLOR_OGRID            "musical_spectrum.color.octave_grid"
 #define     CONFSTR_MS_COLOR_WHITE_KEYS       "musical_spectrum.color.white_keys"
 #define     CONFSTR_MS_COLOR_BLACK_KEYS       "musical_spectrum.color.black_keys"
+#define     CONFSTR_MS_COLOR_PEAKS            "musical_spectrum.color.peaks"
 #define     CONFSTR_MS_NUM_COLORS             "musical_spectrum.num_colors"
 #define     CONFSTR_MS_FONT                   "musical_spectrum.font.labels"
 #define     CONFSTR_MS_COLOR_GRADIENT         "musical_spectrum.color.gradient_"
@@ -79,6 +81,7 @@ extern int CONFIG_NOTE_MAX;
 extern int CONFIG_AMPLITUDE_MIN;
 extern int CONFIG_AMPLITUDE_MAX;
 extern int CONFIG_ENABLE_PEAKS;
+extern int CONFIG_ENABLE_PEAKS_COLOR;
 extern int CONFIG_ENABLE_AMPLITUDES;
 extern int CONFIG_ENABLE_TOP_LABELS;
 extern int CONFIG_ENABLE_BOTTOM_LABELS;
@@ -115,6 +118,7 @@ extern GdkColor CONFIG_COLOR_HGRID;
 extern GdkColor CONFIG_COLOR_OGRID;
 extern GdkColor CONFIG_COLOR_BLACK_KEYS;
 extern GdkColor CONFIG_COLOR_WHITE_KEYS;
+extern GdkColor CONFIG_COLOR_PEAKS;
 extern GList *CONFIG_GRADIENT_COLORS;
 
 extern int FFT_INDEX;

@@ -234,6 +234,8 @@ set_config_values (GtkWidget *w)
     set_toggle_button (w, "peaks_check", CONFIG_ENABLE_PEAKS);
     set_toggle_button (w, "amplitudes_check", CONFIG_ENABLE_AMPLITUDES);
 
+    set_toggle_button (w, "peaks_color_check", CONFIG_ENABLE_PEAKS_COLOR);
+
     set_spin_button (w, "pitch_spin", CONFIG_PITCH);
     set_spin_button (w, "transpose_spin", CONFIG_TRANSPOSE);
     set_spin_button (w, "notes_max_spin", CONFIG_NOTE_MAX);
@@ -259,6 +261,7 @@ set_config_values (GtkWidget *w)
     set_color_button (w, "text_color", &CONFIG_COLOR_TEXT);
     set_color_button (w, "wkeys_color", &CONFIG_COLOR_WHITE_KEYS);
     set_color_button (w, "bkeys_color", &CONFIG_COLOR_BLACK_KEYS);
+    set_color_button (w, "peaks_color", &CONFIG_COLOR_PEAKS);
 
     set_font_button (w, "font_button", CONFIG_FONT);
 
@@ -288,6 +291,8 @@ get_config_values (GtkWidget *w)
     CONFIG_ENABLE_PEAKS = get_toggle_button (w, "peaks_check");
     CONFIG_ENABLE_AMPLITUDES = get_toggle_button (w, "amplitudes_check");
 
+    CONFIG_ENABLE_PEAKS_COLOR = get_toggle_button (w, "peaks_color_check");
+
     CONFIG_PITCH = get_spin_button (w, "pitch_spin");
     CONFIG_TRANSPOSE = get_spin_button (w, "transpose_spin");
     CONFIG_NOTE_MIN = get_spin_button (w, "notes_min_spin");
@@ -314,6 +319,7 @@ get_config_values (GtkWidget *w)
     get_color_button (w, "text_color", &CONFIG_COLOR_TEXT);
     get_color_button (w, "wkeys_color", &CONFIG_COLOR_WHITE_KEYS);
     get_color_button (w, "bkeys_color", &CONFIG_COLOR_BLACK_KEYS);
+    get_color_button (w, "peaks_color", &CONFIG_COLOR_PEAKS);
 
     CONFIG_FONT = get_font_button (w, "font_button");
 

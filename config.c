@@ -39,6 +39,7 @@ int CONFIG_NOTE_MAX = 107;
 int CONFIG_AMPLITUDE_MIN = -60;
 int CONFIG_AMPLITUDE_MAX = 0;
 int CONFIG_ENABLE_PEAKS = 1;
+int CONFIG_ENABLE_PEAKS_COLOR = 0;
 int CONFIG_ENABLE_AMPLITUDES = 0;
 int CONFIG_ENABLE_HGRID = 1;
 int CONFIG_ENABLE_BOTTOM_LABELS = 1;
@@ -74,6 +75,7 @@ GdkColor CONFIG_COLOR_HGRID;
 GdkColor CONFIG_COLOR_OGRID;
 GdkColor CONFIG_COLOR_BLACK_KEYS;
 GdkColor CONFIG_COLOR_WHITE_KEYS;
+GdkColor CONFIG_COLOR_PEAKS;
 GdkColor CONFIG_COLOR_TEXT;
 GList *CONFIG_GRADIENT_COLORS = NULL;
 
@@ -102,6 +104,7 @@ save_config (void)
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_LEFT_LABELS,          CONFIG_ENABLE_LEFT_LABELS);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_RIGHT_LABELS,         CONFIG_ENABLE_RIGHT_LABELS);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_PEAKS,                CONFIG_ENABLE_PEAKS);
+    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_PEAKS_COLOR,          CONFIG_ENABLE_PEAKS_COLOR);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_AMPLITUDES,           CONFIG_ENABLE_AMPLITUDES);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_HGRID,                CONFIG_ENABLE_HGRID);
     deadbeef->conf_set_int (CONFSTR_MS_ENABLE_VGRID,                CONFIG_ENABLE_VGRID);
@@ -149,6 +152,8 @@ save_config (void)
     deadbeef->conf_set_str (CONFSTR_MS_COLOR_BLACK_KEYS, color);
     snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_WHITE_KEYS.red, CONFIG_COLOR_WHITE_KEYS.green, CONFIG_COLOR_WHITE_KEYS.blue);
     deadbeef->conf_set_str (CONFSTR_MS_COLOR_WHITE_KEYS, color);
+    snprintf (color, sizeof (color), "%d %d %d", CONFIG_COLOR_PEAKS.red, CONFIG_COLOR_PEAKS.green, CONFIG_COLOR_PEAKS.blue);
+    deadbeef->conf_set_str (CONFSTR_MS_COLOR_PEAKS, color);
 }
 
 void
@@ -167,6 +172,7 @@ load_config (void)
     CONFIG_AMPLITUDE_MIN = deadbeef->conf_get_int (CONFSTR_MS_AMPLITUDE_MIN,               -60);
     CONFIG_AMPLITUDE_MAX = deadbeef->conf_get_int (CONFSTR_MS_AMPLITUDE_MAX,                 0);
     CONFIG_ENABLE_PEAKS = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_PEAKS,                   1);
+    CONFIG_ENABLE_PEAKS_COLOR = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_PEAKS_COLOR,       0);
     CONFIG_ENABLE_AMPLITUDES = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_AMPLITUDES,         0);
     CONFIG_ENABLE_TOP_LABELS = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_TOP_LABELS,         0);
     CONFIG_ENABLE_BOTTOM_LABELS = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_BOTTOM_LABELS,   1);
@@ -211,6 +217,8 @@ load_config (void)
     sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_BLACK_KEYS.red, &CONFIG_COLOR_BLACK_KEYS.green, &CONFIG_COLOR_BLACK_KEYS.blue);
     color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_WHITE_KEYS,           "8738 8738 8738");
     sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_WHITE_KEYS.red, &CONFIG_COLOR_WHITE_KEYS.green, &CONFIG_COLOR_WHITE_KEYS.blue);
+    color = deadbeef->conf_get_str_fast (CONFSTR_MS_COLOR_PEAKS,           "65535 0 0");
+    sscanf (color, "%hd %hd %hd", &CONFIG_COLOR_PEAKS.red, &CONFIG_COLOR_PEAKS.green, &CONFIG_COLOR_PEAKS.blue);
 
     g_list_free_full (CONFIG_GRADIENT_COLORS, g_free);
     CONFIG_GRADIENT_COLORS = NULL;
