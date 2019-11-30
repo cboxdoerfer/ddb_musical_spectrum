@@ -62,6 +62,7 @@ int CONFIG_WINDOW = 0;
 int CONFIG_NUM_BARS = 132;
 int CONFIG_BAR_W = 0;
 int CONFIG_GAPS = TRUE;
+int CONFIG_SPACING = TRUE;
 int CONFIG_DRAW_STYLE = 0;
 int CONFIG_FILL_SPECTRUM = TRUE;
 const char *CONFIG_FONT = NULL;
@@ -110,6 +111,7 @@ save_config (void)
     deadbeef->conf_set_int (CONFSTR_MS_NUM_BARS,                    CONFIG_NUM_BARS);
     deadbeef->conf_set_int (CONFSTR_MS_BAR_W,                       CONFIG_BAR_W);
     deadbeef->conf_set_int (CONFSTR_MS_GAPS,                        CONFIG_GAPS);
+    deadbeef->conf_set_int (CONFSTR_MS_SPACING,                     CONFIG_SPACING);
     deadbeef->conf_set_int (CONFSTR_MS_DRAW_STYLE,                  CONFIG_DRAW_STYLE);
     deadbeef->conf_set_int (CONFSTR_MS_FILL_SPECTRUM,               CONFIG_FILL_SPECTRUM);
     deadbeef->conf_set_int (CONFSTR_MS_BAR_FALLOFF,                 CONFIG_BAR_FALLOFF);
@@ -177,6 +179,7 @@ load_config (void)
     CONFIG_NUM_BARS = deadbeef->conf_get_int (CONFSTR_MS_NUM_BARS,                         132);
     CONFIG_BAR_W = deadbeef->conf_get_int (CONFSTR_MS_BAR_W,                                 0);
     CONFIG_GAPS = deadbeef->conf_get_int (CONFSTR_MS_GAPS,                                TRUE);
+    CONFIG_SPACING = deadbeef->conf_get_int (CONFSTR_MS_SPACING,                          TRUE);
     CONFIG_DRAW_STYLE = deadbeef->conf_get_int (CONFSTR_MS_DRAW_STYLE,                       0);
     CONFIG_FILL_SPECTRUM = deadbeef->conf_get_int (CONFSTR_MS_FILL_SPECTRUM,              TRUE);
     CONFIG_BAR_FALLOFF = deadbeef->conf_get_int (CONFSTR_MS_BAR_FALLOFF,                    -1);

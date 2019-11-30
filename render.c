@@ -441,11 +441,17 @@ spectrum_draw_cairo_bars (struct spectrum_render_t *render, cairo_t *cr, int num
 
 
     double x = r->x;
+    double bar_width = barw - 1;
+    double bar_offset = 0;
+    if (CONFIG_SPACING && bar_width > 4) {
+        bar_offset = 1;
+        bar_width -= 2;
+    }
     for (int i = 0; i < num_bars; i++, x += barw) {
         if (render->bars[i] <= 0) {
             continue;
         }
-        cairo_rectangle (cr, x, r->y + r->height - 1, barw - 1, - render->bars[i] * base_s);
+        cairo_rectangle (cr, x + bar_offset, r->y + r->height - 1, bar_width, - render->bars[i] * base_s);
     }
     if (CONFIG_FILL_SPECTRUM) {
         cairo_fill (cr);
@@ -462,8 +468,8 @@ spectrum_draw_cairo_bars (struct spectrum_render_t *render, cairo_t *cr, int num
                 continue;
             }
             const double y = r->y + CLAMP (r->height - render->peaks[i] * base_s, 0, r->height - 1);
-            cairo_move_to (cr, x, y); 
-            cairo_rel_line_to (cr, barw - 1, 0);
+            cairo_move_to (cr, x + bar_offset, y); 
+            cairo_rel_line_to (cr, bar_width, 0);
         }
         cairo_stroke (cr);
     }
@@ -639,11 +645,11 @@ spectrum_bar_width_get (int num_bands, double width)
     if (CONFIG_DRAW_STYLE) {
         barw = 1;
     }
-    else if (CONFIG_GAPS || CONFIG_BAR_W > 1) {
-        barw = CLAMP (width / num_bands, 2, 100);
-    }
+    //else if (CONFIG_GAPS || CONFIG_BAR_W > 1) {
+    //    barw = CLAMP (width / num_bands, 2, 100);
+    //}
     else {
-        barw = CLAMP (width / num_bands, 2, 100) - 1;
+        barw = CLAMP (width / num_bands, 2, 100);
     }
     return barw;
 }
