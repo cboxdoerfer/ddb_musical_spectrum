@@ -52,12 +52,14 @@ window_table_fill (double *window)
             for (int i = 0; i < CONFIG_FFT_SIZE; i++) {
                 // Blackman-Harris
                 window[i] = 0.35875 - 0.48829 * cos(2 * M_PI * i / CONFIG_FFT_SIZE) + 0.14128 * cos(4 * M_PI * i / CONFIG_FFT_SIZE) - 0.01168 * cos(6 * M_PI * i / CONFIG_FFT_SIZE);
+                window[i] *= 2.7;
             }
             break;
         case HANNING:
             for (int i = 0; i < CONFIG_FFT_SIZE; i++) {
                 // Hanning
                 window[i] = (0.5 * (1 - cos (2 * M_PI * i / CONFIG_FFT_SIZE)));
+                window[i] *= 2;
             }
             break;
         default:
