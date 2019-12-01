@@ -21,6 +21,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <gdk/gdk.h>
 
 #define     CONFSTR_MS_REFRESH_INTERVAL       "musical_spectrum.refresh_interval"
 #define     CONFSTR_MS_FFT_SIZE               "musical_spectrum.fft_size"
