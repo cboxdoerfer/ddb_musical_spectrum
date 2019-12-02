@@ -210,12 +210,12 @@ static inline double
 spectrum_get_value (w_spectrum_t *w, int band, int num_bands)
 {
     band = MAX (band, 1);
-    //const int k0 = w->data->keys[MAX(band - 1, w->data->low_res_end)];
-    const int k0 = w->data->keys[band];
-    const int k1 = w->data->keys[MIN(band + 1, num_bands -1)];
+    double k0 = w->data->keys[MAX(band - 1, w->data->low_res_end)];
+    double k1 = w->data->keys[band];
+    double k2 = w->data->keys[MIN(band + 1, num_bands -1)];
 
-    int start = CLAMP (k0, 0, MAX_FFT_SIZE - 1);
-    int end = CLAMP (k1, 0, MAX_FFT_SIZE - 1);
+    int start = ceil((k1 - k0)/2.0 + k0);
+    int end = ceil((k2 - k1)/2.0 + k1);
 
     if (start >= end) {
         return w->data->spectrum[end];
