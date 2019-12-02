@@ -236,12 +236,7 @@ spectrum_band_gravity (double *peaks,
                        int delay,
                        int band)
 {
-    if (peaks[band] <= bars[band]) {
-        peaks[band] = bars[band];
-        delays[band] = delay;
-        velocities[band] = 0;
-    }
-    else {
+    if (peaks[band] > bars[band]) {
         if (delays[band] < 0) {
             peaks[band] -= velocities[band] * CONFIG_REFRESH_INTERVAL;
         }
@@ -249,6 +244,12 @@ spectrum_band_gravity (double *peaks,
             delays[band]--;
         }
         velocities[band] += d_velocity;
+    }
+
+    if (peaks[band] <= bars[band]) {
+        peaks[band] = bars[band];
+        delays[band] = delay;
+        velocities[band] = 0;
     }
 }
 
@@ -449,17 +450,31 @@ spectrum_draw_cairo_bars (struct spectrum_render_t *render, cairo_t *cr, int num
         bar_offset = 1;
         bar_width -= 2;
     }
-    for (int i = 0; i < num_bars; i++, x += barw) {
-        if (render->bars[i] <= 0) {
-            continue;
+
+    if (CONFIG_ENABLE_BAR_MODE) { 
+        for (int i = 0; i < num_bars; i++, x += barw) {
+            int y0 = r->y + r->height;
+            for (int y = y0; y > y0 - render->bars[i] * base_s; y -= 2) {
+                cairo_move_to (cr, x + bar_offset, y); 
+                cairo_rel_line_to (cr, bar_width, 0);
+            }
+            cairo_stroke (cr);
         }
-        cairo_rectangle (cr, x + bar_offset, r->y + r->height - 1, bar_width, - render->bars[i] * base_s);
-    }
-    if (CONFIG_FILL_SPECTRUM) {
-        cairo_fill (cr);
     }
     else {
-        cairo_stroke (cr);
+        for (int i = 0; i < num_bars; i++, x += barw) {
+            if (render->bars[i] <= 0) {
+                continue;
+            }
+            cairo_rectangle (cr, x + bar_offset, r->y + r->height - 1, bar_width, - render->bars[i] * base_s);
+        }
+
+        if (CONFIG_FILL_SPECTRUM) {
+            cairo_fill (cr);
+        }
+        else {
+            cairo_stroke (cr);
+        }
     }
 
     // draw peaks
@@ -479,14 +494,6 @@ spectrum_draw_cairo_bars (struct spectrum_render_t *render, cairo_t *cr, int num
         cairo_stroke (cr);
     }
 
-    if (CONFIG_ENABLE_BAR_MODE) { 
-        gdk_cairo_set_source_color (cr, &CONFIG_COLOR_BG);
-        for (int y = (int)r->y; y < r->height; y += 2) {
-            cairo_move_to (cr, r->x, r->y + y); 
-            cairo_rel_line_to (cr, r->width, 0);
-        }
-        cairo_stroke (cr);
-    }
 }
 
 static void

@@ -127,6 +127,7 @@ create_config_dialog (void)
   GtkWidget *musical_box;
   GtkWidget *spacing_check;
   GtkWidget *gaps_check;
+  GtkWidget *led_check;
   GtkWidget *hbox6;
   GtkWidget *label31;
   GtkWidget *mode_combo;
@@ -637,13 +638,17 @@ create_config_dialog (void)
   gtk_widget_show (musical_box);
   gtk_box_pack_start (GTK_BOX (vbox8), musical_box, TRUE, TRUE, 0);
 
-  spacing_check = gtk_check_button_new_with_mnemonic (_("Bar spacing"));
+  spacing_check = gtk_check_button_new_with_mnemonic (_("Show spacing"));
   gtk_widget_show (spacing_check);
   gtk_box_pack_start (GTK_BOX (musical_box), spacing_check, FALSE, FALSE, 0);
 
-  gaps_check = gtk_check_button_new_with_mnemonic (_("Bar gaps"));
+  gaps_check = gtk_check_button_new_with_mnemonic (_("Show gaps"));
   gtk_widget_show (gaps_check);
   gtk_box_pack_start (GTK_BOX (musical_box), gaps_check, FALSE, FALSE, 0);
+
+  led_check = gtk_check_button_new_with_mnemonic (_("LED style"));
+  gtk_widget_show (led_check);
+  gtk_box_pack_start (GTK_BOX (musical_box), led_check, FALSE, FALSE, 0);
 
   hbox6 = gtk_hbox_new (FALSE, 4);
   gtk_widget_show (hbox6);
@@ -987,6 +992,7 @@ create_config_dialog (void)
   GLADE_HOOKUP_OBJECT (config_dialog, musical_box, "musical_box");
   GLADE_HOOKUP_OBJECT (config_dialog, spacing_check, "spacing_check");
   GLADE_HOOKUP_OBJECT (config_dialog, gaps_check, "gaps_check");
+  GLADE_HOOKUP_OBJECT (config_dialog, led_check, "led_check");
   GLADE_HOOKUP_OBJECT (config_dialog, hbox6, "hbox6");
   GLADE_HOOKUP_OBJECT (config_dialog, label31, "label31");
   GLADE_HOOKUP_OBJECT (config_dialog, mode_combo, "mode_combo");
