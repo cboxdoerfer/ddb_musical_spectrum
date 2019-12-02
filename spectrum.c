@@ -56,9 +56,9 @@ static int
 on_config_changed (gpointer user_data)
 {
     w_spectrum_t *w = user_data;
-    w->need_redraw = 1;
     load_config ();
     deadbeef->mutex_lock (w->data->mutex);
+    w->need_redraw = 1;
     if (w->data->fft_plan) {
         fftw_destroy_plan (w->data->fft_plan);
     }
