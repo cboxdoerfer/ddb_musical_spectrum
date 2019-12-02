@@ -239,11 +239,11 @@ spectrum_band_gravity (double *peaks,
     if (peaks[band] > bars[band]) {
         if (delays[band] < 0) {
             peaks[band] -= velocities[band] * CONFIG_REFRESH_INTERVAL;
+            velocities[band] += d_velocity;
         }
         else {
             delays[band]--;
         }
-        velocities[band] += d_velocity;
     }
 
     if (peaks[band] <= bars[band]) {
