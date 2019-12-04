@@ -77,6 +77,8 @@ typedef struct {
     int prev_height;
     enum PLAYBACK_STATUS playback_status;
 
+    cairo_rectangle_t spectrum_rectangle;
+
     struct spectrum_data_t *data;
     struct spectrum_render_t *render;
     struct motion_context motion_ctx;

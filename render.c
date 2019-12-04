@@ -811,10 +811,24 @@ spectrum_get_render_ctx (cairo_t *cr, double width, double height)
     return r_ctx;
 }
 
+int
+draw_labels (cairo_t *cr, int width, int height)
+{
+    double x1, y1, x2, y2;
+    cairo_clip_extents (cr, &x1, &y1, &x2, &y2);
+
+    int clip_width = x2 - x1;
+    int clip_height = y2 - y1;
+
+    if (clip_width != width || clip_height != height) {
+        return 0;
+    }
+    return 1;
+}
+
 gboolean
 spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     w_spectrum_t *w = user_data;
-
 
     GtkAllocation a;
     gtk_widget_get_allocation (w->drawarea, &a);
@@ -822,14 +836,17 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     const int height = a.height;
 
     struct spectrum_render_ctx_t r_ctx = spectrum_get_render_ctx (cr, width, height);
+    w->spectrum_rectangle = r_ctx.r_s;
 
     if (width != w->prev_width || w->need_redraw) {
-        w->need_redraw = 0;
+        if (w->need_redraw == 1) {
+            w->need_redraw = 0;
+        }
         create_frequency_table(w->data, w->samplerate, spectrum_width_max (r_ctx.font_layout, width));
     }
-
     w->prev_width = width;
     w->prev_height = height;
+
 
     // draw background
     spectrum_background_draw (cr, width, height);
@@ -844,17 +861,19 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         spectrum_draw_cairo (w->render, cr, r_ctx.num_bands, &r_ctx.r_s);
     }
 
-    if (CONFIG_ENABLE_TOP_LABELS) {
-        spectrum_draw_labels_freq (cr, &r_ctx, &r_ctx.r_t);
-    }
-    if (CONFIG_ENABLE_BOTTOM_LABELS) {
-        spectrum_draw_labels_freq (cr, &r_ctx, &r_ctx.r_b);
-    }
-    if (CONFIG_ENABLE_LEFT_LABELS) {
-        spectrum_draw_labels_db (cr, &r_ctx, &r_ctx.r_l);
-    }
-    if (CONFIG_ENABLE_RIGHT_LABELS) {
-        spectrum_draw_labels_db (cr, &r_ctx, &r_ctx.r_r);
+    if (draw_labels (cr, width, height)) {
+        if (CONFIG_ENABLE_TOP_LABELS) {
+            spectrum_draw_labels_freq (cr, &r_ctx, &r_ctx.r_t);
+        }
+        if (CONFIG_ENABLE_BOTTOM_LABELS) {
+            spectrum_draw_labels_freq (cr, &r_ctx, &r_ctx.r_b);
+        }
+        if (CONFIG_ENABLE_LEFT_LABELS) {
+            spectrum_draw_labels_db (cr, &r_ctx, &r_ctx.r_l);
+        }
+        if (CONFIG_ENABLE_RIGHT_LABELS) {
+            spectrum_draw_labels_db (cr, &r_ctx, &r_ctx.r_r);
+        }
     }
 
     if (CONFIG_ENABLE_TOOLTIP && w->motion_ctx.entered) {
