@@ -245,6 +245,8 @@ spectrum_init (w_spectrum_t *w) {
     }
     deadbeef->vis_waveform_listen (w, spectrum_wavedata_listener);
     s->need_redraw = 1;
+    s->prev_width = -1;
+    s->prev_height = -1;
 }
 
 static ddb_gtkui_widget_t *
