@@ -38,16 +38,25 @@ char *spectrum_notes[] =
 
 size_t spectrum_notes_size = sizeof (spectrum_notes)/sizeof (spectrum_notes[0]);
 
+static void
+spectrum_queue_spectrum_region (w_spectrum_t *s)
+{
+    cairo_rectangle_t r = s->spectrum_rectangle;
+    gtk_widget_queue_draw_area (s->drawarea, r.x, r.y, r.width, r.height);
+}
+
 static gboolean
 spectrum_draw_cb (void *data) {
     w_spectrum_t *s = data;
-    gtk_widget_queue_draw (s->drawarea);
+
+    spectrum_queue_spectrum_region (s);
     return TRUE;
 }
 
 static gboolean
 spectrum_redraw_cb (void *data) {
     w_spectrum_t *s = data;
+    s->need_redraw = 1;
     gtk_widget_queue_draw (s->drawarea);
     return FALSE;
 }
@@ -141,6 +150,13 @@ spectrum_expose_event (GtkWidget *widget, GdkEventExpose *event, gpointer user_d
     return res;
 }
 
+static gboolean
+spectrum_configure_event (GtkWidget *widget, GdkEvent *event, gpointer user_data)
+{
+    w_spectrum_t *w = user_data;
+    g_idle_add (spectrum_redraw_cb, w);
+    return FALSE;
+}
 
 static gboolean
 spectrum_button_press_event (GtkWidget *widget, GdkEventButton *event, gpointer user_data)
@@ -172,7 +188,9 @@ spectrum_leave_notify_event (GtkWidget *widget, GdkEventMotion *event, gpointer 
 {
     w_spectrum_t *w = user_data;
     w->motion_ctx.entered = 0;
-    gtk_widget_queue_draw (w->drawarea);
+    if (CONFIG_ENABLE_TOOLTIP) {
+        spectrum_queue_spectrum_region (w);
+    }
     return FALSE;
 }
 
@@ -186,7 +204,7 @@ spectrum_motion_notify_event (GtkWidget *widget, GdkEventMotion *event, gpointer
     if (CONFIG_ENABLE_TOOLTIP) {
         w->motion_ctx.x = event->x - 1;
         w->motion_ctx.y = event->y - 1;
-        gtk_widget_queue_draw (w->drawarea);
+        spectrum_queue_spectrum_region (w);
     }
 
     return FALSE;
@@ -276,6 +294,7 @@ w_musical_spectrum_create (void) {
 #else
     g_signal_connect_after ((gpointer) w->drawarea, "draw", G_CALLBACK (spectrum_expose_event), w);
 #endif
+    g_signal_connect_after ((gpointer) w->drawarea, "configure_event", G_CALLBACK (spectrum_configure_event), w);
     g_signal_connect_after ((gpointer) w->drawarea, "button_press_event", G_CALLBACK (spectrum_button_press_event), w);
     g_signal_connect_after ((gpointer) w->drawarea, "button_release_event", G_CALLBACK (spectrum_button_release_event), w);
     g_signal_connect_after ((gpointer) w->drawarea, "motion_notify_event", G_CALLBACK (spectrum_motion_notify_event), w);
