@@ -258,7 +258,8 @@ spectrum_band_set (struct spectrum_render_t *r, int playback_status, double ampl
 {
     r->bars[band] = CLAMP (amplitude - CONFIG_AMPLITUDE_MIN, -DBL_MAX, get_db_range ());
 
-    if (playback_status == PLAYING) {
+    const int state = deadbeef->get_output ()->state ();
+    if (state == OUTPUT_STATE_PLAYING) {
         if (CONFIG_ENABLE_PEAKS && CONFIG_PEAK_FALLOFF != -1) {
             // peak gravity
             spectrum_band_gravity (r->peaks, r->bars, r->v_peaks, r->peak_velocity, r->delay_peaks, r->peak_delay, band);
@@ -303,14 +304,15 @@ spectrum_bands_fill (w_spectrum_t *w, int num_bands, int playback_status)
 static void
 spectrum_render (w_spectrum_t *w, int num_bands)
 {
-    if (w->playback_status != STOPPED) {
-        if (w->playback_status == PAUSED) {
+    const int state = deadbeef->get_output()->state();
+    if (state != OUTPUT_STATE_STOPPED) {
+        if (state == OUTPUT_STATE_PAUSED) {
             spectrum_remove_refresh_interval (w);
         }
         do_fft (w->data);
         spectrum_bands_fill (w, num_bands, w->playback_status);
     }
-    else if (w->playback_status == STOPPED) {
+    else {
         spectrum_remove_refresh_interval (w);
         struct spectrum_render_t *r = w->render;
         for (int i = 0; i < num_bands; i++) {
@@ -812,6 +814,7 @@ spectrum_get_render_ctx (cairo_t *cr, double width, double height)
 gboolean
 spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     w_spectrum_t *w = user_data;
+
 
     GtkAllocation a;
     gtk_widget_get_allocation (w->drawarea, &a);

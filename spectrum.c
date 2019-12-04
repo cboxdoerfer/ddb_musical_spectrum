@@ -200,7 +200,6 @@ spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32
     const int samplerate_temp = w->samplerate;
     switch (id) {
         case DB_EV_SONGSTARTED:
-            w->playback_status = PLAYING;
             w->samplerate = deadbeef->get_output ()->fmt.samplerate;
             if (w->samplerate == 0) w->samplerate = 44100;
             if (samplerate_temp != w->samplerate) {
@@ -216,15 +215,10 @@ spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32
             break;
         case DB_EV_PAUSED:
             if (p1 == 0) {
-                w->playback_status = PLAYING;
                 spectrum_set_refresh_interval (w, CONFIG_REFRESH_INTERVAL);
-            }
-            else {
-                w->playback_status = PAUSED;
             }
             break;
         case DB_EV_STOP:
-            w->playback_status = STOPPED;
             g_idle_add (spectrum_redraw_cb, w);
             break;
     }
