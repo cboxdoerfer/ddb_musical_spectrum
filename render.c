@@ -821,15 +821,15 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     const int width = a.width;
     const int height = a.height;
 
-    static int last_bar_w = -1;
-
     struct spectrum_render_ctx_t r_ctx = spectrum_get_render_ctx (cr, width, height);
 
-    if (width != last_bar_w || w->need_redraw) {
+    if (width != w->prev_width || w->need_redraw) {
         w->need_redraw = 0;
         create_frequency_table(w->data, w->samplerate, spectrum_width_max (r_ctx.font_layout, width));
     }
-    last_bar_w = a.width;
+
+    w->prev_width = width;
+    w->prev_height = height;
 
     // draw background
     spectrum_background_draw (cr, width, height);

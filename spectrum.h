@@ -73,6 +73,8 @@ typedef struct {
     guint drawtimer;
     int samplerate;
     int need_redraw;
+    int prev_width;
+    int prev_height;
     enum PLAYBACK_STATUS playback_status;
 
     struct spectrum_data_t *data;
