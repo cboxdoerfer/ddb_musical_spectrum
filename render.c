@@ -226,7 +226,9 @@ skip_channel (int channel, int num_channels, uint32_t channel_mask)
     //    return 0;
     //}
     uint32_t ch = 1 << channel;
-    //printf("channel: %d\n", channel);
+    if (CONFIG_CHANNEL & ch) {
+        printf("channel: %d\n", channel);
+    }
     //print_channel_mask (ch);
     return 0;
 }
