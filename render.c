@@ -758,12 +758,13 @@ spectrum_get_render_ctx (cairo_t *cr, double width, double height)
     const double label_height = font_height + FONT_PADDING_VERTICAL;
     const double label_width = font_width + FONT_PADDING_HORIZONTAL;
 
-    const int num_bands = !CONFIG_DRAW_STYLE ? get_num_notes () : get_num_bars ();
     double labels_width = (CONFIG_ENABLE_RIGHT_LABELS + CONFIG_ENABLE_LEFT_LABELS) * label_width;
     double labels_height = (CONFIG_ENABLE_TOP_LABELS + CONFIG_ENABLE_BOTTOM_LABELS) * label_height;
-    int bar_width = spectrum_bar_width_get (num_bands, width - labels_width);
+    const double spectrum_width_max = width - labels_width;
+    const int num_bands = get_num_bars (spectrum_width_max);
+    int bar_width = spectrum_bar_width_get (num_bands, spectrum_width_max);
     double spectrum_width = bar_width * num_bands;
-    double spectrum_height = height - labels_height;;
+    double spectrum_height = height - labels_height;
     const int x0 = get_align_pos (width, spectrum_width + labels_width);
 
     cairo_rectangle_t r_l, r_r, r_t, r_b, r_s;
@@ -844,16 +845,16 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
         if (w->need_redraw == 1) {
             w->need_redraw = 0;
         }
-        create_frequency_table(w->data, w->samplerate, spectrum_width_max (r_ctx.font_layout, width));
+        create_frequency_table(w->data, w->samplerate, r_ctx.num_bands);
     }
     w->prev_width = width;
     w->prev_height = height;
 
 
+    spectrum_render (w, r_ctx.num_bands);
+
     // draw background
     spectrum_background_draw (cr, width, height);
-
-    spectrum_render (w, get_num_bars ());
 
     spectrum_draw_cairo_static (w, cr, r_ctx.note_width, r_ctx.num_bands, &r_ctx.r_s);
     if (!CONFIG_DRAW_STYLE) {
