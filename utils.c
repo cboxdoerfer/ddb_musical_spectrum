@@ -32,16 +32,31 @@
 #include "spectrum.h"
 #include "utils.h"
 
-int CALCULATED_NUM_BARS = 136;
+static int
+num_bars_for_width (int width)
+{
+    int num_bars = 136;
+    if (CONFIG_DRAW_STYLE == 1) {
+        num_bars = CLAMP (width, 1, MAX_BARS);
+    }
+    else if (CONFIG_BAR_W > 0) {
+        int added_bar_w = CONFIG_BAR_W;
+        if (CONFIG_GAPS) {
+            added_bar_w += 1;
+        }
+        num_bars = CLAMP (width/added_bar_w, 1, MAX_BARS);
+    }
+    return num_bars;
+}
 
 int
-get_num_bars ()
+get_num_bars (int width)
 {
     if (CONFIG_DRAW_STYLE == 1 || CONFIG_BAR_W > 0) {
-        return CALCULATED_NUM_BARS;
+        return num_bars_for_width (width);
     }
 
-    return 1 + CONFIG_NOTE_MAX - CONFIG_NOTE_MIN;
+    return get_num_notes ();
 }
 
 void
@@ -68,21 +83,6 @@ window_table_fill (double *window)
 }
 
 void
-update_num_bars (int width)
-{
-    CALCULATED_NUM_BARS = 136;
-    if (CONFIG_DRAW_STYLE == 1) {
-        CALCULATED_NUM_BARS = CLAMP (width, 1, MAX_BARS);
-    }
-    else if (CONFIG_BAR_W > 0) {
-        int added_bar_w = CONFIG_BAR_W;
-        if (CONFIG_GAPS)
-            added_bar_w += 1;
-        CALCULATED_NUM_BARS = CLAMP (width/added_bar_w, 1, MAX_BARS);
-    }
-}
-
-void
 update_gravity (struct spectrum_render_t *render)
 {
     render->peak_delay = (int)ceil (CONFIG_PEAK_DELAY/CONFIG_REFRESH_INTERVAL);
@@ -102,13 +102,10 @@ get_num_notes ()
 }
 
 void
-create_frequency_table (struct spectrum_data_t *s, int samplerate, int width)
+create_frequency_table (struct spectrum_data_t *s, int samplerate, int num_bars)
 {
     s->low_res_end = 0;
 
-    update_num_bars (width);
-    //const int num_bars = get_num_bars ();
-    const int num_bars = get_num_bars ();
     const double note_size = num_bars / (double)(get_num_notes ());
     const double a4pos = (57.0 + CONFIG_TRANSPOSE - CONFIG_NOTE_MIN) * note_size;
     const double octave = 12.0 * note_size;

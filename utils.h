@@ -24,13 +24,8 @@
 #include "render.h"
 #include "spectrum.h"
 
-extern int CALCULATED_NUM_BARS;
-
-void
-update_num_bars (int width);
-
 int
-get_num_bars ();
+get_num_bars (int width);
 
 int
 get_num_notes ();
@@ -42,7 +37,7 @@ void
 window_table_fill (double *window);
 
 void
-create_frequency_table (struct spectrum_data_t *s, int samplerate, int width);
+create_frequency_table (struct spectrum_data_t *s, int samplerate, int num_bars);
 
 double
 hermite_interpolate (double *y,
