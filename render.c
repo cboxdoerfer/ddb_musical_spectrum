@@ -190,6 +190,8 @@ do_fft (struct spectrum_data_t *s)
         s->spectrum[i] = -DBL_MAX;
     }
 
+    const double fft_squared = CONFIG_FFT_SIZE * CONFIG_FFT_SIZE;
+
     for (int ch = 0; ch < s->num_channels; ++ch) {
         for (int i = 0; i < CONFIG_FFT_SIZE; i++) {
             s->fft_in[i] = s->samples[i * s->num_channels + ch] * s->window[i];
@@ -199,7 +201,7 @@ do_fft (struct spectrum_data_t *s)
         for (int i = 0; i < CONFIG_FFT_SIZE/2; i++) {
             const double real = s->fft_out[i][0];
             const double imag = s->fft_out[i][1];
-            const double mag = 10.0 * log10 (4.0 * (real*real + imag*imag)/ (double)(CONFIG_FFT_SIZE*CONFIG_FFT_SIZE));
+            const double mag = 10.0 * log10 (4.0 * (real*real + imag*imag)/ fft_squared);
             s->spectrum[i] = MAX (mag, s->spectrum[i]);
         }
     }
