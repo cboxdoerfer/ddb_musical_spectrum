@@ -664,9 +664,6 @@ spectrum_bar_width_get (int num_bands, double width)
     if (CONFIG_DRAW_STYLE) {
         barw = 1;
     }
-    //else if (CONFIG_GAPS || CONFIG_BAR_W > 1) {
-    //    barw = CLAMP (width / num_bands, 2, 100);
-    //}
     else {
         barw = CLAMP (width / num_bands, 2, 100);
     }
