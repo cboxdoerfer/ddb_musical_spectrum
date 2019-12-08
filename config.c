@@ -25,6 +25,7 @@
 #include <assert.h>
 #include <math.h>
 #include <fcntl.h>
+#include <inttypes.h>
 
 #include <gtk/gtk.h>
 
@@ -68,6 +69,7 @@ int CONFIG_GAPS = TRUE;
 int CONFIG_SPACING = TRUE;
 int CONFIG_DRAW_STYLE = 0;
 int CONFIG_FILL_SPECTRUM = TRUE;
+uint32_t CONFIG_CHANNEL = 0;
 const char *CONFIG_FONT = NULL;
 GdkColor CONFIG_COLOR_BG;
 GdkColor CONFIG_COLOR_VGRID;
@@ -137,6 +139,11 @@ save_config (void)
     deadbeef->conf_set_int (CONFSTR_MS_WINDOW,                      CONFIG_WINDOW);
     deadbeef->conf_set_int (CONFSTR_MS_NUM_COLORS,                  CONFIG_NUM_COLORS);
     deadbeef->conf_set_str (CONFSTR_MS_FONT,                        CONFIG_FONT);
+
+    char channel_config_string[10];
+    snprintf (channel_config_string, sizeof (channel_config_string), "%" PRIu32, CONFIG_CHANNEL);
+    deadbeef->conf_set_str (CONFSTR_MS_CHANNEL, channel_config_string);
+
     char color[100];
     char conf_str[100];
     GList *c = CONFIG_GRADIENT_COLORS;
@@ -207,6 +214,9 @@ load_config (void)
     CONFIG_PEAK_DELAY = deadbeef->conf_get_int (CONFSTR_MS_PEAK_DELAY,                     500);
     CONFIG_NUM_COLORS = deadbeef->conf_get_int (CONFSTR_MS_NUM_COLORS,                       6);
     CONFIG_FONT = deadbeef->conf_get_str_fast (CONFSTR_MS_FONT,                       "Sans 7");
+
+    const char *config_channel = deadbeef->conf_get_str_fast (CONFSTR_MS_CHANNEL,         "63");
+    CONFIG_CHANNEL = (uint32_t)strtoul (config_channel, NULL, 0);
 
     get_color (CONFSTR_MS_COLOR_BG,         &CONFIG_COLOR_BG,         "8738 8738 8738");
     get_color (CONFSTR_MS_COLOR_TEXT,       &CONFIG_COLOR_TEXT,       "65535 65535 65535");

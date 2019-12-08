@@ -3,3 +3,4 @@
  */
 
 GtkWidget* create_config_dialog (void);
+GtkWidget* create_channel_menu (void);

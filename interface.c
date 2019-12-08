@@ -65,13 +65,13 @@ create_config_dialog (void)
   GtkWidget *label13;
   GtkWidget *label14;
   GtkWidget *label15;
-  GtkWidget *channel_button;
   GtkWidget *label16;
   GtkWidget *label3;
   GtkWidget *label4;
   GObject *fft_spin_adj;
   GtkWidget *fft_spin;
   GtkWidget *window_combo;
+  GtkWidget *channel_button;
   GtkWidget *label100;
   GtkWidget *frame2;
   GtkWidget *alignment2;
@@ -352,12 +352,6 @@ create_config_dialog (void)
                     (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label15), 0, 0.5);
 
-  channel_button = gtk_button_new_with_mnemonic (_("channel"));
-  gtk_widget_show (channel_button);
-  gtk_table_attach (GTK_TABLE (table1), channel_button, 1, 4, 2, 3,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-
   label16 = gtk_label_new (_("Window:"));
   gtk_widget_show (label16);
   gtk_table_attach (GTK_TABLE (table1), label16, 0, 1, 7, 8,
@@ -391,6 +385,12 @@ create_config_dialog (void)
   gtk_table_attach (GTK_TABLE (table1), window_combo, 1, 4, 7, 8,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (GTK_FILL), 0, 0);
+
+  channel_button = gtk_button_new_with_mnemonic (_("All Channels"));
+  gtk_widget_show (channel_button);
+  gtk_table_attach (GTK_TABLE (table1), channel_button, 1, 4, 2, 3,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
 
   label100 = gtk_label_new (_("<b>Processing</b>"));
   gtk_widget_show (label100);
@@ -935,12 +935,12 @@ create_config_dialog (void)
   GLADE_HOOKUP_OBJECT (config_dialog, label13, "label13");
   GLADE_HOOKUP_OBJECT (config_dialog, label14, "label14");
   GLADE_HOOKUP_OBJECT (config_dialog, label15, "label15");
-  GLADE_HOOKUP_OBJECT (config_dialog, channel_button, "channel_button");
   GLADE_HOOKUP_OBJECT (config_dialog, label16, "label16");
   GLADE_HOOKUP_OBJECT (config_dialog, label3, "label3");
   GLADE_HOOKUP_OBJECT (config_dialog, label4, "label4");
   GLADE_HOOKUP_OBJECT (config_dialog, fft_spin, "fft_spin");
   GLADE_HOOKUP_OBJECT (config_dialog, window_combo, "window_combo");
+  GLADE_HOOKUP_OBJECT (config_dialog, channel_button, "channel_button");
   GLADE_HOOKUP_OBJECT (config_dialog, label100, "label100");
   GLADE_HOOKUP_OBJECT (config_dialog, frame2, "frame2");
   GLADE_HOOKUP_OBJECT (config_dialog, alignment2, "alignment2");
@@ -1036,5 +1036,139 @@ create_config_dialog (void)
   GLADE_HOOKUP_OBJECT (config_dialog, okbutton1, "okbutton1");
 
   return config_dialog;
+}
+
+GtkWidget*
+create_channel_menu (void)
+{
+  GtkWidget *channel_menu;
+  GtkWidget *all_channels;
+  GtkWidget *separator1;
+  GtkWidget *front_left;
+  GtkWidget *front_right;
+  GtkWidget *front_center;
+  GtkWidget *low_frequency;
+  GtkWidget *back_left;
+  GtkWidget *back_right;
+  GtkWidget *front_left_of_center;
+  GtkWidget *front_right_of_center;
+  GtkWidget *back_center;
+  GtkWidget *side_left;
+  GtkWidget *side_right;
+  GtkWidget *top_center;
+  GtkWidget *top_front_left;
+  GtkWidget *top_front_center;
+  GtkWidget *top_front_right;
+  GtkWidget *top_back_left;
+  GtkWidget *top_back_center;
+  GtkWidget *top_back_right;
+
+  channel_menu = gtk_menu_new ();
+
+  all_channels = gtk_check_menu_item_new_with_mnemonic (_("All Channels"));
+  gtk_widget_show (all_channels);
+  gtk_container_add (GTK_CONTAINER (channel_menu), all_channels);
+
+  separator1 = gtk_separator_menu_item_new ();
+  gtk_widget_show (separator1);
+  gtk_container_add (GTK_CONTAINER (channel_menu), separator1);
+  gtk_widget_set_sensitive (separator1, FALSE);
+
+  front_left = gtk_check_menu_item_new_with_mnemonic (_("Front Left"));
+  gtk_widget_show (front_left);
+  gtk_container_add (GTK_CONTAINER (channel_menu), front_left);
+
+  front_right = gtk_check_menu_item_new_with_mnemonic (_("Front Right"));
+  gtk_widget_show (front_right);
+  gtk_container_add (GTK_CONTAINER (channel_menu), front_right);
+
+  front_center = gtk_check_menu_item_new_with_mnemonic (_("Front Center"));
+  gtk_widget_show (front_center);
+  gtk_container_add (GTK_CONTAINER (channel_menu), front_center);
+
+  low_frequency = gtk_check_menu_item_new_with_mnemonic (_("Low Frequency"));
+  gtk_widget_show (low_frequency);
+  gtk_container_add (GTK_CONTAINER (channel_menu), low_frequency);
+
+  back_left = gtk_check_menu_item_new_with_mnemonic (_("Back Left"));
+  gtk_widget_show (back_left);
+  gtk_container_add (GTK_CONTAINER (channel_menu), back_left);
+
+  back_right = gtk_check_menu_item_new_with_mnemonic (_("Back Right"));
+  gtk_widget_show (back_right);
+  gtk_container_add (GTK_CONTAINER (channel_menu), back_right);
+
+  front_left_of_center = gtk_check_menu_item_new_with_mnemonic (_("Front Left of Center"));
+  gtk_widget_show (front_left_of_center);
+  gtk_container_add (GTK_CONTAINER (channel_menu), front_left_of_center);
+
+  front_right_of_center = gtk_check_menu_item_new_with_mnemonic (_("Front Right of Center"));
+  gtk_widget_show (front_right_of_center);
+  gtk_container_add (GTK_CONTAINER (channel_menu), front_right_of_center);
+
+  back_center = gtk_check_menu_item_new_with_mnemonic (_("Back Center"));
+  gtk_widget_show (back_center);
+  gtk_container_add (GTK_CONTAINER (channel_menu), back_center);
+
+  side_left = gtk_check_menu_item_new_with_mnemonic (_("Side Left"));
+  gtk_widget_show (side_left);
+  gtk_container_add (GTK_CONTAINER (channel_menu), side_left);
+
+  side_right = gtk_check_menu_item_new_with_mnemonic (_("Side Right"));
+  gtk_widget_show (side_right);
+  gtk_container_add (GTK_CONTAINER (channel_menu), side_right);
+
+  top_center = gtk_check_menu_item_new_with_mnemonic (_("Top Center"));
+  gtk_widget_show (top_center);
+  gtk_container_add (GTK_CONTAINER (channel_menu), top_center);
+
+  top_front_left = gtk_check_menu_item_new_with_mnemonic (_("Top Front Left"));
+  gtk_widget_show (top_front_left);
+  gtk_container_add (GTK_CONTAINER (channel_menu), top_front_left);
+
+  top_front_center = gtk_check_menu_item_new_with_mnemonic (_("Top Front Center"));
+  gtk_widget_show (top_front_center);
+  gtk_container_add (GTK_CONTAINER (channel_menu), top_front_center);
+
+  top_front_right = gtk_check_menu_item_new_with_mnemonic (_("Top Front Right"));
+  gtk_widget_show (top_front_right);
+  gtk_container_add (GTK_CONTAINER (channel_menu), top_front_right);
+
+  top_back_left = gtk_check_menu_item_new_with_mnemonic (_("Top Back Left"));
+  gtk_widget_show (top_back_left);
+  gtk_container_add (GTK_CONTAINER (channel_menu), top_back_left);
+
+  top_back_center = gtk_check_menu_item_new_with_mnemonic (_("Top Back Center"));
+  gtk_widget_show (top_back_center);
+  gtk_container_add (GTK_CONTAINER (channel_menu), top_back_center);
+
+  top_back_right = gtk_check_menu_item_new_with_mnemonic (_("Top Back Right"));
+  gtk_widget_show (top_back_right);
+  gtk_container_add (GTK_CONTAINER (channel_menu), top_back_right);
+
+  /* Store pointers to all widgets, for use by lookup_widget(). */
+  GLADE_HOOKUP_OBJECT_NO_REF (channel_menu, channel_menu, "channel_menu");
+  GLADE_HOOKUP_OBJECT (channel_menu, all_channels, "all_channels");
+  GLADE_HOOKUP_OBJECT (channel_menu, separator1, "separator1");
+  GLADE_HOOKUP_OBJECT (channel_menu, front_left, "front_left");
+  GLADE_HOOKUP_OBJECT (channel_menu, front_right, "front_right");
+  GLADE_HOOKUP_OBJECT (channel_menu, front_center, "front_center");
+  GLADE_HOOKUP_OBJECT (channel_menu, low_frequency, "low_frequency");
+  GLADE_HOOKUP_OBJECT (channel_menu, back_left, "back_left");
+  GLADE_HOOKUP_OBJECT (channel_menu, back_right, "back_right");
+  GLADE_HOOKUP_OBJECT (channel_menu, front_left_of_center, "front_left_of_center");
+  GLADE_HOOKUP_OBJECT (channel_menu, front_right_of_center, "front_right_of_center");
+  GLADE_HOOKUP_OBJECT (channel_menu, back_center, "back_center");
+  GLADE_HOOKUP_OBJECT (channel_menu, side_left, "side_left");
+  GLADE_HOOKUP_OBJECT (channel_menu, side_right, "side_right");
+  GLADE_HOOKUP_OBJECT (channel_menu, top_center, "top_center");
+  GLADE_HOOKUP_OBJECT (channel_menu, top_front_left, "top_front_left");
+  GLADE_HOOKUP_OBJECT (channel_menu, top_front_center, "top_front_center");
+  GLADE_HOOKUP_OBJECT (channel_menu, top_front_right, "top_front_right");
+  GLADE_HOOKUP_OBJECT (channel_menu, top_back_left, "top_back_left");
+  GLADE_HOOKUP_OBJECT (channel_menu, top_back_center, "top_back_center");
+  GLADE_HOOKUP_OBJECT (channel_menu, top_back_right, "top_back_right");
+
+  return channel_menu;
 }
 

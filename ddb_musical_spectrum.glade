@@ -656,25 +656,6 @@
 			  </child>
 
 			  <child>
-			    <widget class="GtkButton" id="channel_button">
-			      <property name="visible">True</property>
-			      <property name="can_focus">True</property>
-			      <property name="label" translatable="yes">channel</property>
-			      <property name="use_underline">True</property>
-			      <property name="relief">GTK_RELIEF_NORMAL</property>
-			      <property name="focus_on_click">True</property>
-			    </widget>
-			    <packing>
-			      <property name="left_attach">1</property>
-			      <property name="right_attach">4</property>
-			      <property name="top_attach">2</property>
-			      <property name="bottom_attach">3</property>
-			      <property name="x_options">fill</property>
-			      <property name="y_options"></property>
-			    </packing>
-			  </child>
-
-			  <child>
 			    <widget class="GtkLabel" id="label16">
 			      <property name="visible">True</property>
 			      <property name="label" translatable="yes">Window:</property>
@@ -794,6 +775,25 @@
 			      <property name="bottom_attach">8</property>
 			      <property name="x_options">fill</property>
 			      <property name="y_options">fill</property>
+			    </packing>
+			  </child>
+
+			  <child>
+			    <widget class="GtkButton" id="channel_button">
+			      <property name="visible">True</property>
+			      <property name="can_focus">True</property>
+			      <property name="label" translatable="yes">All Channels</property>
+			      <property name="use_underline">True</property>
+			      <property name="relief">GTK_RELIEF_NORMAL</property>
+			      <property name="focus_on_click">True</property>
+			    </widget>
+			    <packing>
+			      <property name="left_attach">1</property>
+			      <property name="right_attach">4</property>
+			      <property name="top_attach">2</property>
+			      <property name="bottom_attach">3</property>
+			      <property name="x_options">fill</property>
+			      <property name="y_options"></property>
 			    </packing>
 			  </child>
 			</widget>
@@ -2459,6 +2459,186 @@
 	  <property name="fill">True</property>
 	</packing>
       </child>
+    </widget>
+  </child>
+</widget>
+
+<widget class="GtkMenu" id="channel_menu">
+
+  <child>
+    <widget class="GtkCheckMenuItem" id="all_channels">
+      <property name="visible">True</property>
+      <property name="label" translatable="yes">All Channels</property>
+      <property name="use_underline">True</property>
+      <property name="active">False</property>
+    </widget>
+  </child>
+
+  <child>
+    <widget class="GtkSeparatorMenuItem" id="separator1">
+      <property name="visible">True</property>
+    </widget>
+  </child>
+
+  <child>
+    <widget class="GtkCheckMenuItem" id="front_left">
+      <property name="visible">True</property>
+      <property name="label" translatable="yes">Front Left</property>
+      <property name="use_underline">True</property>
+      <property name="active">False</property>
+    </widget>
+  </child>
+
+  <child>
+    <widget class="GtkCheckMenuItem" id="front_right">
+      <property name="visible">True</property>
+      <property name="label" translatable="yes">Front Right</property>
+      <property name="use_underline">True</property>
+      <property name="active">False</property>
+    </widget>
+  </child>
+
+  <child>
+    <widget class="GtkCheckMenuItem" id="front_center">
+      <property name="visible">True</property>
+      <property name="label" translatable="yes">Front Center</property>
+      <property name="use_underline">True</property>
+      <property name="active">False</property>
+    </widget>
+  </child>
+
+  <child>
+    <widget class="GtkCheckMenuItem" id="low_frequency">
+      <property name="visible">True</property>
+      <property name="label" translatable="yes">Low Frequency</property>
+      <property name="use_underline">True</property>
+      <property name="active">False</property>
+    </widget>
+  </child>
+
+  <child>
+    <widget class="GtkCheckMenuItem" id="back_left">
+      <property name="visible">True</property>
+      <property name="label" translatable="yes">Back Left</property>
+      <property name="use_underline">True</property>
+      <property name="active">False</property>
+    </widget>
+  </child>
+
+  <child>
+    <widget class="GtkCheckMenuItem" id="back_right">
+      <property name="visible">True</property>
+      <property name="label" translatable="yes">Back Right</property>
+      <property name="use_underline">True</property>
+      <property name="active">False</property>
+    </widget>
+  </child>
+
+  <child>
+    <widget class="GtkCheckMenuItem" id="front_left_of_center">
+      <property name="visible">True</property>
+      <property name="label" translatable="yes">Front Left of Center</property>
+      <property name="use_underline">True</property>
+      <property name="active">False</property>
+    </widget>
+  </child>
+
+  <child>
+    <widget class="GtkCheckMenuItem" id="front_right_of_center">
+      <property name="visible">True</property>
+      <property name="label" translatable="yes">Front Right of Center</property>
+      <property name="use_underline">True</property>
+      <property name="active">False</property>
+    </widget>
+  </child>
+
+  <child>
+    <widget class="GtkCheckMenuItem" id="back_center">
+      <property name="visible">True</property>
+      <property name="label" translatable="yes">Back Center</property>
+      <property name="use_underline">True</property>
+      <property name="active">False</property>
+    </widget>
+  </child>
+
+  <child>
+    <widget class="GtkCheckMenuItem" id="side_left">
+      <property name="visible">True</property>
+      <property name="label" translatable="yes">Side Left</property>
+      <property name="use_underline">True</property>
+      <property name="active">False</property>
+    </widget>
+  </child>
+
+  <child>
+    <widget class="GtkCheckMenuItem" id="side_right">
+      <property name="visible">True</property>
+      <property name="label" translatable="yes">Side Right</property>
+      <property name="use_underline">True</property>
+      <property name="active">False</property>
+    </widget>
+  </child>
+
+  <child>
+    <widget class="GtkCheckMenuItem" id="top_center">
+      <property name="visible">True</property>
+      <property name="label" translatable="yes">Top Center</property>
+      <property name="use_underline">True</property>
+      <property name="active">False</property>
+    </widget>
+  </child>
+
+  <child>
+    <widget class="GtkCheckMenuItem" id="top_front_left">
+      <property name="visible">True</property>
+      <property name="label" translatable="yes">Top Front Left</property>
+      <property name="use_underline">True</property>
+      <property name="active">False</property>
+    </widget>
+  </child>
+
+  <child>
+    <widget class="GtkCheckMenuItem" id="top_front_center">
+      <property name="visible">True</property>
+      <property name="label" translatable="yes">Top Front Center</property>
+      <property name="use_underline">True</property>
+      <property name="active">False</property>
+    </widget>
+  </child>
+
+  <child>
+    <widget class="GtkCheckMenuItem" id="top_front_right">
+      <property name="visible">True</property>
+      <property name="label" translatable="yes">Top Front Right</property>
+      <property name="use_underline">True</property>
+      <property name="active">False</property>
+    </widget>
+  </child>
+
+  <child>
+    <widget class="GtkCheckMenuItem" id="top_back_left">
+      <property name="visible">True</property>
+      <property name="label" translatable="yes">Top Back Left</property>
+      <property name="use_underline">True</property>
+      <property name="active">False</property>
+    </widget>
+  </child>
+
+  <child>
+    <widget class="GtkCheckMenuItem" id="top_back_center">
+      <property name="visible">True</property>
+      <property name="label" translatable="yes">Top Back Center</property>
+      <property name="use_underline">True</property>
+      <property name="active">False</property>
+    </widget>
+  </child>
+
+  <child>
+    <widget class="GtkCheckMenuItem" id="top_back_right">
+      <property name="visible">True</property>
+      <property name="label" translatable="yes">Top Back Right</property>
+      <property name="use_underline">True</property>
+      <property name="active">False</property>
     </widget>
   </child>
 </widget>

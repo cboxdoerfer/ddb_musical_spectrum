@@ -45,6 +45,29 @@ static size_t grad_orientation_size = 2;
 static const char *visual_mode[] = {"Musical", "Solid", "Bars"};
 static size_t visual_mode_size = 3;
 
+const char *channel_check_buttons[] = {
+  "front_left",
+  "front_right",
+  "front_center",
+  "low_frequency",
+  "back_left",
+  "back_right",
+  "front_left_of_center",
+  "front_right_of_center",
+  "back_center",
+  "side_left",
+  "side_right",
+  "top_center",
+  "top_front_left",
+  "top_front_center",
+  "top_front_right",
+  "top_back_left",
+  "top_back_center",
+  "top_back_right",
+  NULL
+};
+
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
@@ -82,6 +105,14 @@ gradient_draw_generic_event (GtkWidget *widget, cairo_t *cr)
     g_list_free_full (colors, free);
 
     return;
+}
+
+static void
+on_channel_button_clicked (GtkButton *button,
+                           gpointer   user_data)
+{
+    GtkWidget *popup = GTK_WIDGET (user_data);
+    gtk_menu_popup (GTK_MENU (popup), NULL, NULL, NULL, GTK_WIDGET (button), 0, gtk_get_current_event_time ());
 }
 
 #if !GTK_CHECK_VERSION(3,0,0)
@@ -210,6 +241,79 @@ set_gradient_colors (GtkWidget *w)
     }
 }
 
+static void
+on_channel_check_button_toggled (GtkCheckMenuItem *checkmenuitem,
+                                 gpointer          user_data);
+
+static void
+set_channel_menu_item_silent (GtkCheckMenuItem *check, GtkWidget *popup, gboolean value)
+{
+    g_signal_handlers_block_by_func ((gpointer)check, on_channel_check_button_toggled, popup);
+    gtk_check_menu_item_set_active (check, value);
+    g_signal_handlers_unblock_by_func ((gpointer)check, on_channel_check_button_toggled, popup);
+}
+
+static void
+on_all_channel_check_button_toggled (GtkCheckMenuItem *checkmenuitem,
+                                     gpointer          user_data);
+
+static void
+set_all_channel_menu_item_silent (GtkCheckMenuItem *check, GtkWidget *popup, gboolean value)
+{
+    g_signal_handlers_block_by_func ((gpointer)check, on_all_channel_check_button_toggled, popup);
+    gtk_check_menu_item_set_active (check, value);
+    g_signal_handlers_unblock_by_func ((gpointer)check, on_all_channel_check_button_toggled, popup);
+}
+
+static void
+on_channel_check_button_toggled (GtkCheckMenuItem *checkmenuitem,
+                                 gpointer          user_data)
+{
+    GtkWidget *popup = GTK_WIDGET (user_data);
+    GtkCheckMenuItem *ch_all_check = GTK_CHECK_MENU_ITEM (lookup_widget (popup, "all_channels"));
+
+    int ch = 0;
+    while (1) {
+        const char *name = channel_check_buttons[ch];
+        if (name == NULL) {
+            break;
+        }
+        GtkCheckMenuItem *check = GTK_CHECK_MENU_ITEM (lookup_widget (popup, name));
+        gboolean active = gtk_check_menu_item_get_active (check);
+        if (!active) {
+            set_all_channel_menu_item_silent (ch_all_check, popup, FALSE);
+            return;
+        }
+        ch++;
+    }
+    set_all_channel_menu_item_silent (ch_all_check, popup, TRUE);
+}
+
+void
+set_channel_config_values (GtkWidget *popup)
+{
+    int ch = 0;
+    int set_all = 1;
+    while (1) {
+        const char *name = channel_check_buttons[ch];
+        if (name == NULL) {
+            break;
+        }
+        GtkCheckMenuItem *check = GTK_CHECK_MENU_ITEM (lookup_widget (popup, name));
+        if (CONFIG_CHANNEL & 1 << ch) {
+            set_channel_menu_item_silent (check, popup, TRUE);
+        }
+        else {
+            set_channel_menu_item_silent (check, popup, FALSE);
+            set_all = 0;
+        }
+        ch++;
+    }
+
+    GtkCheckMenuItem *check = GTK_CHECK_MENU_ITEM (lookup_widget (popup, "all_channels"));
+    set_all_channel_menu_item_silent (check, popup, set_all);
+}
+
 void
 set_config_values (GtkWidget *w)
 {
@@ -250,6 +354,7 @@ set_config_values (GtkWidget *w)
     set_spin_button (w, "amplitudes_gravity_spin", CONFIG_BAR_FALLOFF);
     set_spin_button (w, "fft_spin", FFT_INDEX);
 
+    //set_combo_box (w, "channel_combo", channels, channels_size, CONFIG_CHANNEL);
     set_combo_box (w, "window_combo", window_functions, window_functions_size, CONFIG_WINDOW);
     set_combo_box (w, "alignment_combo", alignment_title, alignment_title_size, CONFIG_ALIGNMENT);
     set_combo_box (w, "gradient_combo", grad_orientation, grad_orientation_size, CONFIG_GRADIENT_ORIENTATION);
@@ -269,7 +374,26 @@ set_config_values (GtkWidget *w)
     set_gradient_colors (w);
 }
 
-void
+static void
+get_channel_config_values (GtkWidget *w)
+{
+    int ch = 0;
+    CONFIG_CHANNEL = 0;
+    while (1) {
+        const char *name = channel_check_buttons[ch];
+        if (name == NULL) {
+            break;
+        }
+        GtkCheckMenuItem *check = GTK_CHECK_MENU_ITEM (lookup_widget (w, name));
+        gboolean active = gtk_check_menu_item_get_active (check);
+        if (active) {
+            CONFIG_CHANNEL |= 1 << ch;
+        }
+        ch++;
+    }
+}
+
+static void
 get_config_values (GtkWidget *w)
 {
     CONFIG_ENABLE_LEFT_LABELS =   get_toggle_button (w, "llabel_check");
@@ -309,6 +433,7 @@ get_config_values (GtkWidget *w)
     FFT_INDEX = get_spin_button (w, "fft_spin");
     CONFIG_FFT_SIZE = (int)exp2 (FFT_INDEX + 9);
 
+    //CONFIG_CHANNEL = get_combo_box (w, "channel_combo");
     CONFIG_WINDOW = get_combo_box (w, "window_combo");
     CONFIG_ALIGNMENT = get_combo_box (w, "alignment_combo");
     CONFIG_GRADIENT_ORIENTATION = get_combo_box (w, "gradient_combo");
@@ -329,7 +454,28 @@ get_config_values (GtkWidget *w)
 }
 
 static void
-set_callbacks (GtkWidget *w)
+on_all_channel_check_button_toggled (GtkCheckMenuItem *checkmenuitem,
+                                     gpointer          user_data)
+{
+    GtkWidget *popup = GTK_WIDGET (user_data);
+    gboolean active = gtk_check_menu_item_get_active (checkmenuitem);
+
+    int ch = 0;
+    while (1) {
+        const char *name = channel_check_buttons[ch];
+        if (name == NULL) {
+            break;
+        }
+        GtkCheckMenuItem *check = GTK_CHECK_MENU_ITEM (lookup_widget (popup, name));
+        g_signal_handlers_block_by_func ((gpointer)check, on_channel_check_button_toggled, popup);
+        gtk_check_menu_item_set_active (check, active);
+        g_signal_handlers_unblock_by_func ((gpointer)check, on_channel_check_button_toggled, popup);
+        ch++;
+    }
+}
+
+static void
+set_callbacks (GtkWidget *w, GtkWidget *popup)
 {
     GtkWidget *gradient_preview = GTK_WIDGET (lookup_widget (w, "gradient_preview"));
 #if !GTK_CHECK_VERSION(3,0,0)
@@ -337,20 +483,41 @@ set_callbacks (GtkWidget *w)
 #else
     g_signal_connect_after ((gpointer) gradient_preview, "draw", G_CALLBACK (on_gradient_preview_draw_event), NULL);
 #endif
+
+    GtkWidget *channel_button = GTK_WIDGET (lookup_widget (w, "channel_button"));
+    g_signal_connect_after ((gpointer) channel_button, "clicked", G_CALLBACK (on_channel_button_clicked), popup);
+
+    int ch = 0;
+    while (1) {
+        const char *name = channel_check_buttons[ch];
+        if (name == NULL) {
+            break;
+        }
+        GtkWidget *ch_check = GTK_WIDGET (lookup_widget (popup, name));
+        g_signal_connect_after ((gpointer) ch_check, "toggled", G_CALLBACK (on_channel_check_button_toggled), popup);
+
+        ch++;
+    }
+
+    GtkWidget *ch_check = GTK_WIDGET (lookup_widget (popup, "all_channels"));
+    g_signal_connect_after ((gpointer) ch_check, "toggled", G_CALLBACK (on_all_channel_check_button_toggled), popup);
 }
 
 void
 on_button_config (GtkMenuItem *menuitem, gpointer user_data)
 {
     GtkWidget *dialog = create_config_dialog ();
+    GtkWidget *popup = create_channel_menu ();
 
-    set_callbacks (dialog);
+    set_callbacks (dialog, popup);
     set_config_values (dialog);
+    set_channel_config_values (popup);
 
     while (TRUE) {
         int response = gtk_dialog_run (GTK_DIALOG (dialog));
         if (response == GTK_RESPONSE_OK || response == GTK_RESPONSE_APPLY) {
             get_config_values (dialog);
+            get_channel_config_values (popup);
             save_config ();
             deadbeef->sendmessage (DB_EV_CONFIGCHANGED, 0, 0, 0);
         }
@@ -359,6 +526,7 @@ on_button_config (GtkMenuItem *menuitem, gpointer user_data)
         }
         break;
     }
+    gtk_widget_destroy (popup);
     gtk_widget_destroy (dialog);
     return;
 }
