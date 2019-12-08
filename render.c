@@ -179,6 +179,59 @@ get_align_pos (int width, int spectrum_width)
 }
 
 static void
+print_channel_mask (uint32_t mask)
+{
+    if (mask & DDB_SPEAKER_FRONT_LEFT)
+        printf("Speaker front left\n");
+    if (mask & DDB_SPEAKER_FRONT_RIGHT)
+        printf("Speaker front right\n");
+    if (mask & DDB_SPEAKER_FRONT_CENTER)
+        printf("Speaker front center\n");
+    if (mask & DDB_SPEAKER_LOW_FREQUENCY)
+        printf("Speaker low freq\n");
+    if (mask & DDB_SPEAKER_BACK_LEFT)
+        printf("Speaker back left\n");
+    if (mask & DDB_SPEAKER_BACK_RIGHT)
+        printf("Speaker back right\n");
+    if (mask & DDB_SPEAKER_FRONT_LEFT_OF_CENTER)
+        printf("Speaker front left of center\n");
+    if (mask & DDB_SPEAKER_FRONT_RIGHT_OF_CENTER)
+        printf("Speaker front right of center\n");
+    if (mask & DDB_SPEAKER_BACK_CENTER)
+        printf("Speaker back center\n");
+    if (mask & DDB_SPEAKER_SIDE_LEFT)
+        printf("Speaker side left\n");
+    if (mask & DDB_SPEAKER_SIDE_RIGHT)
+        printf("Speaker side right\n");
+    if (mask & DDB_SPEAKER_TOP_CENTER)
+        printf("Speaker top center\n");
+    if (mask & DDB_SPEAKER_TOP_FRONT_LEFT)
+        printf("Speaker top front left\n");
+    if (mask & DDB_SPEAKER_TOP_FRONT_CENTER)
+        printf("Speaker top front center\n");
+    if (mask & DDB_SPEAKER_TOP_FRONT_RIGHT)
+        printf("Speaker top front right\n");
+    if (mask & DDB_SPEAKER_TOP_BACK_LEFT)
+        printf("Speaker top back left\n");
+    if (mask & DDB_SPEAKER_TOP_BACK_CENTER)
+        printf("Speaker top back center\n");
+    if (mask & DDB_SPEAKER_TOP_BACK_RIGHT)
+        printf("Speaker top back right\n");
+}
+
+static int
+skip_channel (int channel, int num_channels, uint32_t channel_mask)
+{
+    //if (CONFIG_CHANNEL == 0) {
+    //    return 0;
+    //}
+    uint32_t ch = 1 << channel;
+    //printf("channel: %d\n", channel);
+    //print_channel_mask (ch);
+    return 0;
+}
+
+static void
 do_fft (struct spectrum_data_t *s)
 {
     if (!s->samples || !s->fft_plan) {
@@ -192,7 +245,12 @@ do_fft (struct spectrum_data_t *s)
 
     const double fft_squared = CONFIG_FFT_SIZE * CONFIG_FFT_SIZE;
 
+    //printf("%d/%d\n", s->num_channels, s->channel_mask);
+    //print_channel_mask (s->channel_mask);
     for (int ch = 0; ch < s->num_channels; ++ch) {
+        if (skip_channel (ch, s->num_channels, s->channel_mask)) {
+            continue;
+        }
         for (int i = 0; i < CONFIG_FFT_SIZE; i++) {
             s->fft_in[i] = s->samples[i * s->num_channels + ch] * s->window[i];
         }

@@ -48,6 +48,7 @@ struct motion_context {
 struct spectrum_data_t {
     int num_channels;
     int num_samples;
+    uint32_t channel_mask;
     double *samples;
     double *spectrum;
     double *window;

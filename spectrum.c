@@ -135,6 +135,7 @@ spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
     memmove (w->data->samples, w->data->samples + sz, n * sizeof (double));
 
     w->data->num_channels = channels;
+    w->data->channel_mask = data->fmt->channelmask;
     int sample_index = n;
     for (int i = 0; i < sz; i++, sample_index++) {
         w->data->samples[sample_index] = data->data[i];

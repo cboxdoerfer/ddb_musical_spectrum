@@ -24,6 +24,7 @@
 #include <gdk/gdk.h>
 
 #define     CONFSTR_MS_REFRESH_INTERVAL       "musical_spectrum.refresh_interval"
+#define     CONFSTR_MS_CHANNEL                "musical_spectrum.channel"
 #define     CONFSTR_MS_FFT_SIZE               "musical_spectrum.fft_size"
 #define     CONFSTR_MS_TRANSPOSE              "musical_spectrum.transpose"
 #define     CONFSTR_MS_PITCH                  "musical_spectrum.pitch"
@@ -75,6 +76,7 @@
 #define NUM_DEFAULT_COLORS 6
 
 extern int CONFIG_REFRESH_INTERVAL;
+extern uint32_t CONFIG_CHANNEL;
 extern int CONFIG_TRANSPOSE;
 extern int CONFIG_PITCH;
 extern int CONFIG_NOTE_MIN;
