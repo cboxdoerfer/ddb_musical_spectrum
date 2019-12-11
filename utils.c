@@ -77,6 +77,11 @@ window_table_fill (double *window)
                 window[i] *= 2;
             }
             break;
+        case NO_WINDOW:
+            for (int i = 0; i < CONFIG_FFT_SIZE; i++) {
+                window[i] = 1;
+            }
+            break;
         default:
             break;
     }
