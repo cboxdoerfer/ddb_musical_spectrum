@@ -228,7 +228,11 @@ spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32
             break;
         case DB_EV_CONFIGCHANGED:
             on_config_changed (w);
+#if (DDB_API_LEVEL >= 11)
+            if (deadbeef->get_output ()->state () == DDB_PLAYBACK_STATE_PLAYING) {
+#else
             if (deadbeef->get_output ()->state () == OUTPUT_STATE_PLAYING) {
+#endif
                 spectrum_set_refresh_interval (w, CONFIG_REFRESH_INTERVAL);
             }
             break;
@@ -258,7 +262,11 @@ spectrum_init (w_spectrum_t *w) {
     window_table_fill (s->data->window);
     update_gravity (s->render);
 
+#if (DDB_API_LEVEL >= 11)
+    if (deadbeef->get_output ()->state () == DDB_PLAYBACK_STATE_PLAYING) {
+#else
     if (deadbeef->get_output ()->state () == OUTPUT_STATE_PLAYING) {
+#endif
         w->playback_status = PLAYING;
         spectrum_set_refresh_interval (w, CONFIG_REFRESH_INTERVAL);
     }
