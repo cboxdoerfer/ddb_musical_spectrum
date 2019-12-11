@@ -28,11 +28,11 @@
 #include "config.h"
 
 static cairo_pattern_t *
-spectrum_gradient_pattern_get (GList *colors, int num_colors, double width, double height)
+spectrum_gradient_pattern_get (GList *colors, int num_colors, int orientation, double width, double height)
 {
     cairo_pattern_t *pat = NULL;
 
-    if (CONFIG_GRADIENT_ORIENTATION == 0) {
+    if (orientation == 0) {
         pat = cairo_pattern_create_linear (0, 0, 0, height);
     }
     else {
@@ -54,11 +54,11 @@ spectrum_gradient_pattern_get (GList *colors, int num_colors, double width, doub
 }
 
 void
-spectrum_gradient_set (cairo_t *cr, GList *colors, double width, double height)
+spectrum_gradient_set (cairo_t *cr, GList *colors, int orientation, double width, double height)
 {
     int num_colors = g_list_length (colors);
     if (num_colors > 1) {
-        cairo_pattern_t *pat = spectrum_gradient_pattern_get (colors, num_colors, width, height);
+        cairo_pattern_t *pat = spectrum_gradient_pattern_get (colors, num_colors, orientation, width, height);
         cairo_set_source (cr, pat);
         cairo_pattern_destroy (pat);
     }
