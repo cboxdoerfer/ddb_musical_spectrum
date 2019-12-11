@@ -42,8 +42,8 @@ static const char *alignment_title[] = {"Left", "Right", "Center"};
 static size_t alignment_title_size = 3;
 static const char *grad_orientation[] = {"Vertical", "Horizontal"};
 static size_t grad_orientation_size = 2;
-static const char *visual_mode[] = {"Musical", "Solid", "Bars"};
-static size_t visual_mode_size = 3;
+static const char *visual_mode[] = {"Musical", "Solid"};
+static size_t visual_mode_size = 2;
 
 static GtkWidget *channel_button = NULL;
 
