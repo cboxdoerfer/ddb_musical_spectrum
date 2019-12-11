@@ -178,47 +178,6 @@ get_align_pos (int width, int spectrum_width)
     return left;
 }
 
-//static void
-//print_channel_mask (uint32_t mask)
-//{
-//    if (mask & DDB_SPEAKER_FRONT_LEFT)
-//        printf("Speaker front left\n");
-//    if (mask & DDB_SPEAKER_FRONT_RIGHT)
-//        printf("Speaker front right\n");
-//    if (mask & DDB_SPEAKER_FRONT_CENTER)
-//        printf("Speaker front center\n");
-//    if (mask & DDB_SPEAKER_LOW_FREQUENCY)
-//        printf("Speaker low freq\n");
-//    if (mask & DDB_SPEAKER_BACK_LEFT)
-//        printf("Speaker back left\n");
-//    if (mask & DDB_SPEAKER_BACK_RIGHT)
-//        printf("Speaker back right\n");
-//    if (mask & DDB_SPEAKER_FRONT_LEFT_OF_CENTER)
-//        printf("Speaker front left of center\n");
-//    if (mask & DDB_SPEAKER_FRONT_RIGHT_OF_CENTER)
-//        printf("Speaker front right of center\n");
-//    if (mask & DDB_SPEAKER_BACK_CENTER)
-//        printf("Speaker back center\n");
-//    if (mask & DDB_SPEAKER_SIDE_LEFT)
-//        printf("Speaker side left\n");
-//    if (mask & DDB_SPEAKER_SIDE_RIGHT)
-//        printf("Speaker side right\n");
-//    if (mask & DDB_SPEAKER_TOP_CENTER)
-//        printf("Speaker top center\n");
-//    if (mask & DDB_SPEAKER_TOP_FRONT_LEFT)
-//        printf("Speaker top front left\n");
-//    if (mask & DDB_SPEAKER_TOP_FRONT_CENTER)
-//        printf("Speaker top front center\n");
-//    if (mask & DDB_SPEAKER_TOP_FRONT_RIGHT)
-//        printf("Speaker top front right\n");
-//    if (mask & DDB_SPEAKER_TOP_BACK_LEFT)
-//        printf("Speaker top back left\n");
-//    if (mask & DDB_SPEAKER_TOP_BACK_CENTER)
-//        printf("Speaker top back center\n");
-//    if (mask & DDB_SPEAKER_TOP_BACK_RIGHT)
-//        printf("Speaker top back right\n");
-//}
-
 static uint32_t channel_list[] = {
     DDB_SPEAKER_FRONT_LEFT,
     DDB_SPEAKER_FRONT_RIGHT,
@@ -761,14 +720,14 @@ spectrum_bar_width_get (int num_bands, double width)
     return barw;
 }
 
-static int
-spectrum_width_max (PangoLayout *layout, double width)
-{
-    const double font_width = spectrum_font_width_max (layout);
-    const double label_width = font_width + FONT_PADDING_HORIZONTAL;
-    const double labels_width = 2 * label_width;
-    return MAX (width - labels_width, 0);
-}
+//static int
+//spectrum_width_max (PangoLayout *layout, double width)
+//{
+//    const double font_width = spectrum_font_width_max (layout);
+//    const double label_width = font_width + FONT_PADDING_HORIZONTAL;
+//    const double labels_width = 2 * label_width;
+//    return MAX (width - labels_width, 0);
+//}
 
 static void
 spectrum_draw_tooltip (struct spectrum_render_t *render,

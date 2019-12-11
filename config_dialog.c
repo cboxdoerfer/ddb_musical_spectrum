@@ -47,28 +47,27 @@ static size_t visual_mode_size = 3;
 
 static GtkWidget *channel_button = NULL;
 
-const char *channel_check_buttons[] = {
-  "front_left",
-  "front_right",
-  "front_center",
-  "low_frequency",
-  "back_left",
-  "back_right",
-  "front_left_of_center",
-  "front_right_of_center",
-  "back_center",
-  "side_left",
-  "side_right",
-  "top_center",
-  "top_front_left",
-  "top_front_center",
-  "top_front_right",
-  "top_back_left",
-  "top_back_center",
-  "top_back_right",
-  NULL
+static int num_channel_buttons = 18;
+const char *channel_buttons[18][2] = {
+    {"front_left", "FL "},
+    {"front_right", "FR "},
+    {"front_center", "FC "},
+    {"low_frequency", "LF "},
+    {"back_left", "BL "},
+    {"back_right", "BR "},
+    {"front_left_of_center", "FLC "},
+    {"front_right_of_center", "FRC "},
+    {"back_center", "BC "},
+    {"side_left", "SL "},
+    {"side_right", "SR "},
+    {"top_center", "TC "},
+    {"top_front_left", "TFL "},
+    {"top_front_center", "TFC "},
+    {"top_front_right", "TFR "},
+    {"top_back_left", "TBL "},
+    {"top_back_center", "TBC "},
+    {"top_back_right", "TBR "},
 };
-
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -253,47 +252,22 @@ set_channel_menu_button_title (GtkWidget *popup, const char *title)
         return;
     }
 
-    const char *labels[] = {
-        "FL ",
-        "FR ",
-        "FC ",
-        "LF ",
-        "BL ",
-        "BR ",
-        "FLC ",
-        "FRC ",
-        "BC ",
-        "SL ",
-        "SR ",
-        "TC ",
-        "TFL ",
-        "TFC ",
-        "TFR ",
-        "TBL ",
-        "TBC ",
-        "TBR "
-    };
-
     GString *button_label = g_string_new (NULL);
-    int ch = 0;
     int n_set = 0;
-    while (1) {
-        const char *name = channel_check_buttons[ch];
-        if (name == NULL) {
-            break;
-        }
+    for (int ch = 0; ch < num_channel_buttons; ch++) {
+        const char *name = channel_buttons[ch][0];
         GtkCheckMenuItem *check = GTK_CHECK_MENU_ITEM (lookup_widget (popup, name));
         gboolean active = gtk_check_menu_item_get_active (check);
         if (active) {
             n_set++;
-            g_string_append (button_label, labels[ch]);
+            g_string_append (button_label, channel_buttons[ch][1]);
         }
-        ch++;
     }
+
     char *label = g_string_free (button_label, FALSE);
     if (label) {
         if (n_set == 0) {
-            gtk_button_set_label (button, "No Channels");
+            gtk_button_set_label (button, "-");
         }
         else if (n_set == 18) {
             gtk_button_set_label (button, "All Channels");
@@ -337,12 +311,8 @@ on_channel_check_button_toggled (GtkCheckMenuItem *checkmenuitem,
     GtkWidget *popup = GTK_WIDGET (user_data);
     GtkCheckMenuItem *ch_all_check = GTK_CHECK_MENU_ITEM (lookup_widget (popup, "all_channels"));
 
-    int ch = 0;
-    while (1) {
-        const char *name = channel_check_buttons[ch];
-        if (name == NULL) {
-            break;
-        }
+    for (int ch = 0; ch < num_channel_buttons; ch++) {
+        const char *name = channel_buttons[ch][0];
         GtkCheckMenuItem *check = GTK_CHECK_MENU_ITEM (lookup_widget (popup, name));
         gboolean active = gtk_check_menu_item_get_active (check);
         if (!active) {
@@ -350,7 +320,6 @@ on_channel_check_button_toggled (GtkCheckMenuItem *checkmenuitem,
             set_channel_menu_button_title (popup, NULL); 
             return;
         }
-        ch++;
     }
     set_all_channel_menu_item_silent (ch_all_check, popup, TRUE);
     set_channel_menu_button_title (popup, NULL); 
@@ -359,13 +328,9 @@ on_channel_check_button_toggled (GtkCheckMenuItem *checkmenuitem,
 void
 set_channel_config_values (GtkWidget *popup)
 {
-    int ch = 0;
     int set_all = 1;
-    while (1) {
-        const char *name = channel_check_buttons[ch];
-        if (name == NULL) {
-            break;
-        }
+    for (int ch = 0; ch < num_channel_buttons; ch++) {
+        const char *name = channel_buttons[ch][0];
         GtkCheckMenuItem *check = GTK_CHECK_MENU_ITEM (lookup_widget (popup, name));
         if (CONFIG_CHANNEL & 1 << ch) {
             set_channel_menu_item_silent (check, popup, TRUE);
@@ -374,7 +339,6 @@ set_channel_config_values (GtkWidget *popup)
             set_channel_menu_item_silent (check, popup, FALSE);
             set_all = 0;
         }
-        ch++;
     }
 
     GtkCheckMenuItem *check = GTK_CHECK_MENU_ITEM (lookup_widget (popup, "all_channels"));
@@ -445,19 +409,14 @@ set_config_values (GtkWidget *w)
 static void
 get_channel_config_values (GtkWidget *w)
 {
-    int ch = 0;
     CONFIG_CHANNEL = 0;
-    while (1) {
-        const char *name = channel_check_buttons[ch];
-        if (name == NULL) {
-            break;
-        }
+    for (int ch = 0; ch < num_channel_buttons; ch++) {
+        const char *name = channel_buttons[ch][0];
         GtkCheckMenuItem *check = GTK_CHECK_MENU_ITEM (lookup_widget (w, name));
         gboolean active = gtk_check_menu_item_get_active (check);
         if (active) {
             CONFIG_CHANNEL |= 1 << ch;
         }
-        ch++;
     }
 }
 
@@ -532,20 +491,15 @@ on_all_channel_check_button_toggled (GtkCheckMenuItem *checkmenuitem,
         set_channel_menu_button_title (popup, "All Channels"); 
     }
     else {
-        set_channel_menu_button_title (popup, "No Channels"); 
+        set_channel_menu_button_title (popup, "-"); 
     }
 
-    int ch = 0;
-    while (1) {
-        const char *name = channel_check_buttons[ch];
-        if (name == NULL) {
-            break;
-        }
+    for (int ch = 0; ch < num_channel_buttons; ch++) {
+        const char *name = channel_buttons[ch][0];
         GtkCheckMenuItem *check = GTK_CHECK_MENU_ITEM (lookup_widget (popup, name));
         g_signal_handlers_block_by_func ((gpointer)check, on_channel_check_button_toggled, popup);
         gtk_check_menu_item_set_active (check, active);
         g_signal_handlers_unblock_by_func ((gpointer)check, on_channel_check_button_toggled, popup);
-        ch++;
     }
 }
 
@@ -562,16 +516,10 @@ set_callbacks (GtkWidget *w, GtkWidget *popup)
     channel_button = GTK_WIDGET (lookup_widget (w, "channel_button"));
     g_signal_connect_after ((gpointer) channel_button, "clicked", G_CALLBACK (on_channel_button_clicked), popup);
 
-    int ch = 0;
-    while (1) {
-        const char *name = channel_check_buttons[ch];
-        if (name == NULL) {
-            break;
-        }
+    for (int ch = 0; ch < num_channel_buttons; ch++) {
+        const char *name = channel_buttons[ch][0];
         GtkWidget *ch_check = GTK_WIDGET (lookup_widget (popup, name));
         g_signal_connect_after ((gpointer) ch_check, "toggled", G_CALLBACK (on_channel_check_button_toggled), popup);
-
-        ch++;
     }
 
     GtkWidget *ch_check = GTK_WIDGET (lookup_widget (popup, "all_channels"));
