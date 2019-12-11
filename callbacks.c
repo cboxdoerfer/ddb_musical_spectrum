@@ -223,3 +223,12 @@ on_mode_combo_changed                  (GtkComboBox     *combobox,
     }
 }
 
+
+void
+on_gradient_combo_changed              (GtkComboBox     *combobox,
+                                        gpointer         user_data)
+{
+    GtkWidget *dialog = gtk_widget_get_toplevel (GTK_WIDGET (combobox));
+    gtk_widget_queue_draw (lookup_widget (dialog, "gradient_preview"));
+}
+

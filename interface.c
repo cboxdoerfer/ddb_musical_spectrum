@@ -798,7 +798,7 @@ create_config_dialog (void)
   gradient_preview = gtk_drawing_area_new ();
   gtk_widget_show (gradient_preview);
   gtk_container_add (GTK_CONTAINER (alignment15), gradient_preview);
-  gtk_widget_set_size_request (gradient_preview, 20, -1);
+  gtk_widget_set_size_request (gradient_preview, 40, -1);
 
   scrolledwindow1 = gtk_scrolled_window_new (NULL, NULL);
   gtk_widget_show (scrolledwindow1);
@@ -894,6 +894,9 @@ create_config_dialog (void)
                     NULL);
   g_signal_connect ((gpointer) mode_combo, "changed",
                     G_CALLBACK (on_mode_combo_changed),
+                    NULL);
+  g_signal_connect ((gpointer) gradient_combo, "changed",
+                    G_CALLBACK (on_gradient_combo_changed),
                     NULL);
   g_signal_connect ((gpointer) color_add, "clicked",
                     G_CALLBACK (on_color_add_clicked),

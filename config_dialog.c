@@ -77,6 +77,7 @@ gradient_draw_generic_event (GtkWidget *widget, cairo_t *cr)
 {
     GtkWidget *dialog = gtk_widget_get_toplevel (GTK_WIDGET (widget));
     GtkContainer *color_box = GTK_CONTAINER (lookup_widget (dialog, "color_box"));
+    GtkComboBox *grad_combo = GTK_COMBO_BOX (lookup_widget (dialog, "gradient_combo"));
     GList *children = gtk_container_get_children (color_box);
 
     if (!children) {
@@ -99,7 +100,7 @@ gradient_draw_generic_event (GtkWidget *widget, cairo_t *cr)
 
     GtkAllocation a;
     gtk_widget_get_allocation (widget, &a);
-    spectrum_gradient_set (cr, colors, a.width, a.height);
+    spectrum_gradient_set (cr, colors, gtk_combo_box_get_active (grad_combo), a.width, a.height);
     cairo_rectangle (cr, 0, 0, a.width, a.height);
     cairo_fill (cr);
 

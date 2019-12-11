@@ -55,3 +55,7 @@ void
 on_mode_combo_changed                  (GtkComboBox     *combobox,
                                         gpointer         user_data);
 
+
+void
+on_gradient_combo_changed              (GtkComboBox     *combobox,
+                                        gpointer         user_data);

@@ -24,5 +24,5 @@
 #include <gdk/gdk.h>
 
 void
-spectrum_gradient_set (cairo_t *cr, GList *colors, double width, double height);
+spectrum_gradient_set (cairo_t *cr, GList *colors, int orientation, double width, double height);
 
