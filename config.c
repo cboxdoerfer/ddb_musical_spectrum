@@ -69,7 +69,7 @@ int CONFIG_GAPS = TRUE;
 int CONFIG_SPACING = TRUE;
 int CONFIG_DRAW_STYLE = 0;
 int CONFIG_FILL_SPECTRUM = TRUE;
-uint32_t CONFIG_CHANNEL = 0;
+uint32_t CONFIG_CHANNEL = 262143;
 const char *CONFIG_FONT = NULL;
 GdkColor CONFIG_COLOR_BG;
 GdkColor CONFIG_COLOR_VGRID;
@@ -215,7 +215,7 @@ load_config (void)
     CONFIG_NUM_COLORS = deadbeef->conf_get_int (CONFSTR_MS_NUM_COLORS,                       6);
     CONFIG_FONT = deadbeef->conf_get_str_fast (CONFSTR_MS_FONT,                       "Sans 7");
 
-    const char *config_channel = deadbeef->conf_get_str_fast (CONFSTR_MS_CHANNEL,         "63");
+    const char *config_channel = deadbeef->conf_get_str_fast (CONFSTR_MS_CHANNEL,     "262143");
     CONFIG_CHANNEL = (uint32_t)strtoul (config_channel, NULL, 0);
 
     get_color (CONFSTR_MS_COLOR_BG,         &CONFIG_COLOR_BG,         "8738 8738 8738");
