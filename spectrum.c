@@ -352,21 +352,13 @@ musical_spectrum_disconnect (void)
     return 0;
 }
 
-static const char settings_dlg[] =
-    "property \"Refresh interval (ms): \"       spinbtn[10,1000,1] "        CONFSTR_MS_REFRESH_INTERVAL         " 25 ;\n"
-    "property \"Bar gravity (dB/s²): \"          spinbtn[-1,1000,1] "        CONFSTR_MS_BAR_FALLOFF              " -1 ;\n"
-    "property \"Bar delay (ms): \"              spinbtn[0,10000,100] "      CONFSTR_MS_BAR_DELAY                " 0 ;\n"
-    "property \"Peak gravity (dB/s²): \"         spinbtn[-1,1000,1] "        CONFSTR_MS_PEAK_FALLOFF             " 50 ;\n"
-    "property \"Peak delay (ms): \"             spinbtn[0,10000,100] "      CONFSTR_MS_PEAK_DELAY               " 500 ;\n"
-;
-
 DB_misc_t plugin = {
     //DB_PLUGIN_SET_API_VERSION
     .plugin.type            = DB_PLUGIN_MISC,
     .plugin.api_vmajor      = 1,
     .plugin.api_vminor      = 5,
     .plugin.version_major   = 0,
-    .plugin.version_minor   = 3,
+    .plugin.version_minor   = 9,
 #if GTK_CHECK_VERSION(3,0,0)
     .plugin.id              = "musical_spectrum-gtk3",
 #else
@@ -398,7 +390,6 @@ DB_misc_t plugin = {
     .plugin.stop            = musical_spectrum_stop,
     .plugin.connect         = musical_spectrum_connect,
     .plugin.disconnect      = musical_spectrum_disconnect,
-    .plugin.configdialog    = settings_dlg,
 };
 
 #if !GTK_CHECK_VERSION(3,0,0)
