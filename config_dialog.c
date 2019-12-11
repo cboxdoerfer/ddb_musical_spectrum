@@ -36,8 +36,8 @@
 #include "interface.h"
 #include "callbacks.h"
 
-static const char *window_functions[] = {"Blackmann-Harris", "Hanning"};
-static size_t window_functions_size = 2;
+static const char *window_functions[] = {"Blackmann-Harris", "Hanning", "None"};
+static size_t window_functions_size = 3;
 static const char *alignment_title[] = {"Left", "Right", "Center"};
 static size_t alignment_title_size = 3;
 static const char *grad_orientation[] = {"Vertical", "Horizontal"};
