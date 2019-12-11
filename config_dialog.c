@@ -45,6 +45,8 @@ static size_t grad_orientation_size = 2;
 static const char *visual_mode[] = {"Musical", "Solid", "Bars"};
 static size_t visual_mode_size = 3;
 
+static GtkWidget *channel_button = NULL;
+
 const char *channel_check_buttons[] = {
   "front_left",
   "front_right",
@@ -242,6 +244,69 @@ set_gradient_colors (GtkWidget *w)
 }
 
 static void
+set_channel_menu_button_title (GtkWidget *popup, const char *title)
+{
+    GtkButton *button = GTK_BUTTON (channel_button);
+
+    if (title) {
+        gtk_button_set_label (button, title);
+        return;
+    }
+
+    const char *labels[] = {
+        "FL ",
+        "FR ",
+        "FC ",
+        "LF ",
+        "BL ",
+        "BR ",
+        "FLC ",
+        "FRC ",
+        "BC ",
+        "SL ",
+        "SR ",
+        "TC ",
+        "TFL ",
+        "TFC ",
+        "TFR ",
+        "TBL ",
+        "TBC ",
+        "TBR "
+    };
+
+    GString *button_label = g_string_new (NULL);
+    int ch = 0;
+    int n_set = 0;
+    while (1) {
+        const char *name = channel_check_buttons[ch];
+        if (name == NULL) {
+            break;
+        }
+        GtkCheckMenuItem *check = GTK_CHECK_MENU_ITEM (lookup_widget (popup, name));
+        gboolean active = gtk_check_menu_item_get_active (check);
+        if (active) {
+            n_set++;
+            g_string_append (button_label, labels[ch]);
+        }
+        ch++;
+    }
+    char *label = g_string_free (button_label, FALSE);
+    if (label) {
+        if (n_set == 0) {
+            gtk_button_set_label (button, "No Channels");
+        }
+        else if (n_set == 18) {
+            gtk_button_set_label (button, "All Channels");
+        }
+        else {
+            gtk_button_set_label (button, label);
+        }
+        g_free (label);
+        label = NULL;
+    }
+}
+
+static void
 on_channel_check_button_toggled (GtkCheckMenuItem *checkmenuitem,
                                  gpointer          user_data);
 
@@ -282,11 +347,13 @@ on_channel_check_button_toggled (GtkCheckMenuItem *checkmenuitem,
         gboolean active = gtk_check_menu_item_get_active (check);
         if (!active) {
             set_all_channel_menu_item_silent (ch_all_check, popup, FALSE);
+            set_channel_menu_button_title (popup, NULL); 
             return;
         }
         ch++;
     }
     set_all_channel_menu_item_silent (ch_all_check, popup, TRUE);
+    set_channel_menu_button_title (popup, NULL); 
 }
 
 void
@@ -312,6 +379,7 @@ set_channel_config_values (GtkWidget *popup)
 
     GtkCheckMenuItem *check = GTK_CHECK_MENU_ITEM (lookup_widget (popup, "all_channels"));
     set_all_channel_menu_item_silent (check, popup, set_all);
+    set_channel_menu_button_title (popup, NULL); 
 }
 
 void
@@ -460,6 +528,13 @@ on_all_channel_check_button_toggled (GtkCheckMenuItem *checkmenuitem,
     GtkWidget *popup = GTK_WIDGET (user_data);
     gboolean active = gtk_check_menu_item_get_active (checkmenuitem);
 
+    if (active) {
+        set_channel_menu_button_title (popup, "All Channels"); 
+    }
+    else {
+        set_channel_menu_button_title (popup, "No Channels"); 
+    }
+
     int ch = 0;
     while (1) {
         const char *name = channel_check_buttons[ch];
@@ -484,7 +559,7 @@ set_callbacks (GtkWidget *w, GtkWidget *popup)
     g_signal_connect_after ((gpointer) gradient_preview, "draw", G_CALLBACK (on_gradient_preview_draw_event), NULL);
 #endif
 
-    GtkWidget *channel_button = GTK_WIDGET (lookup_widget (w, "channel_button"));
+    channel_button = GTK_WIDGET (lookup_widget (w, "channel_button"));
     g_signal_connect_after ((gpointer) channel_button, "clicked", G_CALLBACK (on_channel_button_clicked), popup);
 
     int ch = 0;
