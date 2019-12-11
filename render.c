@@ -356,16 +356,11 @@ spectrum_bands_fill (w_spectrum_t *w, int num_bands, int playback_status)
 static void
 spectrum_render (w_spectrum_t *w, int num_bands)
 {
-    const int state = deadbeef->get_output()->state();
-    if (state != OUTPUT_STATE_STOPPED) {
-        if (state == OUTPUT_STATE_PAUSED) {
-            spectrum_remove_refresh_interval (w);
-        }
+    if (w->playback_status != STOPPED) {
         do_fft (w->data);
         spectrum_bands_fill (w, num_bands, w->playback_status);
     }
     else {
-        spectrum_remove_refresh_interval (w);
         struct spectrum_render_t *r = w->render;
         for (int i = 0; i < num_bands; i++) {
                 r->bars[i] = -DBL_MAX;

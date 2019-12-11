@@ -211,6 +211,14 @@ spectrum_motion_notify_event (GtkWidget *widget, GdkEventMotion *event, gpointer
     return FALSE;
 }
 
+static void
+spectrum_playback_stopped (w_spectrum_t *w)
+{
+    w->playback_status = STOPPED;
+    spectrum_remove_refresh_interval (w);
+    g_idle_add (spectrum_redraw_cb, w);
+}
+
 static int
 spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2)
 {
@@ -224,7 +232,11 @@ spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32
             if (samplerate_temp != w->samplerate) {
                 w->need_redraw = 1;
             }
+            w->playback_status = PLAYING;
             spectrum_set_refresh_interval (w, CONFIG_REFRESH_INTERVAL);
+            break;
+        case DB_EV_SONGFINISHED:
+            spectrum_playback_stopped (w);
             break;
         case DB_EV_CONFIGCHANGED:
             on_config_changed (w);
@@ -238,11 +250,17 @@ spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32
             break;
         case DB_EV_PAUSED:
             if (p1 == 0) {
+                w->playback_status = PAUSED;
                 spectrum_set_refresh_interval (w, CONFIG_REFRESH_INTERVAL);
+            }
+            else {
+                w->playback_status = PLAYING;
+                spectrum_remove_refresh_interval (w);
+                g_idle_add (spectrum_redraw_cb, w);
             }
             break;
         case DB_EV_STOP:
-            g_idle_add (spectrum_redraw_cb, w);
+            spectrum_playback_stopped (w);
             break;
     }
     return 0;
