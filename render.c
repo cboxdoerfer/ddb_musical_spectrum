@@ -706,7 +706,7 @@ static int
 spectrum_bar_width_get (int num_bands, double width)
 {
     int barw = 0;
-    if (CONFIG_DRAW_STYLE) {
+    if (CONFIG_DRAW_STYLE == MUSICAL_STYLE) {
         barw = 1;
     }
     else {
@@ -899,7 +899,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     spectrum_background_draw (cr, width, height);
 
     spectrum_draw_cairo_static (w, cr, r_ctx.note_width, r_ctx.num_bands, &r_ctx.r_s);
-    if (!CONFIG_DRAW_STYLE) {
+    if (CONFIG_DRAW_STYLE == MUSICAL_STYLE) {
         spectrum_draw_cairo_bars (w->render, cr, r_ctx.num_bands, r_ctx.note_width, &r_ctx.r_s);
     }
     else {
