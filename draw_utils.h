@@ -23,6 +23,9 @@
 #include <cairo.h>
 #include <gdk/gdk.h>
 
+cairo_pattern_t *
+spectrum_gradient_pattern_get (GList *colors, int orientation, double width, double height);
+
 void
 spectrum_gradient_set (cairo_t *cr, GList *colors, int orientation, double width, double height);
 
