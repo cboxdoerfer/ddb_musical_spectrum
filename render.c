@@ -116,6 +116,10 @@ spectrum_render_free (struct spectrum_render_t *render)
         free (render->delay_peaks);
         render->delay_peaks = NULL;
     }
+    if (render->pattern) {
+        cairo_pattern_destroy (render->pattern);
+        render->pattern = NULL;
+    }
     free (render);
     render = NULL;
 }
@@ -148,6 +152,7 @@ spectrum_render_new (void)
     render->v_peaks = calloc (MAX_FFT_SIZE, sizeof (double));
     render->delay_bars = calloc (MAX_FFT_SIZE, sizeof (int));
     render->delay_peaks = calloc (MAX_FFT_SIZE, sizeof (int));
+    render->pattern = NULL;
     return render;
 }
 
@@ -486,7 +491,8 @@ spectrum_draw_cairo_bars (struct spectrum_render_t *render, cairo_t *cr, int num
     // draw spectrum
 
     // draw bars
-    spectrum_gradient_set (cr, CONFIG_GRADIENT_COLORS, CONFIG_GRADIENT_ORIENTATION, r->width, r->height);
+    //spectrum_gradient_set (cr, CONFIG_GRADIENT_COLORS, CONFIG_GRADIENT_ORIENTATION, r->width, r->height);
+    cairo_set_source (cr, render->pattern);
 
 
     double x = r->x;
@@ -555,7 +561,8 @@ spectrum_draw_cairo (struct spectrum_render_t *render, cairo_t *cr, int bands, c
     const int barw = CLAMP (floor(r->width / bands), 2, 20) - 1;
 
     // draw spectrum
-    spectrum_gradient_set (cr, CONFIG_GRADIENT_COLORS, CONFIG_GRADIENT_ORIENTATION, r->width, r->height);
+    //spectrum_gradient_set (cr, CONFIG_GRADIENT_COLORS, CONFIG_GRADIENT_ORIENTATION, r->width, r->height);
+    cairo_set_source (cr, render->pattern);
 
     cairo_set_antialias (cr, CAIRO_ANTIALIAS_BEST);
     cairo_set_line_width (cr, 1);
@@ -888,6 +895,11 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
             w->need_redraw = 0;
         }
         create_frequency_table(w->data, w->samplerate, r_ctx.num_bands);
+        if (w->render->pattern) {
+            cairo_pattern_destroy (w->render->pattern);
+            w->render->pattern = NULL;
+        }
+        w->render->pattern = spectrum_gradient_pattern_get (CONFIG_GRADIENT_COLORS, CONFIG_GRADIENT_ORIENTATION, width, height);
     }
     w->prev_width = width;
     w->prev_height = height;

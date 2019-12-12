@@ -14,6 +14,7 @@ struct spectrum_render_t {
     int peak_delay;
     double bar_velocity;
     double peak_velocity;
+    cairo_pattern_t *pattern;
 };
 
 gboolean
