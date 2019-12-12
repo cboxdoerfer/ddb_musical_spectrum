@@ -40,4 +40,4 @@ make
 
 ## Screenshot
 
-![](http://i.imgur.com/IGice7K.png)
+![](https://user-images.githubusercontent.com/6108388/70710858-6f132880-1ce0-11ea-9b8e-85cfa711eda8.png)
