@@ -114,7 +114,7 @@ on_channel_button_clicked (GtkButton *button,
                            gpointer   user_data)
 {
     GtkWidget *popup = GTK_WIDGET (user_data);
-    gtk_menu_popup (GTK_MENU (popup), NULL, NULL, NULL, GTK_WIDGET (button), 0, gtk_get_current_event_time ());
+    gtk_menu_popup (GTK_MENU (popup), NULL, NULL, NULL, NULL, 0, gtk_get_current_event_time ());
 }
 
 #if !GTK_CHECK_VERSION(3,0,0)
