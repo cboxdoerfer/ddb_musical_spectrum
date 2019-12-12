@@ -61,7 +61,7 @@ spectrum_gradient_pattern_get (GList *colors, int orientation, double width, dou
 void
 spectrum_gradient_set (cairo_t *cr, GList *colors, int orientation, double width, double height)
 {
-    int num_colors = g_list_length (colors);
+    const int num_colors = g_list_length (colors);
     if (num_colors > 1) {
         cairo_pattern_t *pat = spectrum_gradient_pattern_get (colors, orientation, width, height);
         cairo_set_source (cr, pat);
