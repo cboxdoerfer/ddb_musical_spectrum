@@ -706,7 +706,7 @@ static int
 spectrum_bar_width_get (int num_bands, double width)
 {
     int barw = 0;
-    if (CONFIG_DRAW_STYLE == MUSICAL_STYLE) {
+    if (CONFIG_DRAW_STYLE == SOLID_STYLE) {
         barw = 1;
     }
     else {
