@@ -51,7 +51,6 @@ create_config_dialog (void)
   GtkWidget *amp_max_spin;
   GtkWidget *label24;
   GtkWidget *label7;
-  GtkWidget *label8;
   GtkWidget *label9;
   GtkWidget *label10;
   GObject *interval_spin_adj;
@@ -72,6 +71,7 @@ create_config_dialog (void)
   GtkWidget *fft_spin;
   GtkWidget *window_combo;
   GtkWidget *channel_button;
+  GtkWidget *label8;
   GtkWidget *label100;
   GtkWidget *frame2;
   GtkWidget *alignment2;
@@ -114,6 +114,7 @@ create_config_dialog (void)
   GtkWidget *white_keys_check;
   GtkWidget *black_keys_check;
   GtkWidget *fill_spectrum_check;
+  GtkWidget *interpolate_check;
   GtkWidget *tooltip_check;
   GtkWidget *hbox4;
   GtkWidget *label106;
@@ -270,13 +271,6 @@ create_config_dialog (void)
                     (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label7), 0, 0.5);
 
-  label8 = gtk_label_new (_("FFT size:"));
-  gtk_widget_show (label8);
-  gtk_table_attach (GTK_TABLE (table1), label8, 0, 1, 4, 5,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-  gtk_misc_set_alignment (GTK_MISC (label8), 0, 0.5);
-
   label9 = gtk_label_new (_("Pitch (A4):"));
   gtk_widget_show (label9);
   gtk_table_attach (GTK_TABLE (table1), label9, 0, 1, 5, 6,
@@ -391,6 +385,13 @@ create_config_dialog (void)
   gtk_table_attach (GTK_TABLE (table1), channel_button, 1, 4, 2, 3,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
+
+  label8 = gtk_label_new (_("FFT size:"));
+  gtk_widget_show (label8);
+  gtk_table_attach (GTK_TABLE (table1), label8, 0, 1, 4, 5,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label8), 0, 0.5);
 
   label100 = gtk_label_new (_("<b>Processing</b>"));
   gtk_widget_show (label100);
@@ -591,6 +592,10 @@ create_config_dialog (void)
   fill_spectrum_check = gtk_check_button_new_with_mnemonic (_("Fill spectrum"));
   gtk_widget_show (fill_spectrum_check);
   gtk_box_pack_start (GTK_BOX (vbox2), fill_spectrum_check, FALSE, FALSE, 0);
+
+  interpolate_check = gtk_check_button_new_with_mnemonic (_("Interpolate"));
+  gtk_widget_show (interpolate_check);
+  gtk_box_pack_start (GTK_BOX (vbox2), interpolate_check, FALSE, FALSE, 0);
 
   tooltip_check = gtk_check_button_new_with_mnemonic (_("Tooltips"));
   gtk_widget_show (tooltip_check);
@@ -927,7 +932,6 @@ create_config_dialog (void)
   GLADE_HOOKUP_OBJECT (config_dialog, amp_max_spin, "amp_max_spin");
   GLADE_HOOKUP_OBJECT (config_dialog, label24, "label24");
   GLADE_HOOKUP_OBJECT (config_dialog, label7, "label7");
-  GLADE_HOOKUP_OBJECT (config_dialog, label8, "label8");
   GLADE_HOOKUP_OBJECT (config_dialog, label9, "label9");
   GLADE_HOOKUP_OBJECT (config_dialog, label10, "label10");
   GLADE_HOOKUP_OBJECT (config_dialog, interval_spin, "interval_spin");
@@ -944,6 +948,7 @@ create_config_dialog (void)
   GLADE_HOOKUP_OBJECT (config_dialog, fft_spin, "fft_spin");
   GLADE_HOOKUP_OBJECT (config_dialog, window_combo, "window_combo");
   GLADE_HOOKUP_OBJECT (config_dialog, channel_button, "channel_button");
+  GLADE_HOOKUP_OBJECT (config_dialog, label8, "label8");
   GLADE_HOOKUP_OBJECT (config_dialog, label100, "label100");
   GLADE_HOOKUP_OBJECT (config_dialog, frame2, "frame2");
   GLADE_HOOKUP_OBJECT (config_dialog, alignment2, "alignment2");
@@ -982,6 +987,7 @@ create_config_dialog (void)
   GLADE_HOOKUP_OBJECT (config_dialog, white_keys_check, "white_keys_check");
   GLADE_HOOKUP_OBJECT (config_dialog, black_keys_check, "black_keys_check");
   GLADE_HOOKUP_OBJECT (config_dialog, fill_spectrum_check, "fill_spectrum_check");
+  GLADE_HOOKUP_OBJECT (config_dialog, interpolate_check, "interpolate_check");
   GLADE_HOOKUP_OBJECT (config_dialog, tooltip_check, "tooltip_check");
   GLADE_HOOKUP_OBJECT (config_dialog, hbox4, "hbox4");
   GLADE_HOOKUP_OBJECT (config_dialog, label106, "label106");
