@@ -222,7 +222,7 @@ create_config_dialog (void)
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
 
-  notes_max_spin_adj = G_OBJECT(gtk_adjustment_new (0, 0, 144, 1, 1, 0));
+  notes_max_spin_adj = G_OBJECT(gtk_adjustment_new (0, 0, 143, 1, 1, 0));
   notes_max_spin = gtk_spin_button_new (GTK_ADJUSTMENT (notes_max_spin_adj), 1, 0);
   gtk_widget_show (notes_max_spin);
   gtk_table_attach (GTK_TABLE (table1), notes_max_spin, 3, 4, 0, 1,
