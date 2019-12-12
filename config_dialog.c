@@ -364,6 +364,8 @@ set_config_values (GtkWidget *w)
 
     set_toggle_button (w, "fill_spectrum_check", CONFIG_FILL_SPECTRUM);
 
+    set_toggle_button (w, "interpolate_check", CONFIG_INTERPOLATE);
+
     set_toggle_button (w, "tooltip_check", CONFIG_ENABLE_TOOLTIP);
     set_toggle_button (w, "spacing_check", CONFIG_SPACING);
     set_toggle_button (w, "gaps_check", CONFIG_GAPS);
@@ -436,6 +438,7 @@ get_config_values (GtkWidget *w)
     CONFIG_ENABLE_WHITE_KEYS = get_toggle_button (w, "white_keys_check");
     CONFIG_ENABLE_BLACK_KEYS = get_toggle_button (w, "black_keys_check");
 
+    CONFIG_INTERPOLATE = get_toggle_button (w, "interpolate_check");
     CONFIG_FILL_SPECTRUM = get_toggle_button (w, "fill_spectrum_check");
     CONFIG_ENABLE_TOOLTIP = get_toggle_button (w, "tooltip_check");
     CONFIG_SPACING = get_toggle_button (w, "spacing_check");

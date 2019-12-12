@@ -33,6 +33,7 @@
 #include "config.h"
 
 int CONFIG_REFRESH_INTERVAL = 25;
+int CONFIG_INTERPOLATE = 1;
 int CONFIG_TRANSPOSE = 0;
 int CONFIG_PITCH = 440;
 int CONFIG_NOTE_MIN = 35;
@@ -102,6 +103,7 @@ void
 save_config (void)
 {
     deadbeef->conf_set_int (CONFSTR_MS_REFRESH_INTERVAL,            CONFIG_REFRESH_INTERVAL);
+    deadbeef->conf_set_int (CONFSTR_MS_INTERPOLATE,                 CONFIG_INTERPOLATE);
     deadbeef->conf_set_int (CONFSTR_MS_FFT_SIZE,                    CONFIG_FFT_SIZE);
     deadbeef->conf_set_int (CONFSTR_MS_TRANSPOSE,                   CONFIG_TRANSPOSE);
     deadbeef->conf_set_int (CONFSTR_MS_PITCH,                       CONFIG_PITCH);
@@ -202,6 +204,7 @@ load_config (void)
     CONFIG_ENABLE_BAR_MODE = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_BAR_MODE,             0);
     CONFIG_DISPLAY_OCTAVES = deadbeef->conf_get_int (CONFSTR_MS_DISPLAY_OCTAVES,             0);
     CONFIG_REFRESH_INTERVAL = deadbeef->conf_get_int (CONFSTR_MS_REFRESH_INTERVAL,          25);
+    CONFIG_INTERPOLATE = deadbeef->conf_get_int (CONFSTR_MS_INTERPOLATE,                     1);
     CONFIG_NUM_BARS = deadbeef->conf_get_int (CONFSTR_MS_NUM_BARS,                         132);
     CONFIG_BAR_W = deadbeef->conf_get_int (CONFSTR_MS_BAR_W,                                 0);
     CONFIG_GAPS = deadbeef->conf_get_int (CONFSTR_MS_GAPS,                                TRUE);
