@@ -114,10 +114,11 @@ create_frequency_table (struct spectrum_data_t *s, int samplerate, int num_bars)
     const double note_size = num_bars / (double)(get_num_notes ());
     const double a4pos = (57.0 + CONFIG_TRANSPOSE - CONFIG_NOTE_MIN) * note_size;
     const double octave = 12.0 * note_size;
+    const double d_freq = CONFIG_FFT_SIZE/(double)samplerate;
 
     for (int i = 0; i < num_bars; i++) {
         s->frequency[i] = (double)CONFIG_PITCH * pow (2.0, (double)(i-a4pos)/octave);
-        s->keys[i] = (int)floor (s->frequency[i] * CONFIG_FFT_SIZE/(double)samplerate);
+        s->keys[i] = (int)floor (s->frequency[i] * d_freq);
         if (i > 0 && s->keys[i] > 0 && s->keys[i-1] == s->keys[i]) {
             s->low_res_end = i;
         }
