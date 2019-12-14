@@ -23,9 +23,25 @@
 #include <stdint.h>
 #include <gdk/gdk.h>
 
-enum spectrum_window { BLACKMAN_HARRIS_WINDOW = 0, HANNING_WINDOW = 1, NO_WINDOW = 2, NUM_WINDOW };
-enum spectrum_alignment { LEFT_ALIGN = 0, RIGHT_ALIGN = 1, CENTER_ALIGN = 2 , NUM_ALIGNMENT};
-enum spectrum_style { MUSICAL_STYLE = 0, SOLID_STYLE = 1, BAR_STYLE = 2 , NUM_STYLE};
+enum spectrum_window {
+    BLACKMAN_HARRIS_WINDOW,
+    HANNING_WINDOW,
+    NO_WINDOW,
+    NUM_WINDOW
+};
+enum spectrum_alignment {
+    LEFT_ALIGN,
+    RIGHT_ALIGN,
+    CENTER_ALIGN,
+    NUM_ALIGNMENT
+};
+
+enum spectrum_style {
+    MUSICAL_STYLE,
+    SOLID_STYLE,
+    BAR_STYLE,
+    NUM_STYLE
+};
 
 enum spectrum_config_int_index {
     IDX_REFRESH_INTERVAL,
