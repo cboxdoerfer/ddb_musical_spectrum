@@ -23,9 +23,6 @@
 #include <stdint.h>
 #include <gdk/gdk.h>
 
-#define MAX_NUM_COLORS 16
-#define NUM_DEFAULT_COLORS 6
-
 enum spectrum_window { BLACKMAN_HARRIS_WINDOW = 0, HANNING_WINDOW = 1, NO_WINDOW = 2, NUM_WINDOW };
 enum spectrum_alignment { LEFT_ALIGN = 0, RIGHT_ALIGN = 1, CENTER_ALIGN = 2 , NUM_ALIGNMENT};
 enum spectrum_style { MUSICAL_STYLE = 0, SOLID_STYLE = 1, BAR_STYLE = 2 , NUM_STYLE};

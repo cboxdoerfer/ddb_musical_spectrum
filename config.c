@@ -90,6 +90,7 @@ struct spectrum_config_string_t spectrum_config_string[NUM_IDX_STRING] = {
 
 GList *CONFIG_GRADIENT_COLORS = NULL;
 
+static size_t num_default_colors = 6;
 static char *default_colors[] = {"65535 0 0",
                                  "65535 32896 0",
                                  "65535 65535 0",
@@ -214,7 +215,7 @@ load_config (void)
     CONFIG_GRADIENT_COLORS = NULL;
     for (int i = 0; i < spectrum_config_int[IDX_NUM_COLORS].val; i++) {
         snprintf (conf_str, sizeof (conf_str), "%s%02d", "musical_spectrum.color.gradient_", i);
-        if (i < NUM_DEFAULT_COLORS) {
+        if (i < num_default_colors) {
             color = deadbeef->conf_get_str_fast (conf_str, default_colors[i]);
         }
         else {
