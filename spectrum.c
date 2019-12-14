@@ -74,7 +74,7 @@ on_config_changed (gpointer user_data)
     window_table_fill (w->data->window);
     update_gravity (w->render);
 
-    w->data->fft_plan = fftw_plan_dft_r2c_1d (CLAMP (CONFIG_FFT_SIZE, 512, MAX_FFT_SIZE), w->data->fft_in, w->data->fft_out, FFTW_ESTIMATE);
+    w->data->fft_plan = fftw_plan_dft_r2c_1d (CLAMP (config_get_int (IDX_FFT_SIZE), 512, MAX_FFT_SIZE), w->data->fft_in, w->data->fft_out, FFTW_ESTIMATE);
     deadbeef->mutex_unlock (w->data->mutex);
     g_idle_add (spectrum_redraw_cb, w);
     return 0;
@@ -130,8 +130,8 @@ spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
 
     const int channels = data->fmt->channels;
     const int nsamples = data->nframes;
-    const int sz = channels * MIN (CONFIG_FFT_SIZE, nsamples);
-    const int n = channels * CONFIG_FFT_SIZE - sz;
+    const int sz = channels * MIN (config_get_int (IDX_FFT_SIZE), nsamples);
+    const int n = channels * config_get_int (IDX_FFT_SIZE) - sz;
     memmove (w->data->samples, w->data->samples + sz, n * sizeof (double));
 
     w->data->num_channels = channels;
@@ -189,7 +189,7 @@ spectrum_leave_notify_event (GtkWidget *widget, GdkEventMotion *event, gpointer 
 {
     w_spectrum_t *w = user_data;
     w->motion_ctx.entered = 0;
-    if (CONFIG_ENABLE_TOOLTIP) {
+    if (config_get_int (IDX_ENABLE_TOOLTIP)) {
         spectrum_queue_spectrum_region (w);
     }
     return FALSE;
@@ -202,7 +202,7 @@ spectrum_motion_notify_event (GtkWidget *widget, GdkEventMotion *event, gpointer
     GtkAllocation a;
     gtk_widget_get_allocation (widget, &a);
 
-    if (CONFIG_ENABLE_TOOLTIP) {
+    if (config_get_int (IDX_ENABLE_TOOLTIP)) {
         w->motion_ctx.x = event->x - 1;
         w->motion_ctx.y = event->y - 1;
         spectrum_queue_spectrum_region (w);
@@ -233,7 +233,7 @@ spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32
                 w->need_redraw = 1;
             }
             w->playback_status = PLAYING;
-            spectrum_set_refresh_interval (w, CONFIG_REFRESH_INTERVAL);
+            spectrum_set_refresh_interval (w, config_get_int (IDX_REFRESH_INTERVAL));
             break;
         case DB_EV_SONGFINISHED:
             spectrum_playback_stopped (w);
@@ -245,13 +245,13 @@ spectrum_message (ddb_gtkui_widget_t *widget, uint32_t id, uintptr_t ctx, uint32
 #else
             if (deadbeef->get_output ()->state () == OUTPUT_STATE_PLAYING) {
 #endif
-                spectrum_set_refresh_interval (w, CONFIG_REFRESH_INTERVAL);
+                spectrum_set_refresh_interval (w, config_get_int (IDX_REFRESH_INTERVAL));
             }
             break;
         case DB_EV_PAUSED:
             if (p1 == 0) {
                 w->playback_status = PAUSED;
-                spectrum_set_refresh_interval (w, CONFIG_REFRESH_INTERVAL);
+                spectrum_set_refresh_interval (w, config_get_int (IDX_REFRESH_INTERVAL));
             }
             else {
                 w->playback_status = PLAYING;
@@ -286,7 +286,7 @@ spectrum_init (w_spectrum_t *w) {
     if (deadbeef->get_output ()->state () == OUTPUT_STATE_PLAYING) {
 #endif
         w->playback_status = PLAYING;
-        spectrum_set_refresh_interval (w, CONFIG_REFRESH_INTERVAL);
+        spectrum_set_refresh_interval (w, config_get_int (IDX_REFRESH_INTERVAL));
     }
     deadbeef->vis_waveform_listen (w, spectrum_wavedata_listener);
     s->need_redraw = 1;

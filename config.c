@@ -32,54 +32,62 @@
 #include "spectrum.h"
 #include "config.h"
 
-int CONFIG_REFRESH_INTERVAL = 25;
-int CONFIG_INTERPOLATE = 1;
-int CONFIG_TRANSPOSE = 0;
-int CONFIG_PITCH = 440;
-int CONFIG_NOTE_MIN = 35;
-int CONFIG_NOTE_MAX = 107;
-int CONFIG_AMPLITUDE_MIN = -60;
-int CONFIG_AMPLITUDE_MAX = 0;
-int CONFIG_ENABLE_PEAKS = 1;
-int CONFIG_ENABLE_PEAKS_COLOR = 0;
-int CONFIG_ENABLE_AMPLITUDES = 0;
-int CONFIG_ENABLE_HGRID = 1;
-int CONFIG_ENABLE_BOTTOM_LABELS = 1;
-int CONFIG_ENABLE_TOP_LABELS = 0;
-int CONFIG_ENABLE_LEFT_LABELS = 0;
-int CONFIG_ENABLE_RIGHT_LABELS = 1;
-int CONFIG_ENABLE_VGRID = 1;
-int CONFIG_ENABLE_TOOLTIP = 1;
-int CONFIG_ENABLE_OGRID = 0;
-int CONFIG_ENABLE_WHITE_KEYS = 0;
-int CONFIG_ENABLE_BLACK_KEYS = 1;
-int CONFIG_ALIGNMENT = 0;
-int CONFIG_ENABLE_BAR_MODE = 0;
-int CONFIG_DISPLAY_OCTAVES = 0;
-int CONFIG_BAR_FALLOFF = -1;
-int CONFIG_BAR_DELAY = 0;
-int CONFIG_PEAK_FALLOFF = 50;
-int CONFIG_PEAK_DELAY = 500;
-int CONFIG_GRADIENT_ORIENTATION = 0;
-int CONFIG_NUM_COLORS = 6;
-int CONFIG_FFT_SIZE = 8192;
-int CONFIG_WINDOW = 0;
-int CONFIG_NUM_BARS = 132;
-int CONFIG_BAR_W = 0;
-int CONFIG_GAPS = TRUE;
-int CONFIG_SPACING = TRUE;
-int CONFIG_DRAW_STYLE = 0;
-int CONFIG_FILL_SPECTRUM = TRUE;
-uint32_t CONFIG_CHANNEL = 262143;
-const char *CONFIG_FONT = NULL;
-GdkColor CONFIG_COLOR_BG;
-GdkColor CONFIG_COLOR_VGRID;
-GdkColor CONFIG_COLOR_HGRID;
-GdkColor CONFIG_COLOR_OGRID;
-GdkColor CONFIG_COLOR_BLACK_KEYS;
-GdkColor CONFIG_COLOR_WHITE_KEYS;
-GdkColor CONFIG_COLOR_PEAKS;
-GdkColor CONFIG_COLOR_TEXT;
+struct spectrum_config_int_t spectrum_config_int[NUM_IDX_INT] = {
+    [IDX_REFRESH_INTERVAL] = {"refresh_interval", 0, 25},
+    [IDX_INTERPOLATE] = {"interpolate", 0, 1},
+    [IDX_CHANNEL] = {"channel", 0, 262143},
+    [IDX_TRANSPOSE] = {"transpose", 0, 0},
+    [IDX_PITCH] = {"pitch", 0, 440},
+    [IDX_NOTE_MIN] = {"note_min", 0, 0},
+    [IDX_NOTE_MAX] = {"note_max", 0, 125},
+    [IDX_AMPLITUDE_MIN] = {"amp_min", 0, -60},
+    [IDX_AMPLITUDE_MAX] = {"amp_max", 0, 0},
+    [IDX_ENABLE_PEAKS] = {"enable_peaks", 0, 1},
+    [IDX_ENABLE_PEAKS_COLOR] = {"enable_peaks_color", 0, 0},
+    [IDX_ENABLE_AMPLITUDES] = {"enable_amp", 0, 0},
+    [IDX_ENABLE_TOP_LABELS] = {"enable_top_labels", 0, 0},
+    [IDX_ENABLE_BOTTOM_LABELS] = {"enable_bottom_labels", 0, 1},
+    [IDX_ENABLE_LEFT_LABELS] = {"enable_left_labels", 0, 1},
+    [IDX_ENABLE_RIGHT_LABELS] = {"enable_right_labels", 0, 1},
+    [IDX_ENABLE_HGRID] = {"enable_hgrid", 0, 1},
+    [IDX_ENABLE_VGRID] = {"enable_vgrid", 0, 1},
+    [IDX_ENABLE_OGRID] = {"enable_ogrid", 0, 0},
+    [IDX_ENABLE_WHITE_KEYS] = {"enable_white_keys", 0, 1},
+    [IDX_ENABLE_BLACK_KEYS] = {"enable_black_keys", 0, 0},
+    [IDX_ENABLE_TOOLTIP] = {"enable_tooltip", 0, 1},
+    [IDX_ALIGNMENT] = {"alignment", 0, CENTER_ALIGN},
+    [IDX_ENABLE_BAR_MODE] = {"enable_bar_mode", 0, 0},
+    [IDX_BAR_FALLOFF] = {"bar_falloff", 0, 100},
+    [IDX_BAR_DELAY] = {"bar_delay", 0, 100},
+    [IDX_PEAK_FALLOFF] = {"peak_falloff", 0, 50},
+    [IDX_PEAK_DELAY] = {"peak_delay", 0, 500},
+    [IDX_GRADIENT_ORIENTATION] = {"gradient_orientation", 0, 0},
+    [IDX_NUM_COLORS] = {"num_colors", 0, 6},
+    [IDX_FFT_SIZE] = {"fft_size", 0, 8192},
+    [IDX_WINDOW] = {"window", 0, HANNING_WINDOW},
+    [IDX_NUM_BARS] = {"num_bars", 0, 108},
+    [IDX_BAR_W] = {"bar_w", 0, 0},
+    [IDX_GAPS] = {"gaps", 0, 1},
+    [IDX_SPACING] = {"spacing", 0, 1},
+    [IDX_DRAW_STYLE] = {"draw_style", 0, MUSICAL_STYLE},
+    [IDX_FILL_SPECTRUM] = {"fill_spectrum", 0, 1},
+};
+
+struct spectrum_config_color_t spectrum_config_color[NUM_IDX_COLOR] = {
+    [IDX_COLOR_BG] =         { "background", {0}, {.red = 0,     .green = 0,     .blue = 0}},
+    [IDX_COLOR_TEXT] =       { "text",       {0}, {.red = 65535, .green = 65535, .blue = 65535}},
+    [IDX_COLOR_VGRID] =      { "vgrid",      {0}, {.red = 21845, .green = 21845, .blue = 21845}},
+    [IDX_COLOR_HGRID] =      { "hgrid",      {0}, {.red = 21845, .green = 21845, .blue = 21845}},
+    [IDX_COLOR_OGRID] =      { "ogrid",      {0}, {.red = 42148, .green = 0,     .blue = 0}},
+    [IDX_COLOR_BLACK_KEYS] = { "black_keys", {0}, {.red = 0,     .green = 0,     .blue = 0}},
+    [IDX_COLOR_WHITE_KEYS] = { "white_keys", {0}, {.red = 10240, .green = 10240, .blue = 10240}},
+    [IDX_COLOR_PEAKS] =      { "peaks",      {0}, {.red = 42148, .green = 0,     .blue = 0}},
+};
+
+struct spectrum_config_string_t spectrum_config_string[NUM_IDX_STRING] = {
+    [IDX_STRING_FONT] = {"font", NULL, "Sans 7"},
+};
+
 GList *CONFIG_GRADIENT_COLORS = NULL;
 
 int FFT_INDEX = 4;
@@ -91,151 +99,125 @@ static char *default_colors[] = {"65535 0 0",
                                  "0 38036 41120",
                                  "0 8224 25700" };
 
-static void
-set_color (const char *name, GdkColor *color)
+static GdkColor
+color_from_string (const char *color_string)
 {
+    GdkColor color = {};
+    sscanf (color_string, "%hd %hd %hd", &color.red, &color.green, &color.blue);
+    return color;
+}
+
+static void
+string_from_color (const GdkColor *color, char *dest, size_t dest_size)
+{
+    snprintf (dest, dest_size, "%d %d %d", color->red, color->green, color->blue);
+}
+
+static void
+config_save_int (const int index)
+{
+    char config_name[200] = {};
+    snprintf (config_name, sizeof (config_name), "musical_spectrum.%s", spectrum_config_int[index].name);
+    deadbeef->conf_set_int (config_name, spectrum_config_int[index].val);
+}
+
+static void
+config_save_color (const int index)
+{
+    char config_name[200] = {};
+    snprintf (config_name, sizeof (config_name), "musical_spectrum.color.%s", spectrum_config_color[index].name);
+
+    GdkColor *color = &spectrum_config_color[index].val;
     char color_formated[100] = {};
-    snprintf (color_formated, sizeof (color_formated), "%d %d %d", color->red, color->green, color->blue);
-    deadbeef->conf_set_str (name, color_formated);
+    string_from_color (color, color_formated, sizeof (color_formated));
+    deadbeef->conf_set_str (config_name, color_formated);
+}
+
+static void
+config_save_string (const int index)
+{
+    char config_name[200] = {};
+    snprintf (config_name, sizeof (config_name), "musical_spectrum.%s", spectrum_config_string[index].name);
+    deadbeef->conf_set_str (config_name, spectrum_config_string[index].val);
 }
 
 void
 save_config (void)
 {
-    deadbeef->conf_set_int (CONFSTR_MS_REFRESH_INTERVAL,            CONFIG_REFRESH_INTERVAL);
-    deadbeef->conf_set_int (CONFSTR_MS_INTERPOLATE,                 CONFIG_INTERPOLATE);
-    deadbeef->conf_set_int (CONFSTR_MS_FFT_SIZE,                    CONFIG_FFT_SIZE);
-    deadbeef->conf_set_int (CONFSTR_MS_TRANSPOSE,                   CONFIG_TRANSPOSE);
-    deadbeef->conf_set_int (CONFSTR_MS_PITCH,                       CONFIG_PITCH);
-    deadbeef->conf_set_int (CONFSTR_MS_NOTE_MIN,                    CONFIG_NOTE_MIN);
-    deadbeef->conf_set_int (CONFSTR_MS_NOTE_MAX,                    CONFIG_NOTE_MAX);
-    deadbeef->conf_set_int (CONFSTR_MS_AMPLITUDE_MIN,               CONFIG_AMPLITUDE_MIN);
-    deadbeef->conf_set_int (CONFSTR_MS_AMPLITUDE_MAX,               CONFIG_AMPLITUDE_MAX);
-    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_TOP_LABELS,           CONFIG_ENABLE_TOP_LABELS);
-    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_BOTTOM_LABELS,        CONFIG_ENABLE_BOTTOM_LABELS);
-    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_LEFT_LABELS,          CONFIG_ENABLE_LEFT_LABELS);
-    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_RIGHT_LABELS,         CONFIG_ENABLE_RIGHT_LABELS);
-    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_PEAKS,                CONFIG_ENABLE_PEAKS);
-    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_PEAKS_COLOR,          CONFIG_ENABLE_PEAKS_COLOR);
-    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_AMPLITUDES,           CONFIG_ENABLE_AMPLITUDES);
-    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_HGRID,                CONFIG_ENABLE_HGRID);
-    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_VGRID,                CONFIG_ENABLE_VGRID);
-    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_OGRID,                CONFIG_ENABLE_OGRID);
-    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_WHITE_KEYS,           CONFIG_ENABLE_WHITE_KEYS);
-    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_BLACK_KEYS,           CONFIG_ENABLE_BLACK_KEYS);
-    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_TOOLTIP,              CONFIG_ENABLE_TOOLTIP);
-    deadbeef->conf_set_int (CONFSTR_MS_ALIGNMENT,                   CONFIG_ALIGNMENT);
-    deadbeef->conf_set_int (CONFSTR_MS_ENABLE_BAR_MODE,             CONFIG_ENABLE_BAR_MODE);
-    deadbeef->conf_set_int (CONFSTR_MS_DISPLAY_OCTAVES,             CONFIG_DISPLAY_OCTAVES);
-    deadbeef->conf_set_int (CONFSTR_MS_NUM_BARS,                    CONFIG_NUM_BARS);
-    deadbeef->conf_set_int (CONFSTR_MS_BAR_W,                       CONFIG_BAR_W);
-    deadbeef->conf_set_int (CONFSTR_MS_GAPS,                        CONFIG_GAPS);
-    deadbeef->conf_set_int (CONFSTR_MS_SPACING,                     CONFIG_SPACING);
-    deadbeef->conf_set_int (CONFSTR_MS_DRAW_STYLE,                  CONFIG_DRAW_STYLE);
-    deadbeef->conf_set_int (CONFSTR_MS_FILL_SPECTRUM,               CONFIG_FILL_SPECTRUM);
-    deadbeef->conf_set_int (CONFSTR_MS_BAR_FALLOFF,                 CONFIG_BAR_FALLOFF);
-    deadbeef->conf_set_int (CONFSTR_MS_BAR_DELAY,                   CONFIG_BAR_DELAY);
-    deadbeef->conf_set_int (CONFSTR_MS_PEAK_FALLOFF,                CONFIG_PEAK_FALLOFF);
-    deadbeef->conf_set_int (CONFSTR_MS_PEAK_DELAY,                  CONFIG_PEAK_DELAY);
-    deadbeef->conf_set_int (CONFSTR_MS_GRADIENT_ORIENTATION,        CONFIG_GRADIENT_ORIENTATION);
-    deadbeef->conf_set_int (CONFSTR_MS_WINDOW,                      CONFIG_WINDOW);
-    deadbeef->conf_set_int (CONFSTR_MS_NUM_COLORS,                  CONFIG_NUM_COLORS);
-    deadbeef->conf_set_str (CONFSTR_MS_FONT,                        CONFIG_FONT);
+    for (int i = 0; i < NUM_IDX_INT; i++) {
+        config_save_int (i);
+    }
+    for (int i = 0; i < NUM_IDX_STRING; i++) {
+        config_save_string (i);
+    }
+    for (int i = 0; i < NUM_IDX_COLOR; i++) {
+        config_save_color (i);
+    }
 
-    char channel_config_string[10];
-    snprintf (channel_config_string, sizeof (channel_config_string), "%" PRIu32, CONFIG_CHANNEL);
-    deadbeef->conf_set_str (CONFSTR_MS_CHANNEL, channel_config_string);
-
-    char color[100];
-    char conf_str[100];
+    // Gradient colors
+    char color[100] = {};
+    char conf_str[100] = {};
     GList *c = CONFIG_GRADIENT_COLORS;
     for (int i = 0; c != NULL; c = c->next, i++) {
         GdkColor *clr = c->data;
         snprintf (color, sizeof (color), "%d %d %d", clr->red, clr->green, clr->blue);
-        snprintf (conf_str, sizeof (conf_str), "%s%02d", CONFSTR_MS_COLOR_GRADIENT, i);
+        snprintf (conf_str, sizeof (conf_str), "%s%02d", "musical_spectrum.color.gradient_", i);
         deadbeef->conf_set_str (conf_str, color);
     }
-    set_color (CONFSTR_MS_COLOR_BG,         &CONFIG_COLOR_BG);
-    set_color (CONFSTR_MS_COLOR_TEXT,       &CONFIG_COLOR_TEXT);
-    set_color (CONFSTR_MS_COLOR_VGRID,      &CONFIG_COLOR_VGRID);
-    set_color (CONFSTR_MS_COLOR_HGRID,      &CONFIG_COLOR_HGRID);
-    set_color (CONFSTR_MS_COLOR_OGRID,      &CONFIG_COLOR_OGRID);
-    set_color (CONFSTR_MS_COLOR_BLACK_KEYS, &CONFIG_COLOR_BLACK_KEYS);
-    set_color (CONFSTR_MS_COLOR_WHITE_KEYS, &CONFIG_COLOR_WHITE_KEYS);
-    set_color (CONFSTR_MS_COLOR_PEAKS,      &CONFIG_COLOR_PEAKS);
 }
 
 static void
-get_color (const char *name, GdkColor *color, const char *color_default_formated)
+config_load_color (const int index)
 {
-    const char *color_formated = deadbeef->conf_get_str_fast (name, color_default_formated);
-    sscanf (color_formated, "%hd %hd %hd", &color->red, &color->green, &color->blue);
+    char config_name[200] = {};
+    snprintf (config_name, sizeof (config_name), "musical_spectrum.color.%s", spectrum_config_color[index].name);
+
+    char color_def_string[100] = {};
+    GdkColor clr = spectrum_config_color[index].val_def;
+    string_from_color (&clr, color_def_string, sizeof (color_def_string));
+
+    const char *color_string = deadbeef->conf_get_str_fast (config_name, color_def_string);
+    spectrum_config_color[index].val = color_from_string (color_string);
+}
+
+static void
+config_load_int (const int index)
+{
+    char config_name[200] = {};
+    snprintf (config_name, sizeof (config_name), "musical_spectrum.%s", spectrum_config_int[index].name);
+    spectrum_config_int[index].val = deadbeef->conf_get_int (config_name, spectrum_config_int[index].val_def);
+}
+
+static void
+config_load_string (const int index)
+{
+    char config_name[200] = {};
+    snprintf (config_name, sizeof (config_name), "musical_spectrum.%s", spectrum_config_string[index].name);
+    spectrum_config_string[index].val = deadbeef->conf_get_str_fast (config_name, spectrum_config_string[index].val_def);
 }
 
 void
 load_config (void)
 {
     deadbeef->conf_lock ();
-    CONFIG_GRADIENT_ORIENTATION = deadbeef->conf_get_int (CONFSTR_MS_GRADIENT_ORIENTATION,   0);
-    CONFIG_WINDOW = deadbeef->conf_get_int (CONFSTR_MS_WINDOW,                 BLACKMAN_HARRIS);
-    CONFIG_FFT_SIZE = deadbeef->conf_get_int (CONFSTR_MS_FFT_SIZE,                        8192);
-    CONFIG_FFT_SIZE = CLAMP (CONFIG_FFT_SIZE, 512, 32768);
-    FFT_INDEX = log2 (CONFIG_FFT_SIZE) - 9;
-    CONFIG_TRANSPOSE = deadbeef->conf_get_int (CONFSTR_MS_TRANSPOSE,                         0);
-    CONFIG_PITCH = deadbeef->conf_get_int (CONFSTR_MS_PITCH,                               440);
-    CONFIG_NOTE_MIN = deadbeef->conf_get_int (CONFSTR_MS_NOTE_MIN,                          35);
-    CONFIG_NOTE_MAX = deadbeef->conf_get_int (CONFSTR_MS_NOTE_MAX,                         107);
-    CONFIG_AMPLITUDE_MIN = deadbeef->conf_get_int (CONFSTR_MS_AMPLITUDE_MIN,               -60);
-    CONFIG_AMPLITUDE_MAX = deadbeef->conf_get_int (CONFSTR_MS_AMPLITUDE_MAX,                 0);
-    CONFIG_ENABLE_PEAKS = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_PEAKS,                   1);
-    CONFIG_ENABLE_PEAKS_COLOR = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_PEAKS_COLOR,       0);
-    CONFIG_ENABLE_AMPLITUDES = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_AMPLITUDES,         0);
-    CONFIG_ENABLE_TOP_LABELS = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_TOP_LABELS,         0);
-    CONFIG_ENABLE_BOTTOM_LABELS = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_BOTTOM_LABELS,   1);
-    CONFIG_ENABLE_LEFT_LABELS = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_LEFT_LABELS,       0);
-    CONFIG_ENABLE_RIGHT_LABELS = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_RIGHT_LABELS,     1);
-    CONFIG_ENABLE_HGRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_HGRID,                   1);
-    CONFIG_ENABLE_VGRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_VGRID,                   1);
-    CONFIG_ENABLE_OGRID = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_OGRID,                   0);
-    CONFIG_ENABLE_WHITE_KEYS = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_WHITE_KEYS,         0);
-    CONFIG_ENABLE_BLACK_KEYS = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_BLACK_KEYS,         1);
-    CONFIG_ENABLE_TOOLTIP = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_TOOLTIP,               1);
-    CONFIG_ALIGNMENT = deadbeef->conf_get_int (CONFSTR_MS_ALIGNMENT,                      LEFT);
-    CONFIG_ENABLE_BAR_MODE = deadbeef->conf_get_int (CONFSTR_MS_ENABLE_BAR_MODE,             0);
-    CONFIG_DISPLAY_OCTAVES = deadbeef->conf_get_int (CONFSTR_MS_DISPLAY_OCTAVES,             0);
-    CONFIG_REFRESH_INTERVAL = deadbeef->conf_get_int (CONFSTR_MS_REFRESH_INTERVAL,          25);
-    CONFIG_INTERPOLATE = deadbeef->conf_get_int (CONFSTR_MS_INTERPOLATE,                     1);
-    CONFIG_NUM_BARS = deadbeef->conf_get_int (CONFSTR_MS_NUM_BARS,                         132);
-    CONFIG_BAR_W = deadbeef->conf_get_int (CONFSTR_MS_BAR_W,                                 0);
-    CONFIG_GAPS = deadbeef->conf_get_int (CONFSTR_MS_GAPS,                                TRUE);
-    CONFIG_SPACING = deadbeef->conf_get_int (CONFSTR_MS_SPACING,                          TRUE);
-    CONFIG_DRAW_STYLE = deadbeef->conf_get_int (CONFSTR_MS_DRAW_STYLE,                       0);
-    CONFIG_FILL_SPECTRUM = deadbeef->conf_get_int (CONFSTR_MS_FILL_SPECTRUM,              TRUE);
-    CONFIG_BAR_FALLOFF = deadbeef->conf_get_int (CONFSTR_MS_BAR_FALLOFF,                    -1);
-    CONFIG_BAR_DELAY = deadbeef->conf_get_int (CONFSTR_MS_BAR_DELAY,                         0);
-    CONFIG_PEAK_FALLOFF = deadbeef->conf_get_int (CONFSTR_MS_PEAK_FALLOFF,                  90);
-    CONFIG_PEAK_DELAY = deadbeef->conf_get_int (CONFSTR_MS_PEAK_DELAY,                     500);
-    CONFIG_NUM_COLORS = deadbeef->conf_get_int (CONFSTR_MS_NUM_COLORS,                       6);
-    CONFIG_FONT = deadbeef->conf_get_str_fast (CONFSTR_MS_FONT,                       "Sans 7");
+    for (int i = 0; i < NUM_IDX_INT; i++) {
+        config_load_int (i);
+    }
+    for (int i = 0; i < NUM_IDX_STRING; i++) {
+        config_load_string (i);
+    }
+    FFT_INDEX = log2 (spectrum_config_int[IDX_FFT_SIZE].val) - 9;
 
-    const char *config_channel = deadbeef->conf_get_str_fast (CONFSTR_MS_CHANNEL,     "262143");
-    CONFIG_CHANNEL = (uint32_t)strtoul (config_channel, NULL, 0);
-
-    get_color (CONFSTR_MS_COLOR_BG,         &CONFIG_COLOR_BG,         "8738 8738 8738");
-    get_color (CONFSTR_MS_COLOR_TEXT,       &CONFIG_COLOR_TEXT,       "65535 65535 65535");
-    get_color (CONFSTR_MS_COLOR_VGRID,      &CONFIG_COLOR_VGRID,      "0 0 0");
-    get_color (CONFSTR_MS_COLOR_HGRID,      &CONFIG_COLOR_HGRID,      "26214 26214 26214");
-    get_color (CONFSTR_MS_COLOR_OGRID,      &CONFIG_COLOR_OGRID,      "26214 26214 26214");
-    get_color (CONFSTR_MS_COLOR_BLACK_KEYS, &CONFIG_COLOR_BLACK_KEYS, "8738 8738 8738");
-    get_color (CONFSTR_MS_COLOR_WHITE_KEYS, &CONFIG_COLOR_WHITE_KEYS, "8738 8738 8738");
-    get_color (CONFSTR_MS_COLOR_PEAKS,      &CONFIG_COLOR_PEAKS,      "65535 0 0");
+    for (int i = 0; i < NUM_IDX_COLOR; i++) {
+        config_load_color (i);
+    }
 
     const char *color = NULL;
     char conf_str[100] = {};
     g_list_free_full (CONFIG_GRADIENT_COLORS, g_free);
     CONFIG_GRADIENT_COLORS = NULL;
-    for (int i = 0; i < CONFIG_NUM_COLORS; i++) {
-        snprintf (conf_str, sizeof (conf_str), "%s%02d", CONFSTR_MS_COLOR_GRADIENT, i);
+    for (int i = 0; i < spectrum_config_int[IDX_NUM_COLORS].val; i++) {
+        snprintf (conf_str, sizeof (conf_str), "%s%02d", "musical_spectrum.color.gradient_", i);
         if (i < NUM_DEFAULT_COLORS) {
             color = deadbeef->conf_get_str_fast (conf_str, default_colors[i]);
         }
@@ -252,5 +234,43 @@ load_config (void)
     }
 
     deadbeef->conf_unlock ();
+}
+
+void
+config_set_int (const int val, const int index)
+{
+    spectrum_config_int[index].val = val;
+}
+
+void
+config_set_string (const char *val, const int index)
+{
+    spectrum_config_string[index].val = val;
+}
+
+void
+config_set_color (const GdkColor *color, const int index)
+{
+    spectrum_config_color[index].val.red = color->red;
+    spectrum_config_color[index].val.green = color->green;
+    spectrum_config_color[index].val.blue = color->blue;
+}
+
+int
+config_get_int (const int index)
+{
+    return spectrum_config_int[index].val;
+}
+
+const char *
+config_get_string (const int index)
+{
+    return spectrum_config_string[index].val;
+}
+
+GdkColor *
+config_get_color (const int index)
+{
+    return &spectrum_config_color[index].val;
 }
 
