@@ -178,10 +178,10 @@ set_combo_box (GtkWidget *w, const char *w_name, const char **values, size_t n_v
 }
 
 static void
-get_color_button (GtkWidget *w, const char *w_name, GdkColor *color)
+get_color_button (GtkWidget *w, const char *w_name, const int index)
 {
     GtkColorButton *button = GTK_COLOR_BUTTON (lookup_widget (w, w_name));
-    gtk_color_button_get_color (button, color);
+    gtk_color_button_get_color (button, &spectrum_config_color[index].val);
 }
 
 static void
@@ -221,7 +221,7 @@ get_gradient_colors (GtkWidget *w)
         gtk_color_button_get_color (button, clr);
         CONFIG_GRADIENT_COLORS = g_list_append (CONFIG_GRADIENT_COLORS, clr);
     }
-    CONFIG_NUM_COLORS = i;
+    config_set_int (i, IDX_NUM_COLORS);
     g_list_free (children);
 }
 
@@ -333,7 +333,7 @@ set_channel_config_values (GtkWidget *popup)
     for (int ch = 0; ch < num_channel_buttons; ch++) {
         const char *name = channel_buttons[ch][0];
         GtkCheckMenuItem *check = GTK_CHECK_MENU_ITEM (lookup_widget (popup, name));
-        if (CONFIG_CHANNEL & 1 << ch) {
+        if (config_get_int (IDX_CHANNEL) & 1 << ch) {
             set_channel_menu_item_silent (check, popup, TRUE);
         }
         else {
@@ -350,61 +350,60 @@ set_channel_config_values (GtkWidget *popup)
 void
 set_config_values (GtkWidget *w)
 {
-    set_toggle_button (w, "llabel_check", CONFIG_ENABLE_LEFT_LABELS);
-    set_toggle_button (w, "rlabel_check", CONFIG_ENABLE_RIGHT_LABELS);
-    set_toggle_button (w, "tlabel_check", CONFIG_ENABLE_TOP_LABELS);
-    set_toggle_button (w, "blabel_check", CONFIG_ENABLE_BOTTOM_LABELS);
+    set_toggle_button (w, "llabel_check", config_get_int (IDX_ENABLE_LEFT_LABELS));
+    set_toggle_button (w, "rlabel_check", config_get_int (IDX_ENABLE_RIGHT_LABELS));
+    set_toggle_button (w, "tlabel_check", config_get_int (IDX_ENABLE_TOP_LABELS));
+    set_toggle_button (w, "blabel_check", config_get_int (IDX_ENABLE_BOTTOM_LABELS));
 
-    set_toggle_button (w, "hgrid_check", CONFIG_ENABLE_HGRID);
-    set_toggle_button (w, "vgrid_check", CONFIG_ENABLE_VGRID);
-    set_toggle_button (w, "ogrid_check", CONFIG_ENABLE_OGRID);
+    set_toggle_button (w, "hgrid_check", config_get_int (IDX_ENABLE_HGRID));
+    set_toggle_button (w, "vgrid_check", config_get_int (IDX_ENABLE_VGRID));
+    set_toggle_button (w, "ogrid_check", config_get_int (IDX_ENABLE_OGRID));
 
-    set_toggle_button (w, "white_keys_check", CONFIG_ENABLE_WHITE_KEYS);
-    set_toggle_button (w, "black_keys_check", CONFIG_ENABLE_BLACK_KEYS);
+    set_toggle_button (w, "white_keys_check", config_get_int (IDX_ENABLE_WHITE_KEYS));
+    set_toggle_button (w, "black_keys_check", config_get_int (IDX_ENABLE_BLACK_KEYS));
 
-    set_toggle_button (w, "fill_spectrum_check", CONFIG_FILL_SPECTRUM);
+    set_toggle_button (w, "fill_spectrum_check", config_get_int (IDX_FILL_SPECTRUM));
 
-    set_toggle_button (w, "interpolate_check", CONFIG_INTERPOLATE);
+    set_toggle_button (w, "interpolate_check", config_get_int (IDX_INTERPOLATE));
 
-    set_toggle_button (w, "tooltip_check", CONFIG_ENABLE_TOOLTIP);
-    set_toggle_button (w, "spacing_check", CONFIG_SPACING);
-    set_toggle_button (w, "gaps_check", CONFIG_GAPS);
-    set_toggle_button (w, "led_check", CONFIG_ENABLE_BAR_MODE);
+    set_toggle_button (w, "tooltip_check", config_get_int (IDX_ENABLE_TOOLTIP));
+    set_toggle_button (w, "spacing_check", config_get_int (IDX_SPACING));
+    set_toggle_button (w, "gaps_check", config_get_int (IDX_GAPS));
+    set_toggle_button (w, "led_check", config_get_int (IDX_ENABLE_BAR_MODE));
 
-    set_toggle_button (w, "peaks_check", CONFIG_ENABLE_PEAKS);
-    set_toggle_button (w, "amplitudes_check", CONFIG_ENABLE_AMPLITUDES);
+    set_toggle_button (w, "peaks_check", config_get_int (IDX_ENABLE_PEAKS));
+    set_toggle_button (w, "amplitudes_check", config_get_int (IDX_ENABLE_AMPLITUDES));
 
-    set_toggle_button (w, "peaks_color_check", CONFIG_ENABLE_PEAKS_COLOR);
+    set_toggle_button (w, "peaks_color_check", config_get_int (IDX_ENABLE_PEAKS_COLOR));
 
-    set_spin_button (w, "pitch_spin", CONFIG_PITCH);
-    set_spin_button (w, "transpose_spin", CONFIG_TRANSPOSE);
-    set_spin_button (w, "notes_max_spin", CONFIG_NOTE_MAX);
-    set_spin_button (w, "notes_min_spin", CONFIG_NOTE_MIN);
-    set_spin_button (w, "amp_max_spin", CONFIG_AMPLITUDE_MAX);
-    set_spin_button (w, "amp_min_spin", CONFIG_AMPLITUDE_MIN);
-    set_spin_button (w, "interval_spin", CONFIG_REFRESH_INTERVAL);
-    set_spin_button (w, "peaks_htime_spin", CONFIG_PEAK_DELAY);
-    set_spin_button (w, "amplitudes_htime_spin", CONFIG_BAR_DELAY);
-    set_spin_button (w, "peaks_gravity_spin", CONFIG_PEAK_FALLOFF);
-    set_spin_button (w, "amplitudes_gravity_spin", CONFIG_BAR_FALLOFF);
+    set_spin_button (w, "pitch_spin", config_get_int (IDX_PITCH));
+    set_spin_button (w, "transpose_spin", config_get_int (IDX_TRANSPOSE));
+    set_spin_button (w, "notes_max_spin", config_get_int (IDX_NOTE_MAX));
+    set_spin_button (w, "notes_min_spin", config_get_int (IDX_NOTE_MIN));
+    set_spin_button (w, "amp_max_spin", config_get_int (IDX_AMPLITUDE_MAX));
+    set_spin_button (w, "amp_min_spin", config_get_int (IDX_AMPLITUDE_MIN));
+    set_spin_button (w, "interval_spin", config_get_int (IDX_REFRESH_INTERVAL));
+    set_spin_button (w, "peaks_htime_spin", config_get_int (IDX_PEAK_DELAY));
+    set_spin_button (w, "amplitudes_htime_spin", config_get_int (IDX_BAR_DELAY));
+    set_spin_button (w, "peaks_gravity_spin", config_get_int (IDX_PEAK_FALLOFF));
+    set_spin_button (w, "amplitudes_gravity_spin", config_get_int (IDX_BAR_FALLOFF));
     set_spin_button (w, "fft_spin", FFT_INDEX);
 
-    //set_combo_box (w, "channel_combo", channels, channels_size, CONFIG_CHANNEL);
-    set_combo_box (w, "window_combo", window_functions, window_functions_size, CONFIG_WINDOW);
-    set_combo_box (w, "alignment_combo", alignment_title, alignment_title_size, CONFIG_ALIGNMENT);
-    set_combo_box (w, "gradient_combo", grad_orientation, grad_orientation_size, CONFIG_GRADIENT_ORIENTATION);
-    set_combo_box (w, "mode_combo", visual_mode, visual_mode_size, CONFIG_DRAW_STYLE);
+    set_combo_box (w, "window_combo", window_functions, window_functions_size, config_get_int (IDX_WINDOW));
+    set_combo_box (w, "alignment_combo", alignment_title, alignment_title_size, config_get_int (IDX_ALIGNMENT));
+    set_combo_box (w, "gradient_combo", grad_orientation, grad_orientation_size, config_get_int (IDX_GRADIENT_ORIENTATION));
+    set_combo_box (w, "mode_combo", visual_mode, visual_mode_size, config_get_int (IDX_DRAW_STYLE));
 
-    set_color_button (w, "background_color", &CONFIG_COLOR_BG);
-    set_color_button (w, "vgrid_color", &CONFIG_COLOR_VGRID);
-    set_color_button (w, "hgrid_color", &CONFIG_COLOR_HGRID);
-    set_color_button (w, "ogrid_color", &CONFIG_COLOR_OGRID);
-    set_color_button (w, "text_color", &CONFIG_COLOR_TEXT);
-    set_color_button (w, "wkeys_color", &CONFIG_COLOR_WHITE_KEYS);
-    set_color_button (w, "bkeys_color", &CONFIG_COLOR_BLACK_KEYS);
-    set_color_button (w, "peaks_color", &CONFIG_COLOR_PEAKS);
+    set_color_button (w, "background_color", config_get_color (IDX_COLOR_BG));
+    set_color_button (w, "vgrid_color", config_get_color (IDX_COLOR_VGRID));
+    set_color_button (w, "hgrid_color", config_get_color (IDX_COLOR_HGRID));
+    set_color_button (w, "ogrid_color", config_get_color (IDX_COLOR_OGRID));
+    set_color_button (w, "text_color", config_get_color (IDX_COLOR_TEXT));
+    set_color_button (w, "wkeys_color", config_get_color (IDX_COLOR_WHITE_KEYS));
+    set_color_button (w, "bkeys_color", config_get_color (IDX_COLOR_BLACK_KEYS));
+    set_color_button (w, "peaks_color", config_get_color (IDX_COLOR_PEAKS));
 
-    set_font_button (w, "font_button", CONFIG_FONT);
+    set_font_button (w, "font_button", config_get_string (IDX_STRING_FONT));
 
     set_gradient_colors (w);
 }
@@ -412,74 +411,75 @@ set_config_values (GtkWidget *w)
 static void
 get_channel_config_values (GtkWidget *w)
 {
-    CONFIG_CHANNEL = 0;
+    config_set_int (0, IDX_CHANNEL);
+    uint32_t channel = 0;
     for (int ch = 0; ch < num_channel_buttons; ch++) {
         const char *name = channel_buttons[ch][0];
         GtkCheckMenuItem *check = GTK_CHECK_MENU_ITEM (lookup_widget (w, name));
         gboolean active = gtk_check_menu_item_get_active (check);
         if (active) {
-            CONFIG_CHANNEL |= 1 << ch;
+            channel |= 1 << ch;
         }
     }
+    config_set_int (channel, IDX_CHANNEL);
 }
 
 static void
 get_config_values (GtkWidget *w)
 {
-    CONFIG_ENABLE_LEFT_LABELS =   get_toggle_button (w, "llabel_check");
-    CONFIG_ENABLE_RIGHT_LABELS =  get_toggle_button (w, "rlabel_check");
-    CONFIG_ENABLE_TOP_LABELS =    get_toggle_button (w, "tlabel_check");
-    CONFIG_ENABLE_BOTTOM_LABELS = get_toggle_button (w, "blabel_check");
+    config_set_int (get_toggle_button (w, "llabel_check"), IDX_ENABLE_LEFT_LABELS);
+    config_set_int (get_toggle_button (w, "rlabel_check"), IDX_ENABLE_RIGHT_LABELS);
+    config_set_int (get_toggle_button (w, "tlabel_check"), IDX_ENABLE_TOP_LABELS);
+    config_set_int (get_toggle_button (w, "blabel_check"), IDX_ENABLE_BOTTOM_LABELS);
 
-    CONFIG_ENABLE_HGRID = get_toggle_button (w, "hgrid_check");
-    CONFIG_ENABLE_VGRID = get_toggle_button (w, "vgrid_check");
-    CONFIG_ENABLE_OGRID = get_toggle_button (w, "ogrid_check");
+    config_set_int (get_toggle_button (w, "hgrid_check"), IDX_ENABLE_HGRID);
+    config_set_int (get_toggle_button (w, "vgrid_check"), IDX_ENABLE_VGRID);
+    config_set_int (get_toggle_button (w, "ogrid_check"), IDX_ENABLE_OGRID);
 
-    CONFIG_ENABLE_WHITE_KEYS = get_toggle_button (w, "white_keys_check");
-    CONFIG_ENABLE_BLACK_KEYS = get_toggle_button (w, "black_keys_check");
+    config_set_int (get_toggle_button (w, "white_keys_check"), IDX_ENABLE_WHITE_KEYS);
+    config_set_int (get_toggle_button (w, "black_keys_check"), IDX_ENABLE_BLACK_KEYS);
 
-    CONFIG_INTERPOLATE = get_toggle_button (w, "interpolate_check");
-    CONFIG_FILL_SPECTRUM = get_toggle_button (w, "fill_spectrum_check");
-    CONFIG_ENABLE_TOOLTIP = get_toggle_button (w, "tooltip_check");
-    CONFIG_SPACING = get_toggle_button (w, "spacing_check");
-    CONFIG_GAPS = get_toggle_button (w, "gaps_check");
-    CONFIG_ENABLE_BAR_MODE = get_toggle_button (w, "led_check");
+    config_set_int (get_toggle_button (w, "interpolate_check"), IDX_INTERPOLATE);
+    config_set_int (get_toggle_button (w, "fill_spectrum_check"), IDX_FILL_SPECTRUM);
+    config_set_int (get_toggle_button (w, "tooltip_check"), IDX_ENABLE_TOOLTIP);
+    config_set_int (get_toggle_button (w, "spacing_check"), IDX_SPACING);
+    config_set_int (get_toggle_button (w, "gaps_check"), IDX_GAPS);
+    config_set_int (get_toggle_button (w, "led_check"), IDX_ENABLE_BAR_MODE);
 
-    CONFIG_ENABLE_PEAKS = get_toggle_button (w, "peaks_check");
-    CONFIG_ENABLE_AMPLITUDES = get_toggle_button (w, "amplitudes_check");
+    config_set_int (get_toggle_button (w, "peaks_check"), IDX_ENABLE_PEAKS);
+    config_set_int (get_toggle_button (w, "amplitudes_check"), IDX_ENABLE_AMPLITUDES);
 
-    CONFIG_ENABLE_PEAKS_COLOR = get_toggle_button (w, "peaks_color_check");
+    config_set_int (get_toggle_button (w, "peaks_color_check"), IDX_ENABLE_PEAKS_COLOR);
 
-    CONFIG_PITCH = get_spin_button (w, "pitch_spin");
-    CONFIG_TRANSPOSE = get_spin_button (w, "transpose_spin");
-    CONFIG_NOTE_MIN = get_spin_button (w, "notes_min_spin");
-    CONFIG_NOTE_MAX = get_spin_button (w, "notes_max_spin");
-    CONFIG_AMPLITUDE_MIN = get_spin_button (w, "amp_min_spin");
-    CONFIG_AMPLITUDE_MAX = get_spin_button (w, "amp_max_spin");
-    CONFIG_REFRESH_INTERVAL = get_spin_button (w, "interval_spin");
-    CONFIG_PEAK_DELAY = get_spin_button (w, "peaks_htime_spin");
-    CONFIG_BAR_DELAY = get_spin_button (w, "amplitudes_htime_spin");
-    CONFIG_PEAK_FALLOFF = get_spin_button (w, "peaks_gravity_spin");
-    CONFIG_BAR_FALLOFF = get_spin_button (w, "amplitudes_gravity_spin");
+    config_set_int (get_spin_button (w, "pitch_spin"), IDX_PITCH);
+    config_set_int (get_spin_button (w, "transpose_spin"), IDX_TRANSPOSE);
+    config_set_int (get_spin_button (w, "notes_min_spin"), IDX_NOTE_MIN);
+    config_set_int (get_spin_button (w, "notes_max_spin"), IDX_NOTE_MAX);
+    config_set_int (get_spin_button (w, "amp_min_spin"), IDX_AMPLITUDE_MIN);
+    config_set_int (get_spin_button (w, "amp_max_spin"), IDX_AMPLITUDE_MAX);
+    config_set_int (get_spin_button (w, "interval_spin"), IDX_REFRESH_INTERVAL);
+    config_set_int (get_spin_button (w, "peaks_htime_spin"), IDX_PEAK_DELAY);
+    config_set_int (get_spin_button (w, "amplitudes_htime_spin"), IDX_BAR_DELAY);
+    config_set_int (get_spin_button (w, "peaks_gravity_spin"), IDX_PEAK_FALLOFF);
+    config_set_int (get_spin_button (w, "amplitudes_gravity_spin"), IDX_BAR_FALLOFF);
     FFT_INDEX = get_spin_button (w, "fft_spin");
-    CONFIG_FFT_SIZE = (int)exp2 (FFT_INDEX + 9);
+    config_set_int ((int)exp2 (FFT_INDEX + 9), IDX_FFT_SIZE); 
 
-    //CONFIG_CHANNEL = get_combo_box (w, "channel_combo");
-    CONFIG_WINDOW = get_combo_box (w, "window_combo");
-    CONFIG_ALIGNMENT = get_combo_box (w, "alignment_combo");
-    CONFIG_GRADIENT_ORIENTATION = get_combo_box (w, "gradient_combo");
-    CONFIG_DRAW_STYLE = get_combo_box (w, "mode_combo");
+    config_set_int (get_combo_box (w, "window_combo"), IDX_WINDOW); 
+    config_set_int (get_combo_box (w, "alignment_combo"), IDX_ALIGNMENT); 
+    config_set_int (get_combo_box (w, "gradient_combo"), IDX_GRADIENT_ORIENTATION); 
+    config_set_int (get_combo_box (w, "mode_combo"), IDX_DRAW_STYLE); 
 
-    get_color_button (w, "background_color", &CONFIG_COLOR_BG);
-    get_color_button (w, "vgrid_color", &CONFIG_COLOR_VGRID);
-    get_color_button (w, "hgrid_color", &CONFIG_COLOR_HGRID);
-    get_color_button (w, "ogrid_color", &CONFIG_COLOR_OGRID);
-    get_color_button (w, "text_color", &CONFIG_COLOR_TEXT);
-    get_color_button (w, "wkeys_color", &CONFIG_COLOR_WHITE_KEYS);
-    get_color_button (w, "bkeys_color", &CONFIG_COLOR_BLACK_KEYS);
-    get_color_button (w, "peaks_color", &CONFIG_COLOR_PEAKS);
+    get_color_button (w, "background_color", IDX_COLOR_BG);
+    get_color_button (w, "vgrid_color", IDX_COLOR_VGRID);
+    get_color_button (w, "hgrid_color", IDX_COLOR_HGRID);
+    get_color_button (w, "ogrid_color", IDX_COLOR_OGRID);
+    get_color_button (w, "text_color", IDX_COLOR_TEXT);
+    get_color_button (w, "wkeys_color", IDX_COLOR_WHITE_KEYS);
+    get_color_button (w, "bkeys_color", IDX_COLOR_BLACK_KEYS);
+    get_color_button (w, "peaks_color", IDX_COLOR_PEAKS);
 
-    CONFIG_FONT = get_font_button (w, "font_button");
+    config_set_string (get_font_button (w, "font_button"), IDX_STRING_FONT);
 
     get_gradient_colors (w);
 }
