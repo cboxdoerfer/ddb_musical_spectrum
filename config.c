@@ -221,12 +221,8 @@ load_config (void)
         else {
             color = deadbeef->conf_get_str_fast (conf_str, "0 0 0");
         }
-        int red, green, blue;
-        sscanf (color, "%d %d %d", &red, &green, &blue);
         GdkColor *clr = g_new0 (GdkColor, 1);
-        clr->red = red;
-        clr->green = green;
-        clr->blue = blue;
+        sscanf (color, "%hd %hd %hd", &clr->red, &clr->green, &clr->blue);
         CONFIG_GRADIENT_COLORS = g_list_append (CONFIG_GRADIENT_COLORS, clr);
     }
 

@@ -110,7 +110,7 @@ enum spectrum_config_color_index {
 struct spectrum_config_color_t {
     const char *name;
     GdkColor val;
-    GdkColor val_def;
+    const GdkColor val_def;
 };
 
 extern struct spectrum_config_color_t spectrum_config_color[NUM_IDX_COLOR];
