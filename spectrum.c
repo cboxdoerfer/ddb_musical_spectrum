@@ -359,7 +359,6 @@ musical_spectrum_start (void)
 static int
 musical_spectrum_stop (void)
 {
-    save_config ();
     return 0;
 }
 
