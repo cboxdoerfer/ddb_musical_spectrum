@@ -115,8 +115,6 @@ extern struct spectrum_config_string_t spectrum_config_string[NUM_IDX_STRING];
 
 extern GList *CONFIG_GRADIENT_COLORS;
 
-extern int FFT_INDEX;
-
 void
 load_config (void);
 

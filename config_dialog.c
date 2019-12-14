@@ -387,7 +387,8 @@ set_config_values (GtkWidget *w)
     set_spin_button (w, "amplitudes_htime_spin", config_get_int (IDX_BAR_DELAY));
     set_spin_button (w, "peaks_gravity_spin", config_get_int (IDX_PEAK_FALLOFF));
     set_spin_button (w, "amplitudes_gravity_spin", config_get_int (IDX_BAR_FALLOFF));
-    set_spin_button (w, "fft_spin", FFT_INDEX);
+    const int fft_index = log2 (spectrum_config_int[IDX_FFT_SIZE].val) - 9;
+    set_spin_button (w, "fft_spin", fft_index);
 
     set_combo_box (w, "window_combo", window_functions, window_functions_size, config_get_int (IDX_WINDOW));
     set_combo_box (w, "alignment_combo", alignment_title, alignment_title_size, config_get_int (IDX_ALIGNMENT));
@@ -462,8 +463,8 @@ get_config_values (GtkWidget *w)
     config_set_int (get_spin_button (w, "amplitudes_htime_spin"), IDX_BAR_DELAY);
     config_set_int (get_spin_button (w, "peaks_gravity_spin"), IDX_PEAK_FALLOFF);
     config_set_int (get_spin_button (w, "amplitudes_gravity_spin"), IDX_BAR_FALLOFF);
-    FFT_INDEX = get_spin_button (w, "fft_spin");
-    config_set_int ((int)exp2 (FFT_INDEX + 9), IDX_FFT_SIZE); 
+    const int fft_index = get_spin_button (w, "fft_spin");
+    config_set_int ((int)exp2 (fft_index + 9), IDX_FFT_SIZE); 
 
     config_set_int (get_combo_box (w, "window_combo"), IDX_WINDOW); 
     config_set_int (get_combo_box (w, "alignment_combo"), IDX_ALIGNMENT); 
