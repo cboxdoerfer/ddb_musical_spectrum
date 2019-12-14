@@ -43,6 +43,7 @@ enum spectrum_style {
     NUM_STYLE
 };
 
+// Config Integer
 enum spectrum_config_int_index {
     IDX_REFRESH_INTERVAL,
     IDX_INTERPOLATE,
@@ -91,20 +92,9 @@ struct spectrum_config_int_t {
     const int val_def;
 };
 
-struct spectrum_config_string_t {
-    const char *name;
-    const char* val;
-    const char *val_def;
-};
-struct spectrum_config_color_t {
-    const char *name;
-    GdkColor val;
-    GdkColor val_def;
-};
-
 extern struct spectrum_config_int_t spectrum_config_int[NUM_IDX_INT];
 
-
+// Config Colors
 enum spectrum_config_color_index {
     IDX_COLOR_BG,
     IDX_COLOR_TEXT,
@@ -117,11 +107,24 @@ enum spectrum_config_color_index {
     NUM_IDX_COLOR
 };
 
+struct spectrum_config_color_t {
+    const char *name;
+    GdkColor val;
+    GdkColor val_def;
+};
+
 extern struct spectrum_config_color_t spectrum_config_color[NUM_IDX_COLOR];
 
+// Config Strings
 enum spectrum_config_string_index {
     IDX_STRING_FONT,
     NUM_IDX_STRING
+};
+
+struct spectrum_config_string_t {
+    const char *name;
+    const char* val;
+    const char *val_def;
 };
 
 extern struct spectrum_config_string_t spectrum_config_string[NUM_IDX_STRING];
