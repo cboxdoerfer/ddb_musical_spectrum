@@ -90,8 +90,6 @@ struct spectrum_config_string_t spectrum_config_string[NUM_IDX_STRING] = {
 
 GList *CONFIG_GRADIENT_COLORS = NULL;
 
-int FFT_INDEX = 4;
-
 static char *default_colors[] = {"65535 0 0",
                                  "65535 32896 0",
                                  "65535 65535 0",
@@ -206,8 +204,6 @@ load_config (void)
     for (int i = 0; i < NUM_IDX_STRING; i++) {
         config_load_string (i);
     }
-    FFT_INDEX = log2 (spectrum_config_int[IDX_FFT_SIZE].val) - 9;
-
     for (int i = 0; i < NUM_IDX_COLOR; i++) {
         config_load_color (i);
     }
