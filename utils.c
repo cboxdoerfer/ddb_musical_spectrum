@@ -127,9 +127,9 @@ create_frequency_table (struct spectrum_data_t *s, int samplerate, int num_bars)
     }
 
     int last_key = 0;
-    s->low_res_indices_num = 1;
+    s->low_res_indices_num = 0;
     s->low_res_indices[0] = 0;
-    for (int i = 0, j = 1; i <= s->low_res_end + 1; i++) {
+    for (int i = 0, j = 0; i <= s->low_res_end; i++) {
         int key = s->keys[i];
         if (key != last_key) {
             s->low_res_indices[j++] = i;
@@ -137,6 +137,8 @@ create_frequency_table (struct spectrum_data_t *s, int samplerate, int num_bars)
         }
         last_key = key;
     }
+    s->low_res_indices[s->low_res_indices_num++] = s->low_res_end + 1;
+    s->low_res_indices[s->low_res_indices_num++] = s->low_res_end + 2;
 }
 
 double
@@ -146,6 +148,10 @@ hermite_interpolate (double *y,
                      double tension,
                      double bias)
 {
+    int debug = 0;
+    if (start >= 4) {
+        debug = 1;
+    }
     double m0,m1,mu2,mu3;
     double a0,a1,a2,a3;
 
@@ -161,6 +167,7 @@ hermite_interpolate (double *y,
     double y2 = y[start + 2];
     double y3 = y[start + 3];
 
+
     mu2 = mu * mu;
     mu3 = mu2 * mu;
     m0  = (y1-y0)*(1+bias)*(1-tension)/2;
@@ -172,6 +179,12 @@ hermite_interpolate (double *y,
     a2 =    mu3 -   mu2;
     a3 = -2*mu3 + 3*mu2;
 
-    return(a0*y1+a1*m0+a2*m1+a3*y2);
+    const double res = a0*y1+a1*m0+a2*m1+a3*y2;
+
+    if (debug) {
+        //printf("debug %d: %f, %f, %f, %f at %f\n", start, y0, y1, y2, y3, mu);
+        //printf("result: %f\n", res);
+    }
+    return res;
 }
 

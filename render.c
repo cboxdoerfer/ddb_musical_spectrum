@@ -268,7 +268,7 @@ static inline double
 spectrum_get_value (w_spectrum_t *w, int band, int num_bands)
 {
     band = MAX (band, 1);
-    const double k0 = w->data->keys[MAX(band - 1, w->data->low_res_end)];
+    const double k0 = w->data->keys[MAX(band - 1, 0)];
     const double k1 = w->data->keys[band];
     const double k2 = w->data->keys[MIN(band + 1, num_bands -1)];
 
@@ -338,7 +338,7 @@ spectrum_bands_fill (w_spectrum_t *w, int num_bands, int playback_status)
     int *x = w->data->low_res_indices;
     double y[low_res_end + 1];
 
-    for (int i = 0; i < low_res_end; i++) {
+    for (int i = 0; i <= low_res_end; i++) {
         y[i] = w->data->spectrum[w->data->keys[x[i]]];
     }
 
