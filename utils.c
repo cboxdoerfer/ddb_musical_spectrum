@@ -36,12 +36,12 @@ static int
 num_bars_for_width (int width)
 {
     int num_bars = 136;
-    if (config_get_int (IDX_DRAW_STYLE) == 1) {
+    if (config_get_int (ID_DRAW_STYLE) == 1) {
         num_bars = CLAMP (width, 1, MAX_BARS);
     }
-    else if (config_get_int (IDX_BAR_W) > 0) {
-        int added_bar_w = config_get_int (IDX_BAR_W);
-        if (config_get_int (IDX_GAPS)) {
+    else if (config_get_int (ID_BAR_W) > 0) {
+        int added_bar_w = config_get_int (ID_BAR_W);
+        if (config_get_int (ID_GAPS)) {
             added_bar_w += 1;
         }
         num_bars = CLAMP (width/added_bar_w, 1, MAX_BARS);
@@ -52,7 +52,7 @@ num_bars_for_width (int width)
 int
 get_num_bars (int width)
 {
-    if (config_get_int (IDX_DRAW_STYLE) == 1 || config_get_int (IDX_BAR_W) > 0) {
+    if (config_get_int (ID_DRAW_STYLE) == 1 || config_get_int (ID_BAR_W) > 0) {
         return num_bars_for_width (width);
     }
 
@@ -62,8 +62,8 @@ get_num_bars (int width)
 void
 window_table_fill (double *window)
 {
-    const int fft_size = config_get_int (IDX_FFT_SIZE);
-    switch (config_get_int (IDX_WINDOW)) {
+    const int fft_size = config_get_int (ID_FFT_SIZE);
+    switch (config_get_int (ID_WINDOW)) {
         case BLACKMAN_HARRIS_WINDOW:
             for (int i = 0; i < fft_size; i++) {
                 // Blackman-Harris
@@ -91,21 +91,21 @@ window_table_fill (double *window)
 void
 update_gravity (struct spectrum_render_t *render)
 {
-    const int refresh_interval = config_get_int (IDX_REFRESH_INTERVAL);
-    render->peak_delay = (int)ceil (config_get_int (IDX_PEAK_DELAY)/refresh_interval);
-    render->bar_delay = (int)ceil (config_get_int (IDX_BAR_DELAY)/refresh_interval);
+    const int refresh_interval = config_get_int (ID_REFRESH_INTERVAL);
+    render->peak_delay = (int)ceil (config_get_int (ID_PEAK_DELAY)/refresh_interval);
+    render->bar_delay = (int)ceil (config_get_int (ID_BAR_DELAY)/refresh_interval);
 
-    const double peak_gravity = config_get_int (IDX_PEAK_FALLOFF)/(1000.0 * 1000.0);
+    const double peak_gravity = config_get_int (ID_PEAK_FALLOFF)/(1000.0 * 1000.0);
     render->peak_velocity = peak_gravity * refresh_interval;
 
-    const double bars_gravity = config_get_int (IDX_BAR_FALLOFF)/(1000.0 * 1000.0);
+    const double bars_gravity = config_get_int (ID_BAR_FALLOFF)/(1000.0 * 1000.0);
     render->bar_velocity = bars_gravity * refresh_interval;
 }
 
 int
 get_num_notes ()
 {
-    return config_get_int (IDX_NOTE_MAX) - config_get_int (IDX_NOTE_MIN) + 1;
+    return config_get_int (ID_NOTE_MAX) - config_get_int (ID_NOTE_MIN) + 1;
 }
 
 void
@@ -114,12 +114,12 @@ create_frequency_table (struct spectrum_data_t *s, int samplerate, int num_bars)
     s->low_res_end = 0;
 
     const double note_size = num_bars / (double)(get_num_notes ());
-    const double a4pos = (57.0 + config_get_int (IDX_TRANSPOSE) - config_get_int (IDX_NOTE_MIN)) * note_size;
+    const double a4pos = (57.0 + config_get_int (ID_TRANSPOSE) - config_get_int (ID_NOTE_MIN)) * note_size;
     const double octave = 12.0 * note_size;
-    const double d_freq = config_get_int (IDX_FFT_SIZE)/(double)samplerate;
+    const double d_freq = config_get_int (ID_FFT_SIZE)/(double)samplerate;
 
     for (int i = 0; i < num_bars; i++) {
-        s->frequency[i] = (double)config_get_int (IDX_PITCH) * pow (2.0, (double)(i-a4pos)/octave);
+        s->frequency[i] = (double)config_get_int (ID_PITCH) * pow (2.0, (double)(i-a4pos)/octave);
         s->keys[i] = (int)floor (s->frequency[i] * d_freq);
         if (i > 0 && s->keys[i] > 0 && s->keys[i-1] == s->keys[i]) {
             s->low_res_end = i;
