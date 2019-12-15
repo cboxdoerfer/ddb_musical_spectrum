@@ -118,6 +118,7 @@ extern struct spectrum_config_color_t spectrum_config_color[NUM_ID_COLOR];
 // Config Strings
 enum spectrum_config_string_index {
     ID_STRING_FONT,
+    ID_STRING_FONT_TOOLTIP,
     NUM_ID_STRING
 };
 

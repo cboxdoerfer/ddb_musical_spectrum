@@ -116,6 +116,9 @@ create_config_dialog (void)
   GtkWidget *fill_spectrum_check;
   GtkWidget *interpolate_check;
   GtkWidget *tooltip_check;
+  GtkWidget *hbox8;
+  GtkWidget *label107;
+  GtkWidget *font_tooltip_button;
   GtkWidget *hbox4;
   GtkWidget *label106;
   GtkWidget *font_button;
@@ -597,15 +600,27 @@ create_config_dialog (void)
   gtk_widget_show (interpolate_check);
   gtk_box_pack_start (GTK_BOX (vbox2), interpolate_check, FALSE, FALSE, 0);
 
-  tooltip_check = gtk_check_button_new_with_mnemonic (_("Tooltips"));
+  tooltip_check = gtk_check_button_new_with_mnemonic (_("Tooltip"));
   gtk_widget_show (tooltip_check);
   gtk_box_pack_start (GTK_BOX (vbox2), tooltip_check, FALSE, FALSE, 0);
+
+  hbox8 = gtk_hbox_new (FALSE, 4);
+  gtk_widget_show (hbox8);
+  gtk_box_pack_start (GTK_BOX (vbox2), hbox8, FALSE, TRUE, 0);
+
+  label107 = gtk_label_new (_("Tooltip font:"));
+  gtk_widget_show (label107);
+  gtk_box_pack_start (GTK_BOX (hbox8), label107, FALSE, FALSE, 0);
+
+  font_tooltip_button = gtk_font_button_new ();
+  gtk_widget_show (font_tooltip_button);
+  gtk_box_pack_start (GTK_BOX (hbox8), font_tooltip_button, TRUE, TRUE, 0);
 
   hbox4 = gtk_hbox_new (FALSE, 4);
   gtk_widget_show (hbox4);
   gtk_box_pack_start (GTK_BOX (vbox2), hbox4, FALSE, FALSE, 0);
 
-  label106 = gtk_label_new (_("Font:"));
+  label106 = gtk_label_new (_("Labels font:"));
   gtk_widget_show (label106);
   gtk_box_pack_start (GTK_BOX (hbox4), label106, FALSE, FALSE, 0);
 
@@ -989,6 +1004,9 @@ create_config_dialog (void)
   GLADE_HOOKUP_OBJECT (config_dialog, fill_spectrum_check, "fill_spectrum_check");
   GLADE_HOOKUP_OBJECT (config_dialog, interpolate_check, "interpolate_check");
   GLADE_HOOKUP_OBJECT (config_dialog, tooltip_check, "tooltip_check");
+  GLADE_HOOKUP_OBJECT (config_dialog, hbox8, "hbox8");
+  GLADE_HOOKUP_OBJECT (config_dialog, label107, "label107");
+  GLADE_HOOKUP_OBJECT (config_dialog, font_tooltip_button, "font_tooltip_button");
   GLADE_HOOKUP_OBJECT (config_dialog, hbox4, "hbox4");
   GLADE_HOOKUP_OBJECT (config_dialog, label106, "label106");
   GLADE_HOOKUP_OBJECT (config_dialog, font_button, "font_button");

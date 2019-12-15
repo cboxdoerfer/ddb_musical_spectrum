@@ -30,6 +30,7 @@ struct spectrum_render_ctx_t {
     cairo_rectangle_t r_b;
     // Font layout
     PangoLayout *font_layout;
+    PangoLayout *font_tooltip_layout;
 };
 
 void
@@ -764,8 +765,8 @@ spectrum_draw_tooltip (struct spectrum_render_t *render,
 
     cairo_save (cr);
 
-    const double text_width = spectrum_pango_font_width (r_ctx->font_layout, t1);
-    const double text_height = spectrum_pango_font_height (r_ctx->font_layout, t1);
+    const double text_width = spectrum_pango_font_width (r_ctx->font_tooltip_layout, t1);
+    const double text_height = spectrum_pango_font_height (r_ctx->font_tooltip_layout, t1);
 
     const double padding = 5;
     double x = m_ctx->x + 20;
@@ -788,23 +789,32 @@ spectrum_draw_tooltip (struct spectrum_render_t *render,
 
     gdk_cairo_set_source_color (cr, config_get_color (ID_COLOR_TEXT));
     cairo_move_to (cr, x, y);
-    pango_layout_set_text (r_ctx->font_layout, t1, -1);
-    pango_cairo_show_layout (cr, r_ctx->font_layout);
+    pango_layout_set_text (r_ctx->font_tooltip_layout, t1, -1);
+    pango_cairo_show_layout (cr, r_ctx->font_tooltip_layout);
 
     cairo_restore (cr);
+}
+
+static PangoLayout *
+spectrum_font_layout_get (cairo_t *cr, const enum spectrum_config_string_index id)
+{
+    PangoLayout *layout = pango_cairo_create_layout (cr);
+    PangoFontDescription *desc = pango_font_description_from_string (config_get_string (id));
+    pango_layout_set_font_description (layout, desc);
+    pango_font_description_free (desc);
+    desc = NULL;
+
+    return layout;
 }
 
 struct spectrum_render_ctx_t
 spectrum_get_render_ctx (cairo_t *cr, double width, double height)
 {
-    PangoLayout *layout = pango_cairo_create_layout (cr);
+    PangoLayout *layout_labels = spectrum_font_layout_get (cr, ID_STRING_FONT);
+    PangoLayout *layout_tooltip = spectrum_font_layout_get (cr, ID_STRING_FONT_TOOLTIP);
 
-    PangoFontDescription *desc = pango_font_description_from_string (config_get_string (ID_STRING_FONT));
-    pango_layout_set_font_description (layout, desc);
-    pango_font_description_free (desc);
-
-    const double font_width = spectrum_font_width_max (layout);
-    const double font_height = spectrum_font_height_max (layout);
+    const double font_width = spectrum_font_width_max (layout_labels);
+    const double font_height = spectrum_font_height_max (layout_labels);
     const double label_height = font_height + FONT_PADDING_VERTICAL;
     const double label_width = font_width + FONT_PADDING_HORIZONTAL;
 
@@ -858,7 +868,8 @@ spectrum_get_render_ctx (cairo_t *cr, double width, double height)
         .r_t = r_t,
         .r_b = r_b,
         .r_s = r_s,
-        .font_layout = layout,
+        .font_layout = layout_labels,
+        .font_tooltip_layout = layout_tooltip,
     };
 
     return r_ctx;
@@ -939,6 +950,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     }
 
     g_object_unref (r_ctx.font_layout);
+    g_object_unref (r_ctx.font_tooltip_layout);
 
     return FALSE;
 }
