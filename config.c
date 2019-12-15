@@ -86,6 +86,7 @@ struct spectrum_config_color_t spectrum_config_color[NUM_ID_COLOR] = {
 
 struct spectrum_config_string_t spectrum_config_string[NUM_ID_STRING] = {
     [ID_STRING_FONT] = {"font", NULL, "Sans 7"},
+    [ID_STRING_FONT_TOOLTIP] = {"font_tooltip", NULL, "Sans 9"},
 };
 
 GList *CONFIG_GRADIENT_COLORS = NULL;

@@ -405,6 +405,7 @@ set_config_values (GtkWidget *w)
     set_color_button (w, "peaks_color", config_get_color (ID_COLOR_PEAKS));
 
     set_font_button (w, "font_button", config_get_string (ID_STRING_FONT));
+    set_font_button (w, "font_tooltip_button", config_get_string (ID_STRING_FONT_TOOLTIP));
 
     set_gradient_colors (w);
 }
@@ -481,6 +482,7 @@ get_config_values (GtkWidget *w)
     get_color_button (w, "peaks_color", ID_COLOR_PEAKS);
 
     config_set_string (get_font_button (w, "font_button"), ID_STRING_FONT);
+    config_set_string (get_font_button (w, "font_tooltip_button"), ID_STRING_FONT_TOOLTIP);
 
     get_gradient_colors (w);
 }
