@@ -32,60 +32,60 @@
 #include "spectrum.h"
 #include "config.h"
 
-struct spectrum_config_int_t spectrum_config_int[NUM_IDX_INT] = {
-    [IDX_REFRESH_INTERVAL] =     {"refresh_interval",     0, 25},
-    [IDX_INTERPOLATE] =          {"interpolate",          0, 1},
-    [IDX_CHANNEL] =              {"channel",              0, 262143},
-    [IDX_TRANSPOSE] =            {"transpose",            0, 0},
-    [IDX_PITCH] =                {"pitch",                0, 440},
-    [IDX_NOTE_MIN] =             {"note_min",             0, 0},
-    [IDX_NOTE_MAX] =             {"note_max",             0, 125},
-    [IDX_AMPLITUDE_MIN] =        {"amp_min",              0, -60},
-    [IDX_AMPLITUDE_MAX] =        {"amp_max",              0, 0},
-    [IDX_ENABLE_PEAKS] =         {"enable_peaks",         0, TRUE},
-    [IDX_ENABLE_PEAKS_COLOR] =   {"enable_peaks_color",   0, FALSE},
-    [IDX_ENABLE_AMPLITUDES] =    {"enable_amp",           0, FALSE},
-    [IDX_ENABLE_TOP_LABELS] =    {"enable_top_labels",    0, FALSE},
-    [IDX_ENABLE_BOTTOM_LABELS] = {"enable_bottom_labels", 0, TRUE},
-    [IDX_ENABLE_LEFT_LABELS] =   {"enable_left_labels",   0, TRUE},
-    [IDX_ENABLE_RIGHT_LABELS] =  {"enable_right_labels",  0, TRUE},
-    [IDX_ENABLE_HGRID] =         {"enable_hgrid",         0, TRUE},
-    [IDX_ENABLE_VGRID] =         {"enable_vgrid",         0, TRUE},
-    [IDX_ENABLE_OGRID] =         {"enable_ogrid",         0, FALSE},
-    [IDX_ENABLE_WHITE_KEYS] =    {"enable_white_keys",    0, TRUE},
-    [IDX_ENABLE_BLACK_KEYS] =    {"enable_black_keys",    0, FALSE},
-    [IDX_ENABLE_TOOLTIP] =       {"enable_tooltip",       0, TRUE},
-    [IDX_ALIGNMENT] =            {"alignment",            0, CENTER_ALIGN},
-    [IDX_ENABLE_BAR_MODE] =      {"enable_bar_mode",      0, FALSE},
-    [IDX_BAR_FALLOFF] =          {"bar_falloff",          0, 100},
-    [IDX_BAR_DELAY] =            {"bar_delay",            0, 100},
-    [IDX_PEAK_FALLOFF] =         {"peak_falloff",         0, 50},
-    [IDX_PEAK_DELAY] =           {"peak_delay",           0, 500},
-    [IDX_GRADIENT_ORIENTATION] = {"gradient_orientation", 0, 0},
-    [IDX_NUM_COLORS] =           {"num_colors",           0, 6},
-    [IDX_FFT_SIZE] =             {"fft_size",             0, 8192},
-    [IDX_WINDOW] =               {"window",               0, HANNING_WINDOW},
-    [IDX_NUM_BARS] =             {"num_bars",             0, 126},
-    [IDX_BAR_W] =                {"bar_w",                0, 0},
-    [IDX_GAPS] =                 {"gaps",                 0, 1},
-    [IDX_SPACING] =              {"spacing",              0, 1},
-    [IDX_DRAW_STYLE] =           {"draw_style",           0, MUSICAL_STYLE},
-    [IDX_FILL_SPECTRUM] =        {"fill_spectrum",        0, 1},
+struct spectrum_config_int_t spectrum_config_int[NUM_ID_INT] = {
+    [ID_REFRESH_INTERVAL] =     {"refresh_interval",     0, 25},
+    [ID_INTERPOLATE] =          {"interpolate",          0, 1},
+    [ID_CHANNEL] =              {"channel",              0, 262143},
+    [ID_TRANSPOSE] =            {"transpose",            0, 0},
+    [ID_PITCH] =                {"pitch",                0, 440},
+    [ID_NOTE_MIN] =             {"note_min",             0, 0},
+    [ID_NOTE_MAX] =             {"note_max",             0, 125},
+    [ID_AMPLITUDE_MIN] =        {"amp_min",              0, -60},
+    [ID_AMPLITUDE_MAX] =        {"amp_max",              0, 0},
+    [ID_ENABLE_PEAKS] =         {"enable_peaks",         0, TRUE},
+    [ID_ENABLE_PEAKS_COLOR] =   {"enable_peaks_color",   0, FALSE},
+    [ID_ENABLE_AMPLITUDES] =    {"enable_amp",           0, FALSE},
+    [ID_ENABLE_TOP_LABELS] =    {"enable_top_labels",    0, FALSE},
+    [ID_ENABLE_BOTTOM_LABELS] = {"enable_bottom_labels", 0, TRUE},
+    [ID_ENABLE_LEFT_LABELS] =   {"enable_left_labels",   0, TRUE},
+    [ID_ENABLE_RIGHT_LABELS] =  {"enable_right_labels",  0, TRUE},
+    [ID_ENABLE_HGRID] =         {"enable_hgrid",         0, TRUE},
+    [ID_ENABLE_VGRID] =         {"enable_vgrid",         0, TRUE},
+    [ID_ENABLE_OGRID] =         {"enable_ogrid",         0, FALSE},
+    [ID_ENABLE_WHITE_KEYS] =    {"enable_white_keys",    0, TRUE},
+    [ID_ENABLE_BLACK_KEYS] =    {"enable_black_keys",    0, FALSE},
+    [ID_ENABLE_TOOLTIP] =       {"enable_tooltip",       0, TRUE},
+    [ID_ALIGNMENT] =            {"alignment",            0, CENTER_ALIGN},
+    [ID_ENABLE_BAR_MODE] =      {"enable_bar_mode",      0, FALSE},
+    [ID_BAR_FALLOFF] =          {"bar_falloff",          0, 100},
+    [ID_BAR_DELAY] =            {"bar_delay",            0, 100},
+    [ID_PEAK_FALLOFF] =         {"peak_falloff",         0, 50},
+    [ID_PEAK_DELAY] =           {"peak_delay",           0, 500},
+    [ID_GRADIENT_ORIENTATION] = {"gradient_orientation", 0, 0},
+    [ID_NUM_COLORS] =           {"num_colors",           0, 6},
+    [ID_FFT_SIZE] =             {"fft_size",             0, 8192},
+    [ID_WINDOW] =               {"window",               0, HANNING_WINDOW},
+    [ID_NUM_BARS] =             {"num_bars",             0, 126},
+    [ID_BAR_W] =                {"bar_w",                0, 0},
+    [ID_GAPS] =                 {"gaps",                 0, 1},
+    [ID_SPACING] =              {"spacing",              0, 1},
+    [ID_DRAW_STYLE] =           {"draw_style",           0, MUSICAL_STYLE},
+    [ID_FILL_SPECTRUM] =        {"fill_spectrum",        0, 1},
 };
 
-struct spectrum_config_color_t spectrum_config_color[NUM_IDX_COLOR] = {
-    [IDX_COLOR_BG] =         { "background", {0}, {.red = 0,     .green = 0,     .blue = 0}},
-    [IDX_COLOR_TEXT] =       { "text",       {0}, {.red = 65535, .green = 65535, .blue = 65535}},
-    [IDX_COLOR_VGRID] =      { "vgrid",      {0}, {.red = 21845, .green = 21845, .blue = 21845}},
-    [IDX_COLOR_HGRID] =      { "hgrid",      {0}, {.red = 21845, .green = 21845, .blue = 21845}},
-    [IDX_COLOR_OGRID] =      { "ogrid",      {0}, {.red = 42148, .green = 0,     .blue = 0}},
-    [IDX_COLOR_BLACK_KEYS] = { "black_keys", {0}, {.red = 0,     .green = 0,     .blue = 0}},
-    [IDX_COLOR_WHITE_KEYS] = { "white_keys", {0}, {.red = 10240, .green = 10240, .blue = 10240}},
-    [IDX_COLOR_PEAKS] =      { "peaks",      {0}, {.red = 42148, .green = 0,     .blue = 0}},
+struct spectrum_config_color_t spectrum_config_color[NUM_ID_COLOR] = {
+    [ID_COLOR_BG] =         { "background", {0}, {.red = 0,     .green = 0,     .blue = 0}},
+    [ID_COLOR_TEXT] =       { "text",       {0}, {.red = 65535, .green = 65535, .blue = 65535}},
+    [ID_COLOR_VGRID] =      { "vgrid",      {0}, {.red = 21845, .green = 21845, .blue = 21845}},
+    [ID_COLOR_HGRID] =      { "hgrid",      {0}, {.red = 21845, .green = 21845, .blue = 21845}},
+    [ID_COLOR_OGRID] =      { "ogrid",      {0}, {.red = 42148, .green = 0,     .blue = 0}},
+    [ID_COLOR_BLACK_KEYS] = { "black_keys", {0}, {.red = 0,     .green = 0,     .blue = 0}},
+    [ID_COLOR_WHITE_KEYS] = { "white_keys", {0}, {.red = 10240, .green = 10240, .blue = 10240}},
+    [ID_COLOR_PEAKS] =      { "peaks",      {0}, {.red = 42148, .green = 0,     .blue = 0}},
 };
 
-struct spectrum_config_string_t spectrum_config_string[NUM_IDX_STRING] = {
-    [IDX_STRING_FONT] = {"font", NULL, "Sans 7"},
+struct spectrum_config_string_t spectrum_config_string[NUM_ID_STRING] = {
+    [ID_STRING_FONT] = {"font", NULL, "Sans 7"},
 };
 
 GList *CONFIG_GRADIENT_COLORS = NULL;
@@ -143,13 +143,13 @@ config_save_string (const int index)
 void
 save_config (void)
 {
-    for (int i = 0; i < NUM_IDX_INT; i++) {
+    for (int i = 0; i < NUM_ID_INT; i++) {
         config_save_int (i);
     }
-    for (int i = 0; i < NUM_IDX_STRING; i++) {
+    for (int i = 0; i < NUM_ID_STRING; i++) {
         config_save_string (i);
     }
-    for (int i = 0; i < NUM_IDX_COLOR; i++) {
+    for (int i = 0; i < NUM_ID_COLOR; i++) {
         config_save_color (i);
     }
 
@@ -199,13 +199,13 @@ void
 load_config (void)
 {
     deadbeef->conf_lock ();
-    for (int i = 0; i < NUM_IDX_INT; i++) {
+    for (int i = 0; i < NUM_ID_INT; i++) {
         config_load_int (i);
     }
-    for (int i = 0; i < NUM_IDX_STRING; i++) {
+    for (int i = 0; i < NUM_ID_STRING; i++) {
         config_load_string (i);
     }
-    for (int i = 0; i < NUM_IDX_COLOR; i++) {
+    for (int i = 0; i < NUM_ID_COLOR; i++) {
         config_load_color (i);
     }
 
@@ -213,7 +213,7 @@ load_config (void)
     char conf_str[100] = {};
     g_list_free_full (CONFIG_GRADIENT_COLORS, g_free);
     CONFIG_GRADIENT_COLORS = NULL;
-    for (int i = 0; i < spectrum_config_int[IDX_NUM_COLORS].val; i++) {
+    for (int i = 0; i < spectrum_config_int[ID_NUM_COLORS].val; i++) {
         snprintf (conf_str, sizeof (conf_str), "%s%02d", "musical_spectrum.color.gradient_", i);
         if (i < num_default_colors) {
             color = deadbeef->conf_get_str_fast (conf_str, default_colors[i]);

@@ -45,45 +45,45 @@ enum spectrum_style {
 
 // Config Integer
 enum spectrum_config_int_index {
-    IDX_REFRESH_INTERVAL,
-    IDX_INTERPOLATE,
-    IDX_CHANNEL,
-    IDX_TRANSPOSE,
-    IDX_PITCH,
-    IDX_NOTE_MIN,
-    IDX_NOTE_MAX,
-    IDX_AMPLITUDE_MIN,
-    IDX_AMPLITUDE_MAX,
-    IDX_ENABLE_PEAKS,
-    IDX_ENABLE_PEAKS_COLOR,
-    IDX_ENABLE_AMPLITUDES,
-    IDX_ENABLE_TOP_LABELS,
-    IDX_ENABLE_BOTTOM_LABELS,
-    IDX_ENABLE_LEFT_LABELS,
-    IDX_ENABLE_RIGHT_LABELS,
-    IDX_ENABLE_HGRID,
-    IDX_ENABLE_VGRID,
-    IDX_ENABLE_OGRID,
-    IDX_ENABLE_WHITE_KEYS,
-    IDX_ENABLE_BLACK_KEYS,
-    IDX_ENABLE_TOOLTIP,
-    IDX_ALIGNMENT,
-    IDX_ENABLE_BAR_MODE,
-    IDX_BAR_FALLOFF,
-    IDX_BAR_DELAY,
-    IDX_PEAK_FALLOFF,
-    IDX_PEAK_DELAY,
-    IDX_GRADIENT_ORIENTATION,
-    IDX_NUM_COLORS,
-    IDX_FFT_SIZE,
-    IDX_WINDOW,
-    IDX_NUM_BARS,
-    IDX_BAR_W,
-    IDX_GAPS,
-    IDX_SPACING,
-    IDX_DRAW_STYLE,
-    IDX_FILL_SPECTRUM,
-    NUM_IDX_INT
+    ID_REFRESH_INTERVAL,
+    ID_INTERPOLATE,
+    ID_CHANNEL,
+    ID_TRANSPOSE,
+    ID_PITCH,
+    ID_NOTE_MIN,
+    ID_NOTE_MAX,
+    ID_AMPLITUDE_MIN,
+    ID_AMPLITUDE_MAX,
+    ID_ENABLE_PEAKS,
+    ID_ENABLE_PEAKS_COLOR,
+    ID_ENABLE_AMPLITUDES,
+    ID_ENABLE_TOP_LABELS,
+    ID_ENABLE_BOTTOM_LABELS,
+    ID_ENABLE_LEFT_LABELS,
+    ID_ENABLE_RIGHT_LABELS,
+    ID_ENABLE_HGRID,
+    ID_ENABLE_VGRID,
+    ID_ENABLE_OGRID,
+    ID_ENABLE_WHITE_KEYS,
+    ID_ENABLE_BLACK_KEYS,
+    ID_ENABLE_TOOLTIP,
+    ID_ALIGNMENT,
+    ID_ENABLE_BAR_MODE,
+    ID_BAR_FALLOFF,
+    ID_BAR_DELAY,
+    ID_PEAK_FALLOFF,
+    ID_PEAK_DELAY,
+    ID_GRADIENT_ORIENTATION,
+    ID_NUM_COLORS,
+    ID_FFT_SIZE,
+    ID_WINDOW,
+    ID_NUM_BARS,
+    ID_BAR_W,
+    ID_GAPS,
+    ID_SPACING,
+    ID_DRAW_STYLE,
+    ID_FILL_SPECTRUM,
+    NUM_ID_INT
 };
 
 struct spectrum_config_int_t {
@@ -92,19 +92,19 @@ struct spectrum_config_int_t {
     const int val_def;
 };
 
-extern struct spectrum_config_int_t spectrum_config_int[NUM_IDX_INT];
+extern struct spectrum_config_int_t spectrum_config_int[NUM_ID_INT];
 
 // Config Colors
 enum spectrum_config_color_index {
-    IDX_COLOR_BG,
-    IDX_COLOR_TEXT,
-    IDX_COLOR_VGRID,
-    IDX_COLOR_HGRID,
-    IDX_COLOR_OGRID,
-    IDX_COLOR_BLACK_KEYS,
-    IDX_COLOR_WHITE_KEYS,
-    IDX_COLOR_PEAKS,
-    NUM_IDX_COLOR
+    ID_COLOR_BG,
+    ID_COLOR_TEXT,
+    ID_COLOR_VGRID,
+    ID_COLOR_HGRID,
+    ID_COLOR_OGRID,
+    ID_COLOR_BLACK_KEYS,
+    ID_COLOR_WHITE_KEYS,
+    ID_COLOR_PEAKS,
+    NUM_ID_COLOR
 };
 
 struct spectrum_config_color_t {
@@ -113,12 +113,12 @@ struct spectrum_config_color_t {
     const GdkColor val_def;
 };
 
-extern struct spectrum_config_color_t spectrum_config_color[NUM_IDX_COLOR];
+extern struct spectrum_config_color_t spectrum_config_color[NUM_ID_COLOR];
 
 // Config Strings
 enum spectrum_config_string_index {
-    IDX_STRING_FONT,
-    NUM_IDX_STRING
+    ID_STRING_FONT,
+    NUM_ID_STRING
 };
 
 struct spectrum_config_string_t {
@@ -127,7 +127,7 @@ struct spectrum_config_string_t {
     const char *val_def;
 };
 
-extern struct spectrum_config_string_t spectrum_config_string[NUM_IDX_STRING];
+extern struct spectrum_config_string_t spectrum_config_string[NUM_ID_STRING];
 
 extern GList *CONFIG_GRADIENT_COLORS;
 
