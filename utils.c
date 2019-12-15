@@ -120,7 +120,7 @@ create_frequency_table (struct spectrum_data_t *s, int samplerate, int num_bars)
 
     for (int i = 0; i < num_bars; i++) {
         s->frequency[i] = (double)config_get_int (ID_PITCH) * pow (2.0, (double)(i-a4pos)/octave);
-        s->keys[i] = (int)floor (s->frequency[i] * d_freq);
+        s->keys[i] = (int)round (s->frequency[i] * d_freq);
         if (i > 0 && s->keys[i] > 0 && s->keys[i-1] == s->keys[i]) {
             s->low_res_end = i;
         }
