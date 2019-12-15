@@ -128,17 +128,16 @@ create_frequency_table (struct spectrum_data_t *s, int samplerate, int num_bars)
 
     int last_key = 0;
     s->low_res_indices_num = 0;
-    s->low_res_indices[0] = 0;
-    for (int i = 0, j = 0; i <= s->low_res_end; i++) {
+    for (int i = 0; i <= s->low_res_end; i++) {
         int key = s->keys[i];
         if (key != last_key) {
-            s->low_res_indices[j++] = i;
-            s->low_res_indices_num++;
+            s->low_res_indices[s->low_res_indices_num++] = i;
         }
         last_key = key;
     }
-    s->low_res_indices[s->low_res_indices_num++] = s->low_res_end + 1;
-    s->low_res_indices[s->low_res_indices_num++] = s->low_res_end + 2;
+    for (int i = s->low_res_end + 1; i < s->low_res_end + 4 && i < num_bars; i++) {
+        s->low_res_indices[s->low_res_indices_num++] = i;
+    }
 }
 
 double
