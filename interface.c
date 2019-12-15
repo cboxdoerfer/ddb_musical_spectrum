@@ -177,13 +177,13 @@ create_config_dialog (void)
   dialog_vbox1 = gtk_dialog_get_content_area (GTK_DIALOG (config_dialog));
   gtk_widget_show (dialog_vbox1);
 
-  hbox1 = gtk_hbox_new (FALSE, 8);
+  hbox1 = gtk_hbox_new (FALSE, 12);
   gtk_widget_show (hbox1);
   gtk_box_pack_start (GTK_BOX (dialog_vbox1), hbox1, TRUE, TRUE, 4);
 
   vbox1 = gtk_vbox_new (FALSE, 4);
   gtk_widget_show (vbox1);
-  gtk_box_pack_start (GTK_BOX (hbox1), vbox1, TRUE, TRUE, 4);
+  gtk_box_pack_start (GTK_BOX (hbox1), vbox1, TRUE, TRUE, 0);
 
   frame1 = gtk_frame_new (NULL);
   gtk_widget_show (frame1);
