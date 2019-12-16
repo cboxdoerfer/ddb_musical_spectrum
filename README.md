@@ -8,23 +8,13 @@ This plugin is based on DeaDBeeFs stock spectrum. It offers variable FFT size (u
 ## Installation
 
 ### Arch Linux
-See the [AUR](https://aur.archlinux.org/packages/deadbeef-plugin-musical-spectrum-git/)
+See the AUR
+
+[GTK3](https://aur.archlinux.org/packages/deadbeef-plugin-musical-spectrum-gtk3-git/)
+[GTK2](https://aur.archlinux.org/packages/deadbeef-plugin-musical-spectrum-gtk2-git/)
 
 ### Gentoo
 See ebuilds [here](https://github.com/megabaks/stuff/tree/master/media-plugins/deadbeef-musical-spectrum)
-
-### Binaries
-
-#### Dev
-[x86_64](https://drone.io/github.com/cboxdoerfer/ddb_musical_spectrum/files/deadbeef-plugin-builder/ddb_musical_spectrum_x86_64.tar.gz)
-
-[i686](https://drone.io/github.com/cboxdoerfer/ddb_musical_spectrum/files/deadbeef-plugin-builder/ddb_musical_spectrum_i686.tar.gz)
-
-Install them as follows:
-
-x86_64: ```tar -xvf ddb_musical_spectrum_x86_64.tar.gz -C ~/.local/lib/deadbeef```
-
-i686: ```tar -xvf ddb_musical_spectrum_i686.tar.gz -C ~/.local/lib/deadbeef```
 
 ### Other distributions
 #### Build from sources
