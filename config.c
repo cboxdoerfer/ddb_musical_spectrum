@@ -65,7 +65,6 @@ struct spectrum_config_int_t spectrum_config_int[NUM_ID_INT] = {
     [ID_NUM_COLORS] =           {"num_colors",           0, 6},
     [ID_FFT_SIZE] =             {"fft_size",             0, 8192},
     [ID_WINDOW] =               {"window",               0, HANNING_WINDOW},
-    [ID_NUM_BARS] =             {"num_bars",             0, 126},
     [ID_BAR_W] =                {"bar_w",                0, 0},
     [ID_GAPS] =                 {"gaps",                 0, 1},
     [ID_SPACING] =              {"spacing",              0, 1},

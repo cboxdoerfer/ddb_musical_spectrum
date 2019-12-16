@@ -376,6 +376,7 @@ set_config_values (GtkWidget *w)
 
     set_toggle_button (w, "peaks_color_check", config_get_int (ID_ENABLE_PEAKS_COLOR));
 
+    set_spin_button (w, "barw_spin", config_get_int (ID_BAR_W));
     set_spin_button (w, "pitch_spin", config_get_int (ID_PITCH));
     set_spin_button (w, "transpose_spin", config_get_int (ID_TRANSPOSE));
     set_spin_button (w, "notes_max_spin", config_get_int (ID_NOTE_MAX));
@@ -453,6 +454,7 @@ get_config_values (GtkWidget *w)
 
     config_set_int (get_toggle_button (w, "peaks_color_check"), ID_ENABLE_PEAKS_COLOR);
 
+    config_set_int (get_spin_button (w, "barw_spin"), ID_BAR_W);
     config_set_int (get_spin_button (w, "pitch_spin"), ID_PITCH);
     config_set_int (get_spin_button (w, "transpose_spin"), ID_TRANSPOSE);
     config_set_int (get_spin_button (w, "notes_min_spin"), ID_NOTE_MIN);

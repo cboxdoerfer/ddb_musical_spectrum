@@ -719,7 +719,12 @@ spectrum_bar_width_get (int num_bands, double width)
         barw = 1;
     }
     else {
-        barw = CLAMP (width / num_bands, 2, 100);
+        if (config_get_int (ID_BAR_W) == 0) {
+            barw = CLAMP (width / num_bands, 2, 100);
+        }
+        else {
+            barw = config_get_int (ID_BAR_W);
+        }
     }
     return barw;
 }

@@ -232,3 +232,18 @@ on_gradient_combo_changed              (GtkComboBox     *combobox,
     gtk_widget_queue_draw (lookup_widget (dialog, "gradient_preview"));
 }
 
+
+gboolean
+on_barw_spin_output                    (GtkSpinButton   *spinbutton,
+                                        gpointer         user_data)
+{
+    GtkAdjustment *adj = gtk_spin_button_get_adjustment (spinbutton);
+    int value = gtk_adjustment_get_value (adj);
+    if (value == 0) {
+        gtk_entry_set_text (GTK_ENTRY (spinbutton), "Auto");
+        return TRUE;
+    }
+
+    return FALSE;
+}
+

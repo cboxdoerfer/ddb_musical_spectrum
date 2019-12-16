@@ -77,7 +77,6 @@ enum spectrum_config_int_index {
     ID_NUM_COLORS,
     ID_FFT_SIZE,
     ID_WINDOW,
-    ID_NUM_BARS,
     ID_BAR_W,
     ID_GAPS,
     ID_SPACING,

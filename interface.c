@@ -126,6 +126,10 @@ create_config_dialog (void)
   GtkWidget *mode_combo;
   GtkWidget *label31;
   GtkWidget *musical_box;
+  GtkWidget *hbox8;
+  GtkWidget *label108;
+  GObject *barw_spin_adj;
+  GtkWidget *barw_spin;
   GtkWidget *spacing_check;
   GtkWidget *gaps_check;
   GtkWidget *led_check;
@@ -677,6 +681,20 @@ create_config_dialog (void)
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL), 0, 0);
 
+  hbox8 = gtk_hbox_new (FALSE, 4);
+  gtk_widget_show (hbox8);
+  gtk_box_pack_start (GTK_BOX (musical_box), hbox8, TRUE, TRUE, 0);
+
+  label108 = gtk_label_new (_("Bar width:"));
+  gtk_widget_show (label108);
+  gtk_box_pack_start (GTK_BOX (hbox8), label108, FALSE, FALSE, 0);
+  gtk_misc_set_alignment (GTK_MISC (label108), 1, 0.5);
+
+  barw_spin_adj = G_OBJECT(gtk_adjustment_new (1, 0, 100, 1, 10, 10));
+  barw_spin = gtk_spin_button_new (GTK_ADJUSTMENT (barw_spin_adj), 1, 0);
+  gtk_widget_show (barw_spin);
+  gtk_box_pack_start (GTK_BOX (hbox8), barw_spin, TRUE, TRUE, 0);
+
   spacing_check = gtk_check_button_new_with_mnemonic (_("Show spacing"));
   gtk_widget_show (spacing_check);
   gtk_box_pack_start (GTK_BOX (musical_box), spacing_check, FALSE, FALSE, 0);
@@ -926,6 +944,9 @@ create_config_dialog (void)
   g_signal_connect ((gpointer) mode_combo, "changed",
                     G_CALLBACK (on_mode_combo_changed),
                     NULL);
+  g_signal_connect ((gpointer) barw_spin, "output",
+                    G_CALLBACK (on_barw_spin_output),
+                    NULL);
   g_signal_connect ((gpointer) gradient_combo, "changed",
                     G_CALLBACK (on_gradient_combo_changed),
                     NULL);
@@ -1025,6 +1046,9 @@ create_config_dialog (void)
   GLADE_HOOKUP_OBJECT (config_dialog, mode_combo, "mode_combo");
   GLADE_HOOKUP_OBJECT (config_dialog, label31, "label31");
   GLADE_HOOKUP_OBJECT (config_dialog, musical_box, "musical_box");
+  GLADE_HOOKUP_OBJECT (config_dialog, hbox8, "hbox8");
+  GLADE_HOOKUP_OBJECT (config_dialog, label108, "label108");
+  GLADE_HOOKUP_OBJECT (config_dialog, barw_spin, "barw_spin");
   GLADE_HOOKUP_OBJECT (config_dialog, spacing_check, "spacing_check");
   GLADE_HOOKUP_OBJECT (config_dialog, gaps_check, "gaps_check");
   GLADE_HOOKUP_OBJECT (config_dialog, led_check, "led_check");

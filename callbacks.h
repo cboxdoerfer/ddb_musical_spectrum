@@ -59,3 +59,7 @@ on_mode_combo_changed                  (GtkComboBox     *combobox,
 void
 on_gradient_combo_changed              (GtkComboBox     *combobox,
                                         gpointer         user_data);
+
+gboolean
+on_barw_spin_output                    (GtkSpinButton   *spinbutton,
+                                        gpointer         user_data);

@@ -35,24 +35,13 @@
 static int
 num_bars_for_width (int width)
 {
-    int num_bars = 136;
-    if (config_get_int (ID_DRAW_STYLE) == 1) {
-        num_bars = CLAMP (width, 1, MAX_BARS);
-    }
-    else if (config_get_int (ID_BAR_W) > 0) {
-        int added_bar_w = config_get_int (ID_BAR_W);
-        if (config_get_int (ID_GAPS)) {
-            added_bar_w += 1;
-        }
-        num_bars = CLAMP (width/added_bar_w, 1, MAX_BARS);
-    }
-    return num_bars;
+    return CLAMP (width, 1, MAX_BARS);
 }
 
 int
 get_num_bars (int width)
 {
-    if (config_get_int (ID_DRAW_STYLE) == 1 || config_get_int (ID_BAR_W) > 0) {
+    if (config_get_int (ID_DRAW_STYLE) == SOLID_STYLE) {
         return num_bars_for_width (width);
     }
 
