@@ -203,12 +203,12 @@ load_config (void)
 
     const size_t num_default_colors = 6;
     char *default_colors[] = {
-        "65535 0 0",
-        "65535 32896 0",
-        "65535 65535 0",
-        "32896 65535 30840",
-        "0 38036 41120",
-        "0 8224 25700"
+        "65535 0 0", // red
+        "65535 32896 0", // orange
+        "65535 65535 0", // yellow
+        "32896 65535 30840", // green
+        "0 38036 41120", // teal
+        "0 8224 25700" // blue
     };
 
     const char *color = NULL;
