@@ -1,5 +1,3 @@
-[![Build Status](https://drone.io/github.com/cboxdoerfer/ddb_musical_spectrum/status.png)](https://drone.io/github.com/cboxdoerfer/ddb_musical_spectrum/latest)
-
 Musical Spectrum plugin for DeaDBeeF audio player
 ====================
 
