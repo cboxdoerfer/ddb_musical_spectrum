@@ -126,6 +126,8 @@ create_config_dialog (void)
   GtkWidget *mode_combo;
   GtkWidget *label31;
   GtkWidget *musical_box;
+  GtkWidget *alignment17;
+  GtkWidget *musical_vbox;
   GtkWidget *hbox8;
   GtkWidget *label108;
   GObject *barw_spin_adj;
@@ -675,15 +677,24 @@ create_config_dialog (void)
                     (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label31), 1, 0.5);
 
-  musical_box = gtk_vbox_new (FALSE, 0);
+  musical_box = gtk_frame_new (NULL);
   gtk_widget_show (musical_box);
   gtk_table_attach (GTK_TABLE (table5), musical_box, 1, 2, 11, 12,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL), 0, 0);
 
+  alignment17 = gtk_alignment_new (0.5, 0.5, 1, 1);
+  gtk_widget_show (alignment17);
+  gtk_container_add (GTK_CONTAINER (musical_box), alignment17);
+  gtk_alignment_set_padding (GTK_ALIGNMENT (alignment17), 6, 6, 6, 6);
+
+  musical_vbox = gtk_vbox_new (FALSE, 0);
+  gtk_widget_show (musical_vbox);
+  gtk_container_add (GTK_CONTAINER (alignment17), musical_vbox);
+
   hbox8 = gtk_hbox_new (FALSE, 4);
   gtk_widget_show (hbox8);
-  gtk_box_pack_start (GTK_BOX (musical_box), hbox8, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (musical_vbox), hbox8, TRUE, TRUE, 0);
 
   label108 = gtk_label_new (_("Bar width:"));
   gtk_widget_show (label108);
@@ -697,15 +708,15 @@ create_config_dialog (void)
 
   spacing_check = gtk_check_button_new_with_mnemonic (_("Show spacing"));
   gtk_widget_show (spacing_check);
-  gtk_box_pack_start (GTK_BOX (musical_box), spacing_check, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (musical_vbox), spacing_check, FALSE, FALSE, 0);
 
   gaps_check = gtk_check_button_new_with_mnemonic (_("Show gaps"));
   gtk_widget_show (gaps_check);
-  gtk_box_pack_start (GTK_BOX (musical_box), gaps_check, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (musical_vbox), gaps_check, FALSE, FALSE, 0);
 
   led_check = gtk_check_button_new_with_mnemonic (_("LED style"));
   gtk_widget_show (led_check);
-  gtk_box_pack_start (GTK_BOX (musical_box), led_check, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (musical_vbox), led_check, FALSE, FALSE, 0);
 
   label29 = gtk_label_new (_("<b>Styles</b>"));
   gtk_widget_show (label29);
@@ -1046,6 +1057,8 @@ create_config_dialog (void)
   GLADE_HOOKUP_OBJECT (config_dialog, mode_combo, "mode_combo");
   GLADE_HOOKUP_OBJECT (config_dialog, label31, "label31");
   GLADE_HOOKUP_OBJECT (config_dialog, musical_box, "musical_box");
+  GLADE_HOOKUP_OBJECT (config_dialog, alignment17, "alignment17");
+  GLADE_HOOKUP_OBJECT (config_dialog, musical_vbox, "musical_vbox");
   GLADE_HOOKUP_OBJECT (config_dialog, hbox8, "hbox8");
   GLADE_HOOKUP_OBJECT (config_dialog, label108, "label108");
   GLADE_HOOKUP_OBJECT (config_dialog, barw_spin, "barw_spin");
