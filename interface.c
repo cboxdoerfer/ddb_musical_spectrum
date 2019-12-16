@@ -668,7 +668,7 @@ create_config_dialog (void)
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (GTK_FILL), 0, 0);
 
-  label31 = gtk_label_new (_("Mode:"));
+  label31 = gtk_label_new (_("Style:"));
   gtk_widget_show (label31);
   gtk_table_attach (GTK_TABLE (table5), label31, 0, 1, 10, 11,
                     (GtkAttachOptions) (GTK_FILL),
