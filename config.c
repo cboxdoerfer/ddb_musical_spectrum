@@ -90,14 +90,6 @@ struct spectrum_config_string_t spectrum_config_string[NUM_ID_STRING] = {
 
 GList *CONFIG_GRADIENT_COLORS = NULL;
 
-static size_t num_default_colors = 6;
-static char *default_colors[] = {"65535 0 0",
-                                 "65535 32896 0",
-                                 "65535 65535 0",
-                                 "32896 65535 30840",
-                                 "0 38036 41120",
-                                 "0 8224 25700" };
-
 static GdkColor
 color_from_string (const char *color_string)
 {
@@ -208,6 +200,16 @@ load_config (void)
     for (int i = 0; i < NUM_ID_COLOR; i++) {
         config_load_color (i);
     }
+
+    const size_t num_default_colors = 6;
+    char *default_colors[] = {
+        "65535 0 0",
+        "65535 32896 0",
+        "65535 65535 0",
+        "32896 65535 30840",
+        "0 38036 41120",
+        "0 8224 25700"
+    };
 
     const char *color = NULL;
     char conf_str[100] = {};
