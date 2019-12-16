@@ -547,14 +547,14 @@ create_config_dialog (void)
   gtk_table_set_row_spacings (GTK_TABLE (table5), 10);
   gtk_table_set_col_spacings (GTK_TABLE (table5), 4);
 
-  label107 = gtk_label_new (_("Tooltip font:"));
+  label107 = gtk_label_new (_("Tooltip:"));
   gtk_widget_show (label107);
   gtk_table_attach (GTK_TABLE (table5), label107, 0, 1, 7, 8,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
-  gtk_misc_set_alignment (GTK_MISC (label107), 0, 0.5);
+  gtk_misc_set_alignment (GTK_MISC (label107), 1, 0.5);
 
-  label106 = gtk_label_new (_("Labels font:"));
+  label106 = gtk_label_new (_("Labels:"));
   gtk_widget_show (label106);
   gtk_table_attach (GTK_TABLE (table5), label106, 0, 1, 8, 9,
                     (GtkAttachOptions) (GTK_FILL),
