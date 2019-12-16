@@ -843,7 +843,6 @@ create_config_dialog (void)
   gtk_box_pack_start (GTK_BOX (hbox7), scrolledwindow1, TRUE, TRUE, 0);
   gtk_widget_set_size_request (scrolledwindow1, 60, 220);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow1), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-  gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrolledwindow1), GTK_SHADOW_ETCHED_IN);
 
   viewport1 = gtk_viewport_new (NULL, NULL);
   gtk_widget_show (viewport1);
