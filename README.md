@@ -8,10 +8,8 @@ This plugin is based on DeaDBeeFs stock spectrum. It offers variable FFT size (u
 ## Installation
 
 ### Arch Linux
-See the AUR
-
-[GTK3](https://aur.archlinux.org/packages/deadbeef-plugin-musical-spectrum-gtk3-git/)
-[GTK2](https://aur.archlinux.org/packages/deadbeef-plugin-musical-spectrum-gtk2-git/)
+See the AUR ([GTK3](https://aur.archlinux.org/packages/deadbeef-plugin-musical-spectrum-gtk3-git/) /
+[GTK2](https://aur.archlinux.org/packages/deadbeef-plugin-musical-spectrum-gtk2-git/))
 
 ### Gentoo
 See ebuilds [here](https://github.com/megabaks/stuff/tree/master/media-plugins/deadbeef-musical-spectrum)
