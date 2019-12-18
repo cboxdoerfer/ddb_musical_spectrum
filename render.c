@@ -28,9 +28,6 @@ struct spectrum_render_ctx_t {
     cairo_rectangle_t r_t;
     // Bottom labels rectangle
     cairo_rectangle_t r_b;
-    // Font layout
-    PangoLayout *font_layout;
-    PangoLayout *font_tooltip_layout;
 };
 
 void
@@ -655,11 +652,11 @@ spectrum_font_width_max (PangoLayout *layout)
 }
 
 static void
-spectrum_draw_labels_freq (cairo_t *cr, struct spectrum_render_ctx_t *r_ctx, cairo_rectangle_t *r)
+spectrum_draw_labels_freq (cairo_t *cr, PangoLayout *layout, struct spectrum_render_ctx_t *r_ctx, cairo_rectangle_t *r)
 {
     const double note_width = r_ctx->note_width;
-    const double f_w_full = spectrum_pango_font_width (r_ctx->font_layout, "D") + 2;
-    const double f_w_half = spectrum_pango_font_width (r_ctx->font_layout, "C#") + 2;
+    const double f_w_full = spectrum_pango_font_width (layout, "D") + 2;
+    const double f_w_half = spectrum_pango_font_width (layout, "C#") + 2;
     const double y = r->y + FONT_PADDING_VERTICAL/2;
     cairo_move_to (cr, r->x, y);
     char s[100] = "";
@@ -692,20 +689,20 @@ spectrum_draw_labels_freq (cairo_t *cr, struct spectrum_render_ctx_t *r_ctx, cai
             continue;
         }
 
-        const double font_width = spectrum_pango_font_width (r_ctx->font_layout, s);
+        const double font_width = spectrum_pango_font_width (layout, s);
         const double xx = x - font_width/2;
         cairo_move_to (cr, xx, y);
-        pango_layout_set_text (r_ctx->font_layout, s, -1);
-        pango_cairo_show_layout (cr, r_ctx->font_layout);
+        pango_layout_set_text (layout, s, -1);
+        pango_cairo_show_layout (cr, layout);
     }
 }
 
 static void
-spectrum_draw_labels_db (cairo_t *cr, struct spectrum_render_ctx_t *r_ctx, cairo_rectangle_t *r)
+spectrum_draw_labels_db (cairo_t *cr, PangoLayout *layout, cairo_rectangle_t *r)
 {
     const int hgrid_num = get_db_range ()/10;
-    pango_layout_set_text (r_ctx->font_layout, "-100dB", -1);
-    const double font_height = spectrum_pango_font_height (r_ctx->font_layout, "-100dB");
+    pango_layout_set_text (layout, "-100dB", -1);
+    const double font_height = spectrum_pango_font_height (layout, "-100dB");
     if (config_get_int (ID_ENABLE_HGRID) && r->height > 2*hgrid_num && r->width > 1) {
         gdk_cairo_set_source_color (cr, config_get_color (ID_COLOR_TEXT));
         const double y = r->y + TOP_EXTRA_SPACE;
@@ -715,8 +712,8 @@ spectrum_draw_labels_db (cairo_t *cr, struct spectrum_render_ctx_t *r_ctx, cairo
         for (int i = 0; i <= hgrid_num; i++) {
             snprintf (s, sizeof (s), "%ddB", config_get_int (ID_AMPLITUDE_MAX) - i * 10);
             cairo_move_to (cr, r->x + FONT_PADDING_HORIZONTAL/2, y + i/(double)hgrid_num * height - font_height/2);
-            pango_layout_set_text (r_ctx->font_layout, s, -1);
-            pango_cairo_show_layout (cr, r_ctx->font_layout);
+            pango_layout_set_text (layout, s, -1);
+            pango_cairo_show_layout (cr, layout);
         }
     }
 }
@@ -747,6 +744,18 @@ spectrum_bar_width_get (int num_bands, double width)
 //    const double labels_width = 2 * label_width;
 //    return MAX (width - labels_width, 0);
 //}
+
+static PangoLayout *
+spectrum_font_layout_get (cairo_t *cr, const enum spectrum_config_string_index id)
+{
+    PangoLayout *layout = pango_cairo_create_layout (cr);
+    PangoFontDescription *desc = pango_font_description_from_string (config_get_string (id));
+    pango_layout_set_font_description (layout, desc);
+    pango_font_description_free (desc);
+    desc = NULL;
+
+    return layout;
+}
 
 static void
 spectrum_draw_tooltip (struct spectrum_render_t *render,
@@ -780,8 +789,9 @@ spectrum_draw_tooltip (struct spectrum_render_t *render,
 
     cairo_save (cr);
 
-    const double text_width = spectrum_pango_font_width (r_ctx->font_tooltip_layout, t1);
-    const double text_height = spectrum_pango_font_height (r_ctx->font_tooltip_layout, t1);
+    PangoLayout *layout = spectrum_font_layout_get (cr, ID_STRING_FONT_TOOLTIP);
+    const double text_width = spectrum_pango_font_width (layout, t1);
+    const double text_height = spectrum_pango_font_height (layout, t1);
 
     const double padding = 5;
     double x = m_ctx->x + 20;
@@ -804,32 +814,23 @@ spectrum_draw_tooltip (struct spectrum_render_t *render,
 
     gdk_cairo_set_source_color (cr, config_get_color (ID_COLOR_TEXT));
     cairo_move_to (cr, x, y);
-    pango_layout_set_text (r_ctx->font_tooltip_layout, t1, -1);
-    pango_cairo_show_layout (cr, r_ctx->font_tooltip_layout);
+    pango_layout_set_text (layout, t1, -1);
+    pango_cairo_show_layout (cr, layout);
 
     cairo_restore (cr);
-}
 
-static PangoLayout *
-spectrum_font_layout_get (cairo_t *cr, const enum spectrum_config_string_index id)
-{
-    PangoLayout *layout = pango_cairo_create_layout (cr);
-    PangoFontDescription *desc = pango_font_description_from_string (config_get_string (id));
-    pango_layout_set_font_description (layout, desc);
-    pango_font_description_free (desc);
-    desc = NULL;
-
-    return layout;
+    g_object_unref (layout);
 }
 
 struct spectrum_render_ctx_t
 spectrum_get_render_ctx (cairo_t *cr, double width, double height)
 {
-    PangoLayout *layout_labels = spectrum_font_layout_get (cr, ID_STRING_FONT);
-    PangoLayout *layout_tooltip = spectrum_font_layout_get (cr, ID_STRING_FONT_TOOLTIP);
+    PangoLayout *layout = spectrum_font_layout_get (cr, ID_STRING_FONT);
+    const double font_width = spectrum_font_width_max (layout);
+    const double font_height = spectrum_font_height_max (layout);
 
-    const double font_width = spectrum_font_width_max (layout_labels);
-    const double font_height = spectrum_font_height_max (layout_labels);
+    g_object_unref (layout);
+
     const double label_height = font_height + FONT_PADDING_VERTICAL;
     const double label_width = font_width + FONT_PADDING_HORIZONTAL;
 
@@ -883,8 +884,6 @@ spectrum_get_render_ctx (cairo_t *cr, double width, double height)
         .r_t = r_t,
         .r_b = r_b,
         .r_s = r_s,
-        .font_layout = layout_labels,
-        .font_tooltip_layout = layout_tooltip,
     };
 
     return r_ctx;
@@ -946,26 +945,27 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     }
 
     if (draw_labels (cr, width, height)) {
+        PangoLayout *layout = spectrum_font_layout_get (cr, ID_STRING_FONT);
         if (config_get_int (ID_ENABLE_TOP_LABELS)) {
-            spectrum_draw_labels_freq (cr, &r_ctx, &r_ctx.r_t);
+            spectrum_draw_labels_freq (cr, layout, &r_ctx, &r_ctx.r_t);
         }
         if (config_get_int (ID_ENABLE_BOTTOM_LABELS)) {
-            spectrum_draw_labels_freq (cr, &r_ctx, &r_ctx.r_b);
+            spectrum_draw_labels_freq (cr, layout, &r_ctx, &r_ctx.r_b);
         }
         if (config_get_int (ID_ENABLE_LEFT_LABELS)) {
-            spectrum_draw_labels_db (cr, &r_ctx, &r_ctx.r_l);
+            spectrum_draw_labels_db (cr, layout, &r_ctx.r_l);
         }
         if (config_get_int (ID_ENABLE_RIGHT_LABELS)) {
-            spectrum_draw_labels_db (cr, &r_ctx, &r_ctx.r_r);
+            spectrum_draw_labels_db (cr, layout, &r_ctx.r_r);
         }
+        g_object_unref (layout);
+        layout = NULL;
+
     }
 
     if (config_get_int (ID_ENABLE_TOOLTIP) && w->motion_ctx.entered) {
         spectrum_draw_tooltip (w->render, w->data, cr, &r_ctx, &w->motion_ctx);
     }
-
-    g_object_unref (r_ctx.font_layout);
-    g_object_unref (r_ctx.font_tooltip_layout);
 
     return FALSE;
 }
