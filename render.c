@@ -10,7 +10,6 @@
 #include "spectrum.h"
 
 #define TOP_EXTRA_SPACE 10
-#define FONT_SIZE 9
 #define FONT_PADDING_HORIZONTAL 8
 #define FONT_PADDING_VERTICAL 0
 #define NUM_NOTES_FOR_OCTAVE 12
@@ -413,7 +412,7 @@ spectrum_draw_cairo_static (w_spectrum_t *w, cairo_t *cr, double barw, int bands
     if (config_get_int (ID_ENABLE_WHITE_KEYS) || config_get_int (ID_ENABLE_BLACK_KEYS)) {
         int num_notes = get_num_notes ();
         for (int i = 0; i < num_notes; i++, x += barw) {
-            const int r = (config_get_int (ID_NOTE_MIN) + i) % 12;
+            const int r = (config_get_int (ID_NOTE_MIN) + i) % NUM_NOTES_FOR_OCTAVE;
             if (is_full_step (r)) {
                 if (!config_get_int (ID_ENABLE_WHITE_KEYS)) {
                     continue;
@@ -676,7 +675,7 @@ spectrum_draw_labels_freq (cairo_t *cr, struct spectrum_render_ctx_t *r_ctx, cai
     const int show_full_steps = note_width > f_w_full ? 1 : 0;
     const int show_half_steps = note_width > f_w_half ? 1 : 0;
     for (int i = config_get_int (ID_NOTE_MIN); i <= config_get_int (ID_NOTE_MAX) && x < x_end; i++, x += note_width) {
-        int r = i % 12; 
+        int r = i % NUM_NOTES_FOR_OCTAVE; 
         if (i == 0 || r == 0) {
             snprintf (s, sizeof (s), "%s", spectrum_notes[i]);
             gdk_cairo_set_source_color (cr, config_get_color (ID_COLOR_TEXT));
