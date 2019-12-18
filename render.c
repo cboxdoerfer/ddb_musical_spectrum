@@ -10,6 +10,7 @@
 #include "spectrum.h"
 
 #define TOP_EXTRA_SPACE 10
+#define DB_GRID_DISTANCE 10
 #define FONT_PADDING_HORIZONTAL 8
 #define FONT_PADDING_VERTICAL 0
 #define NUM_NOTES_FOR_OCTAVE 12
@@ -397,8 +398,14 @@ is_full_step (int r)
     }
 }
 
+static int
+get_num_db_gridlines (void)
+{
+    return get_db_range ()/DB_GRID_DISTANCE;
+}
+
 static void
-spectrum_draw_cairo_static (w_spectrum_t *w, cairo_t *cr, double barw, int bands, cairo_rectangle_t *r)
+spectrum_draw_cairo_static (w_spectrum_t *w, cairo_t *cr, double note_width, int bands, cairo_rectangle_t *r)
 {
     cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
     cairo_set_line_width (cr, 1);
@@ -408,7 +415,7 @@ spectrum_draw_cairo_static (w_spectrum_t *w, cairo_t *cr, double barw, int bands
     const double height = r->height;
     if (config_get_int (ID_ENABLE_WHITE_KEYS) || config_get_int (ID_ENABLE_BLACK_KEYS)) {
         int num_notes = get_num_notes ();
-        for (int i = 0; i < num_notes; i++, x += barw) {
+        for (int i = 0; i < num_notes; i++, x += note_width) {
             const int r = (config_get_int (ID_NOTE_MIN) + i) % NUM_NOTES_FOR_OCTAVE;
             if (is_full_step (r)) {
                 if (!config_get_int (ID_ENABLE_WHITE_KEYS)) {
@@ -422,18 +429,18 @@ spectrum_draw_cairo_static (w_spectrum_t *w, cairo_t *cr, double barw, int bands
                 }
                 gdk_cairo_set_source_color (cr, config_get_color (ID_COLOR_BLACK_KEYS));
             }
-            cairo_rectangle (cr, x, y, barw - 1, height);
+            cairo_rectangle (cr, x, y, note_width - 1, height);
             cairo_fill (cr);
         }
     }
 
-    const double octave_width = barw * NUM_NOTES_FOR_OCTAVE;
+    const double octave_width = note_width * NUM_NOTES_FOR_OCTAVE;
 
     // draw octave grid
     if (config_get_int (ID_ENABLE_VGRID)) {
         const int offset = config_get_int (ID_NOTE_MIN) % NUM_NOTES_FOR_OCTAVE;
         gdk_cairo_set_source_color (cr, config_get_color (ID_COLOR_VGRID));
-        double x = r->x + (NUM_NOTES_FOR_OCTAVE - offset) * barw;
+        double x = r->x + (NUM_NOTES_FOR_OCTAVE - offset) * note_width;
         while (x < r->x + r->width) {
             cairo_move_to (cr, x, r->y);
             cairo_rel_line_to (cr, 0, r->height);
@@ -443,7 +450,7 @@ spectrum_draw_cairo_static (w_spectrum_t *w, cairo_t *cr, double barw, int bands
     }
 
     // draw horizontal grid
-    const int hgrid_num = get_db_range()/10;
+    const int hgrid_num = get_num_db_gridlines ();
     if (config_get_int (ID_ENABLE_HGRID) && r->height > 2*hgrid_num && r->width > 1) {
         gdk_cairo_set_source_color (cr, config_get_color (ID_COLOR_HGRID));
         const double y = r->y + TOP_EXTRA_SPACE;
@@ -460,7 +467,7 @@ spectrum_draw_cairo_static (w_spectrum_t *w, cairo_t *cr, double barw, int bands
         const int dx = (int)(w->motion_ctx.x - r->x);
         if (dx >= 0 && dx <= r->width) {
             const int octave_offset = dx % (int)octave_width;
-            const int band_offset = dx % (int)barw;
+            const int band_offset = dx % (int)note_width;
             gdk_cairo_set_source_color (cr, config_get_color (ID_COLOR_OGRID));
             double x = octave_offset + r->x - band_offset;
             while (x <= r->width + r->x) {
@@ -501,7 +508,6 @@ spectrum_draw_cairo_bars (struct spectrum_render_t *render, cairo_t *cr, int num
 
     // draw bars
     cairo_set_source (cr, render->pattern);
-
 
     double x = r->x;
     double bar_width = barw;
@@ -640,11 +646,11 @@ spectrum_font_height_max (PangoLayout *layout)
 static double
 spectrum_font_width_max (PangoLayout *layout)
 {
-    const int hgrid_num = get_db_range ()/10;
+    const int hgrid_num = get_num_db_gridlines ();
     char s[100] = "";
     double w_max = 0;
     for (int i = 1; i < hgrid_num; i++) {
-        snprintf (s, sizeof (s), "%ddB", config_get_int (ID_AMPLITUDE_MAX) - i * 10);
+        snprintf (s, sizeof (s), "%ddB", config_get_int (ID_AMPLITUDE_MAX) - i * DB_GRID_DISTANCE);
         w_max = MAX (w_max, spectrum_pango_font_width (layout, s));
     }
 
@@ -700,7 +706,7 @@ spectrum_draw_labels_freq (cairo_t *cr, PangoLayout *layout, struct spectrum_ren
 static void
 spectrum_draw_labels_db (cairo_t *cr, PangoLayout *layout, cairo_rectangle_t *r)
 {
-    const int hgrid_num = get_db_range ()/10;
+    const int hgrid_num = get_num_db_gridlines ();
     pango_layout_set_text (layout, "-100dB", -1);
     const double font_height = spectrum_pango_font_height (layout, "-100dB");
     if (config_get_int (ID_ENABLE_HGRID) && r->height > 2*hgrid_num && r->width > 1) {
@@ -710,7 +716,7 @@ spectrum_draw_labels_db (cairo_t *cr, PangoLayout *layout, cairo_rectangle_t *r)
         cairo_move_to (cr, r->x, y);
         char s[100] = "";
         for (int i = 0; i <= hgrid_num; i++) {
-            snprintf (s, sizeof (s), "%ddB", config_get_int (ID_AMPLITUDE_MAX) - i * 10);
+            snprintf (s, sizeof (s), "%ddB", config_get_int (ID_AMPLITUDE_MAX) - i * DB_GRID_DISTANCE);
             cairo_move_to (cr, r->x + FONT_PADDING_HORIZONTAL/2, y + i/(double)hgrid_num * height - font_height/2);
             pango_layout_set_text (layout, s, -1);
             pango_cairo_show_layout (cr, layout);
@@ -929,7 +935,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     spectrum_background_draw (cr, width, height);
 
     spectrum_draw_cairo_static (w, cr, r_ctx.note_width, r_ctx.num_bands, &r_ctx.center);
-    if (config_get_int (ID_DRAW_STYLE )== MUSICAL_STYLE) {
+    if (config_get_int (ID_DRAW_STYLE) == MUSICAL_STYLE) {
         spectrum_draw_cairo_bars (w->render, cr, r_ctx.num_bands, r_ctx.note_width, &r_ctx.center);
     }
     else {
