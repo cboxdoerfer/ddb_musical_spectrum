@@ -495,6 +495,27 @@ spectrum_amp_scale_get (const double height)
 }
 
 static void
+spectrum_draw_peaks (struct spectrum_render_t *render, cairo_t *cr, cairo_rectangle_t *r, const int bar_width,
+                     const int peak_width, const int num_bands, const double amp_scale, const double bar_offset)
+{
+    if (config_get_int (ID_ENABLE_PEAKS) && config_get_int (ID_PEAK_FALLOFF) >= 0) {
+        if (config_get_int (ID_ENABLE_PEAKS_COLOR)) {
+            gdk_cairo_set_source_color (cr, config_get_color (ID_COLOR_PEAKS));
+        }
+        double x = r->x;
+        for (int i = 0; i < num_bands; i++, x += bar_width) {
+            if (render->peaks[i] <= 0) {
+                continue;
+            }
+            const double y = r->y + CLAMP (r->height - render->peaks[i] * amp_scale, 0, r->height - 1);
+            cairo_move_to (cr, x + bar_offset, y); 
+            cairo_rel_line_to (cr, peak_width, 0);
+        }
+        cairo_stroke (cr);
+    }
+}
+
+static void
 spectrum_draw_cairo_bars (struct spectrum_render_t *render, cairo_t *cr, int num_bars, int barw, cairo_rectangle_t *r)
 {
     if (r->height <= 0) {
@@ -547,22 +568,7 @@ spectrum_draw_cairo_bars (struct spectrum_render_t *render, cairo_t *cr, int num
     }
 
     // draw peaks
-    if (config_get_int (ID_ENABLE_PEAKS) && config_get_int (ID_PEAK_FALLOFF) >= 0) {
-        if (config_get_int (ID_ENABLE_PEAKS_COLOR)) {
-            gdk_cairo_set_source_color (cr, config_get_color (ID_COLOR_PEAKS));
-        }
-        x = r->x;
-        for (gint i = 0; i < num_bars; i++, x += barw) {
-            if (render->peaks[i] <= 0) {
-                continue;
-            }
-            const double y = r->y + CLAMP (r->height - render->peaks[i] * amp_scale, 0, r->height - 1);
-            cairo_move_to (cr, x + bar_offset, y); 
-            cairo_rel_line_to (cr, bar_width, 0);
-        }
-        cairo_stroke (cr);
-    }
-
+    spectrum_draw_peaks (render, cr, r, barw, bar_width, num_bars, amp_scale, bar_offset);
 }
 
 static void
@@ -604,19 +610,7 @@ spectrum_draw_cairo (struct spectrum_render_t *render, cairo_t *cr, int bands, c
         cairo_stroke (cr);
     }
 
-    if (config_get_int (ID_ENABLE_PEAKS) && config_get_int (ID_PEAK_FALLOFF) >= 0) {
-        if (config_get_int (ID_ENABLE_PEAKS_COLOR)) {
-            gdk_cairo_set_source_color (cr, config_get_color (ID_COLOR_PEAKS));
-        }
-        for (int i = 0; i < bands; i += 2) {
-            const double x = r->x + barw * i;
-            const double y = CLAMP (r->height - render->peaks[i] * amp_scale, 0, r->height);
-            cairo_move_to (cr, x, y); 
-            cairo_rel_line_to (cr, barw, 0);
-        }
-        cairo_stroke (cr);
-    }
-
+    spectrum_draw_peaks (render, cr, r, barw, barw, bands, amp_scale, 0);
 }
 
 static double
