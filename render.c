@@ -19,15 +19,15 @@ struct spectrum_render_ctx_t {
     double band_width;
     double note_width;
     // Spectrum rectangle
-    cairo_rectangle_t r_s;
+    cairo_rectangle_t center;
     // Left labels rectangle
-    cairo_rectangle_t r_l;
+    cairo_rectangle_t left;
     // Right labels rectangle
-    cairo_rectangle_t r_r;
+    cairo_rectangle_t right;
     // Top labels rectangle
-    cairo_rectangle_t r_t;
+    cairo_rectangle_t top;
     // Bottom labels rectangle
-    cairo_rectangle_t r_b;
+    cairo_rectangle_t bottom;
 };
 
 void
@@ -764,7 +764,7 @@ spectrum_draw_tooltip (struct spectrum_render_t *render,
                        struct spectrum_render_ctx_t *r_ctx,
                        struct motion_context *m_ctx)
 {
-    cairo_rectangle_t *r = &r_ctx->r_s;
+    cairo_rectangle_t *r = &r_ctx->center;
 
     const double band_width = r_ctx->band_width;
     const double note_width = r_ctx->note_width;
@@ -835,55 +835,47 @@ spectrum_get_render_ctx (cairo_t *cr, double width, double height)
     const double label_width = font_width + FONT_PADDING_HORIZONTAL;
 
     const double labels_width = (config_get_int (ID_ENABLE_RIGHT_LABELS) + config_get_int (ID_ENABLE_LEFT_LABELS)) * label_width;
-    const double labels_height = (config_get_int (ID_ENABLE_TOP_LABELS) + config_get_int (ID_ENABLE_BOTTOM_LABELS)) * label_height;
     const double spectrum_width_max = width - labels_width;
     const int num_bands = get_num_bars (spectrum_width_max);
     const int bar_width = spectrum_bar_width_get (num_bands, spectrum_width_max);
     const double spectrum_width = bar_width * num_bands;
-    const double spectrum_height = height - labels_height;
-    const int x0 = get_align_pos (width, spectrum_width + labels_width);
+    const int x_start = get_align_pos (width, spectrum_width + labels_width);
 
-    cairo_rectangle_t r_l, r_r, r_t, r_b, r_s;
+    cairo_rectangle_t left, right, top, bottom, center;
 
-    r_l.x = x0;
-    r_l.width = label_width * config_get_int (ID_ENABLE_LEFT_LABELS);
+    left.width = label_width * config_get_int (ID_ENABLE_LEFT_LABELS);
+    right.width = label_width * config_get_int (ID_ENABLE_RIGHT_LABELS);
+    center.width = spectrum_width;
+    top.width = spectrum_width;
+    bottom.width = spectrum_width;
 
-    r_s.x = r_l.x + r_l.width;
-    r_s.width = spectrum_width;
-    r_s.height = spectrum_height;
+    top.height = label_height * config_get_int (ID_ENABLE_TOP_LABELS);
+    bottom.height = label_height * config_get_int (ID_ENABLE_BOTTOM_LABELS);
+    center.height = height - top.height - bottom.height;
+    left.height = center.height;
+    right.height = center.height;
 
-    r_r.x = r_s.x + r_s.width;
-    r_r.width = label_width * config_get_int (ID_ENABLE_RIGHT_LABELS);
+    left.x = x_start;
+    center.x = left.x + left.width;
+    top.x = center.x;
+    bottom.x = center.x;
+    right.x = center.x + center.width;
 
-    r_t.x = r_s.x;
-    r_t.width = r_s.width;
-
-    r_b.x = r_t.x;
-    r_b.width = r_t.width;
-
-    r_t.y = 0;
-    r_t.height = label_height * config_get_int (ID_ENABLE_TOP_LABELS);
-
-    r_s.y = r_t.y + r_t.height;
-
-    r_b.y = r_s.y + r_s.height;
-    r_b.height = r_t.height;
-
-    r_l.y = r_s.y;
-    r_l.height = r_s.height;
-
-    r_r.y = r_s.y;
-    r_r.height = r_s.height;
+    top.y = 0;
+    center.y = top.y + top.height;
+    bottom.y = center.y + center.height;
+    left.y = center.y;
+    right.y = center.y;
 
     struct spectrum_render_ctx_t r_ctx = {
         .num_bands = num_bands,
-        .band_width = (double)spectrum_width / num_bands,
-        .note_width = (double)spectrum_width / (double)(get_num_notes ()),
-        .r_r = r_r,
-        .r_l = r_l,
-        .r_t = r_t,
-        .r_b = r_b,
-        .r_s = r_s,
+        .band_width = bar_width,
+        .note_width = spectrum_width / (double)(get_num_notes ()),
+        .right = right,
+        .left = left,
+        .top = top,
+        .bottom = bottom,
+        .center = center,
     };
 
     return r_ctx;
@@ -914,7 +906,7 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     const int height = a.height;
 
     struct spectrum_render_ctx_t r_ctx = spectrum_get_render_ctx (cr, width, height);
-    w->spectrum_rectangle = r_ctx.r_s;
+    w->spectrum_rectangle = r_ctx.center;
 
     if (width != w->prev_width || w->need_redraw) {
         if (w->need_redraw == 1) {
@@ -936,27 +928,27 @@ spectrum_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data) {
     // draw background
     spectrum_background_draw (cr, width, height);
 
-    spectrum_draw_cairo_static (w, cr, r_ctx.note_width, r_ctx.num_bands, &r_ctx.r_s);
+    spectrum_draw_cairo_static (w, cr, r_ctx.note_width, r_ctx.num_bands, &r_ctx.center);
     if (config_get_int (ID_DRAW_STYLE )== MUSICAL_STYLE) {
-        spectrum_draw_cairo_bars (w->render, cr, r_ctx.num_bands, r_ctx.note_width, &r_ctx.r_s);
+        spectrum_draw_cairo_bars (w->render, cr, r_ctx.num_bands, r_ctx.note_width, &r_ctx.center);
     }
     else {
-        spectrum_draw_cairo (w->render, cr, r_ctx.num_bands, &r_ctx.r_s);
+        spectrum_draw_cairo (w->render, cr, r_ctx.num_bands, &r_ctx.center);
     }
 
     if (draw_labels (cr, width, height)) {
         PangoLayout *layout = spectrum_font_layout_get (cr, ID_STRING_FONT);
         if (config_get_int (ID_ENABLE_TOP_LABELS)) {
-            spectrum_draw_labels_freq (cr, layout, &r_ctx, &r_ctx.r_t);
+            spectrum_draw_labels_freq (cr, layout, &r_ctx, &r_ctx.top);
         }
         if (config_get_int (ID_ENABLE_BOTTOM_LABELS)) {
-            spectrum_draw_labels_freq (cr, layout, &r_ctx, &r_ctx.r_b);
+            spectrum_draw_labels_freq (cr, layout, &r_ctx, &r_ctx.bottom);
         }
         if (config_get_int (ID_ENABLE_LEFT_LABELS)) {
-            spectrum_draw_labels_db (cr, layout, &r_ctx.r_l);
+            spectrum_draw_labels_db (cr, layout, &r_ctx.left);
         }
         if (config_get_int (ID_ENABLE_RIGHT_LABELS)) {
-            spectrum_draw_labels_db (cr, layout, &r_ctx.r_r);
+            spectrum_draw_labels_db (cr, layout, &r_ctx.right);
         }
         g_object_unref (layout);
         layout = NULL;
