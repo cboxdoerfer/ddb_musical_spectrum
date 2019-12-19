@@ -33,6 +33,8 @@
 #include "config.h"
 
 #define CONFIG_PREFIX "musical_spectrum"
+#define CONFIG_COLOR_FORMAT "%d %d %d"
+#define CONFIG_COLOR_FORMAT_SHORT "%hd %hd %hd"
 
 struct spectrum_config_int_t spectrum_config_int[NUM_ID_INT] = {
     [ID_REFRESH_INTERVAL] =     {"refresh_interval",     0, 25},
@@ -96,14 +98,14 @@ static GdkColor
 color_from_string (const char *color_string)
 {
     GdkColor color = {};
-    sscanf (color_string, "%hd %hd %hd", &color.red, &color.green, &color.blue);
+    sscanf (color_string, CONFIG_COLOR_FORMAT_SHORT, &color.red, &color.green, &color.blue);
     return color;
 }
 
 static void
 string_from_color (const GdkColor *color, char *dest, size_t dest_size)
 {
-    snprintf (dest, dest_size, "%d %d %d", color->red, color->green, color->blue);
+    snprintf (dest, dest_size, CONFIG_COLOR_FORMAT, color->red, color->green, color->blue);
 }
 
 static void
@@ -153,7 +155,7 @@ save_config (void)
     GList *c = CONFIG_GRADIENT_COLORS;
     for (int i = 0; c != NULL; c = c->next, i++) {
         GdkColor *clr = c->data;
-        snprintf (color, sizeof (color), "%d %d %d", clr->red, clr->green, clr->blue);
+        snprintf (color, sizeof (color), CONFIG_COLOR_FORMAT, clr->red, clr->green, clr->blue);
         snprintf (conf_str, sizeof (conf_str), "%s%02d", CONFIG_PREFIX ".color.gradient_", i);
         deadbeef->conf_set_str (conf_str, color);
     }
@@ -226,7 +228,7 @@ load_config (void)
             color = deadbeef->conf_get_str_fast (conf_str, "0 0 0");
         }
         GdkColor *clr = g_new0 (GdkColor, 1);
-        sscanf (color, "%hd %hd %hd", &clr->red, &clr->green, &clr->blue);
+        sscanf (color, CONFIG_COLOR_FORMAT_SHORT, &clr->red, &clr->green, &clr->blue);
         CONFIG_GRADIENT_COLORS = g_list_append (CONFIG_GRADIENT_COLORS, clr);
     }
 
