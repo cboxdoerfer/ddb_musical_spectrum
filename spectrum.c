@@ -61,10 +61,9 @@ spectrum_redraw_cb (void *data) {
     return FALSE;
 }
 
-static int
-on_config_changed (gpointer user_data)
+static void
+on_config_changed (w_spectrum_t *w)
 {
-    w_spectrum_t *w = user_data;
     load_config ();
     deadbeef->mutex_lock (w->data->mutex);
     w->need_redraw = 1;
@@ -77,7 +76,6 @@ on_config_changed (gpointer user_data)
     w->data->fft_plan = fftw_plan_dft_r2c_1d (CLAMP (config_get_int (ID_FFT_SIZE), 512, MAX_FFT_SIZE), w->data->fft_in, w->data->fft_out, FFTW_ESTIMATE);
     deadbeef->mutex_unlock (w->data->mutex);
     g_idle_add (spectrum_redraw_cb, w);
-    return 0;
 }
 
 ///// spectrum vis
@@ -85,6 +83,10 @@ static void
 w_spectrum_destroy (ddb_gtkui_widget_t *w) {
     w_spectrum_t *s = (w_spectrum_t *)w;
     deadbeef->vis_waveform_unlisten (w);
+    if (s->drawtimer) {
+        g_source_remove (s->drawtimer);
+        s->drawtimer = 0;
+    }
     if (CONFIG_GRADIENT_COLORS) {
         g_list_free_full (CONFIG_GRADIENT_COLORS, g_free);
         CONFIG_GRADIENT_COLORS = NULL;
@@ -95,38 +97,31 @@ w_spectrum_destroy (ddb_gtkui_widget_t *w) {
     if (s->render) {
         spectrum_render_free (s->render);
     }
-    if (s->drawtimer) {
-        g_source_remove (s->drawtimer);
-        s->drawtimer = 0;
-    }
 }
 
-gboolean
-spectrum_remove_refresh_interval (gpointer user_data)
+static void
+spectrum_remove_refresh_interval (w_spectrum_t *w)
 {
-    w_spectrum_t *w = user_data;
     if (w->drawtimer) {
         g_source_remove (w->drawtimer);
         w->drawtimer = 0;
     }
-    return TRUE;
 }
 
-static gboolean
+static void
 spectrum_set_refresh_interval (gpointer user_data, int interval)
 {
     w_spectrum_t *w = user_data;
-    g_return_val_if_fail (w && interval > 0, FALSE);
+    g_assert (interval > 0);
 
     spectrum_remove_refresh_interval (w);
     w->drawtimer = g_timeout_add (interval, spectrum_draw_cb, w);
-    return TRUE;
 }
 
 static void
 spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
     w_spectrum_t *w = ctx;
-    g_return_if_fail (w->data->samples);
+    g_assert (w->data->samples != NULL);
 
     const int channels = data->fmt->channels;
     const int nsamples = data->nframes;
@@ -192,8 +187,6 @@ static gboolean
 spectrum_motion_notify_event (GtkWidget *widget, GdkEventMotion *event, gpointer user_data)
 {
     w_spectrum_t *w = user_data;
-    GtkAllocation a;
-    gtk_widget_get_allocation (widget, &a);
 
     if (config_get_int (ID_ENABLE_TOOLTIP)) {
         w->motion_ctx.x = event->x - 1;
@@ -307,7 +300,7 @@ w_musical_spectrum_create (void) {
     gtk_widget_show (w->popup_item);
 
     gtk_widget_add_events (w->drawarea,
-            GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK | GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK );
+            GDK_EXPOSURE_MASK | GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK | GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK );
 
 #if !GTK_CHECK_VERSION(3,0,0)
     g_signal_connect_after ((gpointer) w->drawarea, "expose_event", G_CALLBACK (spectrum_expose_event), w);

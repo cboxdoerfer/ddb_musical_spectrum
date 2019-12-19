@@ -88,6 +88,3 @@ typedef struct {
 extern char *spectrum_notes[];
 extern size_t spectrum_notes_size;
 
-gboolean
-spectrum_remove_refresh_interval (gpointer user_data);
-
