@@ -36,12 +36,80 @@
 #include "interface.h"
 #include "callbacks.h"
 
+#define ARRAY_LEN(x)  (sizeof(x) / sizeof((x)[0]))
+
 static const char *window_functions[NUM_WINDOW] = {"Blackmann-Harris", "Hanning", "None"};
 static const char *alignment_title[NUM_ALIGNMENT] = {"Left", "Right", "Center"};
 static const char *grad_orientation[NUM_ORIENTATION] = {"Vertical", "Horizontal"};
 static const char *visual_mode[NUM_STYLE] = {"Musical", "Solid"};
 
 static GtkWidget *channel_button = NULL;
+
+struct config_dialog_entry_t {
+    const char *name;
+    int id;
+    const char **values;
+    size_t n_values;
+};
+
+static struct config_dialog_entry_t toggle_button_entries[] = {
+    {"llabel_check", ID_ENABLE_LEFT_LABELS},
+    {"rlabel_check", ID_ENABLE_RIGHT_LABELS},
+    {"tlabel_check", ID_ENABLE_TOP_LABELS},
+    {"blabel_check", ID_ENABLE_BOTTOM_LABELS},
+    {"hgrid_check", ID_ENABLE_HGRID},
+    {"vgrid_check", ID_ENABLE_VGRID},
+    {"ogrid_check", ID_ENABLE_OGRID},
+    {"white_keys_check", ID_ENABLE_WHITE_KEYS},
+    {"black_keys_check", ID_ENABLE_BLACK_KEYS},
+    {"interpolate_check", ID_INTERPOLATE},
+    {"fill_spectrum_check", ID_FILL_SPECTRUM},
+    {"tooltip_check", ID_ENABLE_TOOLTIP},
+    {"spacing_check", ID_SPACING},
+    {"gaps_check", ID_GAPS},
+    {"led_check", ID_ENABLE_BAR_MODE},
+    {"peaks_check", ID_ENABLE_PEAKS},
+    {"amplitudes_check", ID_ENABLE_AMPLITUDES},
+    {"peaks_color_check", ID_ENABLE_PEAKS_COLOR},
+};
+
+static struct config_dialog_entry_t spin_button_entries[] = {
+    {"barw_spin", ID_BAR_W},
+    {"pitch_spin", ID_PITCH},
+    {"transpose_spin", ID_TRANSPOSE},
+    {"notes_min_spin", ID_NOTE_MIN},
+    {"notes_max_spin", ID_NOTE_MAX},
+    {"amp_min_spin", ID_AMPLITUDE_MIN},
+    {"amp_max_spin", ID_AMPLITUDE_MAX},
+    {"interval_spin", ID_REFRESH_INTERVAL},
+    {"peaks_htime_spin", ID_PEAK_DELAY},
+    {"amplitudes_htime_spin", ID_BAR_DELAY},
+    {"peaks_gravity_spin", ID_PEAK_FALLOFF},
+    {"amplitudes_gravity_spin", ID_BAR_FALLOFF},
+};
+
+static struct config_dialog_entry_t color_button_entries[] = {
+    {"background_color", ID_COLOR_BG},
+    {"vgrid_color", ID_COLOR_VGRID},
+    {"hgrid_color", ID_COLOR_HGRID},
+    {"ogrid_color", ID_COLOR_OGRID},
+    {"text_color", ID_COLOR_TEXT},
+    {"wkeys_color", ID_COLOR_WHITE_KEYS},
+    {"bkeys_color", ID_COLOR_BLACK_KEYS},
+    {"peaks_color", ID_COLOR_PEAKS},
+};
+
+static struct config_dialog_entry_t font_button_entries[] = {
+    {"font_button", ID_STRING_FONT},
+    {"font_tooltip_button", ID_STRING_FONT_TOOLTIP},
+};
+
+static struct config_dialog_entry_t combo_button_entries[] = {
+    {"window_combo", ID_WINDOW, window_functions, NUM_WINDOW}, 
+    {"alignment_combo", ID_ALIGNMENT, alignment_title, NUM_ALIGNMENT}, 
+    {"gradient_combo", ID_GRADIENT_ORIENTATION, grad_orientation, NUM_ORIENTATION}, 
+    {"mode_combo", ID_DRAW_STYLE, visual_mode, NUM_STYLE}, 
+};
 
 static int num_channel_buttons = 18;
 const char *channel_buttons[18][2] = {
@@ -346,63 +414,32 @@ set_channel_config_values (GtkWidget *popup)
 void
 set_config_values (GtkWidget *w)
 {
-    set_toggle_button (w, "llabel_check", config_get_int (ID_ENABLE_LEFT_LABELS));
-    set_toggle_button (w, "rlabel_check", config_get_int (ID_ENABLE_RIGHT_LABELS));
-    set_toggle_button (w, "tlabel_check", config_get_int (ID_ENABLE_TOP_LABELS));
-    set_toggle_button (w, "blabel_check", config_get_int (ID_ENABLE_BOTTOM_LABELS));
+    for (int i = 0; i < ARRAY_LEN (toggle_button_entries); i++) {
+        struct config_dialog_entry_t entry = toggle_button_entries[i];
+        set_toggle_button (w, entry.name, config_get_int (entry.id));
+    }
 
-    set_toggle_button (w, "hgrid_check", config_get_int (ID_ENABLE_HGRID));
-    set_toggle_button (w, "vgrid_check", config_get_int (ID_ENABLE_VGRID));
-    set_toggle_button (w, "ogrid_check", config_get_int (ID_ENABLE_OGRID));
+    for (int i = 0; i < ARRAY_LEN (spin_button_entries); i++) {
+        struct config_dialog_entry_t entry = spin_button_entries[i];
+        set_spin_button (w, entry.name, config_get_int (entry.id));
+    }
 
-    set_toggle_button (w, "white_keys_check", config_get_int (ID_ENABLE_WHITE_KEYS));
-    set_toggle_button (w, "black_keys_check", config_get_int (ID_ENABLE_BLACK_KEYS));
-
-    set_toggle_button (w, "fill_spectrum_check", config_get_int (ID_FILL_SPECTRUM));
-
-    set_toggle_button (w, "interpolate_check", config_get_int (ID_INTERPOLATE));
-
-    set_toggle_button (w, "tooltip_check", config_get_int (ID_ENABLE_TOOLTIP));
-    set_toggle_button (w, "spacing_check", config_get_int (ID_SPACING));
-    set_toggle_button (w, "gaps_check", config_get_int (ID_GAPS));
-    set_toggle_button (w, "led_check", config_get_int (ID_ENABLE_BAR_MODE));
-
-    set_toggle_button (w, "peaks_check", config_get_int (ID_ENABLE_PEAKS));
-    set_toggle_button (w, "amplitudes_check", config_get_int (ID_ENABLE_AMPLITUDES));
-
-    set_toggle_button (w, "peaks_color_check", config_get_int (ID_ENABLE_PEAKS_COLOR));
-
-    set_spin_button (w, "barw_spin", config_get_int (ID_BAR_W));
-    set_spin_button (w, "pitch_spin", config_get_int (ID_PITCH));
-    set_spin_button (w, "transpose_spin", config_get_int (ID_TRANSPOSE));
-    set_spin_button (w, "notes_max_spin", config_get_int (ID_NOTE_MAX));
-    set_spin_button (w, "notes_min_spin", config_get_int (ID_NOTE_MIN));
-    set_spin_button (w, "amp_max_spin", config_get_int (ID_AMPLITUDE_MAX));
-    set_spin_button (w, "amp_min_spin", config_get_int (ID_AMPLITUDE_MIN));
-    set_spin_button (w, "interval_spin", config_get_int (ID_REFRESH_INTERVAL));
-    set_spin_button (w, "peaks_htime_spin", config_get_int (ID_PEAK_DELAY));
-    set_spin_button (w, "amplitudes_htime_spin", config_get_int (ID_BAR_DELAY));
-    set_spin_button (w, "peaks_gravity_spin", config_get_int (ID_PEAK_FALLOFF));
-    set_spin_button (w, "amplitudes_gravity_spin", config_get_int (ID_BAR_FALLOFF));
+    for (int i = 0; i < ARRAY_LEN (color_button_entries); i++) {
+        struct config_dialog_entry_t entry = color_button_entries[i];
+        set_color_button (w, entry.name, config_get_color (entry.id));
+    }
     const int fft_index = log2 (spectrum_config_int[ID_FFT_SIZE].val) - 9;
     set_spin_button (w, "fft_spin", fft_index);
 
-    set_combo_box (w, "window_combo", window_functions, NUM_WINDOW, config_get_int (ID_WINDOW));
-    set_combo_box (w, "alignment_combo", alignment_title, NUM_ALIGNMENT, config_get_int (ID_ALIGNMENT));
-    set_combo_box (w, "gradient_combo", grad_orientation, NUM_ORIENTATION, config_get_int (ID_GRADIENT_ORIENTATION));
-    set_combo_box (w, "mode_combo", visual_mode, NUM_STYLE, config_get_int (ID_DRAW_STYLE));
+    for (int i = 0; i < ARRAY_LEN (combo_button_entries); i++) {
+        struct config_dialog_entry_t entry = combo_button_entries[i];
+        set_combo_box (w, entry.name, entry.values, entry.n_values, config_get_int (entry.id));
+    }
 
-    set_color_button (w, "background_color", config_get_color (ID_COLOR_BG));
-    set_color_button (w, "vgrid_color", config_get_color (ID_COLOR_VGRID));
-    set_color_button (w, "hgrid_color", config_get_color (ID_COLOR_HGRID));
-    set_color_button (w, "ogrid_color", config_get_color (ID_COLOR_OGRID));
-    set_color_button (w, "text_color", config_get_color (ID_COLOR_TEXT));
-    set_color_button (w, "wkeys_color", config_get_color (ID_COLOR_WHITE_KEYS));
-    set_color_button (w, "bkeys_color", config_get_color (ID_COLOR_BLACK_KEYS));
-    set_color_button (w, "peaks_color", config_get_color (ID_COLOR_PEAKS));
-
-    set_font_button (w, "font_button", config_get_string (ID_STRING_FONT));
-    set_font_button (w, "font_tooltip_button", config_get_string (ID_STRING_FONT_TOOLTIP));
+    for (int i = 0; i < ARRAY_LEN (font_button_entries); i++) {
+        struct config_dialog_entry_t entry = font_button_entries[i];
+        set_font_button (w, entry.name, config_get_string (entry.id));
+    }
 
     set_gradient_colors (w);
 }
@@ -426,61 +463,33 @@ get_channel_config_values (GtkWidget *w)
 static void
 get_config_values (GtkWidget *w)
 {
-    config_set_int (get_toggle_button (w, "llabel_check"), ID_ENABLE_LEFT_LABELS);
-    config_set_int (get_toggle_button (w, "rlabel_check"), ID_ENABLE_RIGHT_LABELS);
-    config_set_int (get_toggle_button (w, "tlabel_check"), ID_ENABLE_TOP_LABELS);
-    config_set_int (get_toggle_button (w, "blabel_check"), ID_ENABLE_BOTTOM_LABELS);
+    for (int i = 0; i < ARRAY_LEN (toggle_button_entries); i++) {
+        struct config_dialog_entry_t entry = toggle_button_entries[i];
+        config_set_int (get_toggle_button (w, entry.name), entry.id);
+    }
 
-    config_set_int (get_toggle_button (w, "hgrid_check"), ID_ENABLE_HGRID);
-    config_set_int (get_toggle_button (w, "vgrid_check"), ID_ENABLE_VGRID);
-    config_set_int (get_toggle_button (w, "ogrid_check"), ID_ENABLE_OGRID);
+    for (int i = 0; i < ARRAY_LEN (spin_button_entries); i++) {
+        struct config_dialog_entry_t entry = spin_button_entries[i];
+        config_set_int (get_spin_button (w, entry.name), entry.id);
+    }
 
-    config_set_int (get_toggle_button (w, "white_keys_check"), ID_ENABLE_WHITE_KEYS);
-    config_set_int (get_toggle_button (w, "black_keys_check"), ID_ENABLE_BLACK_KEYS);
+    for (int i = 0; i < ARRAY_LEN (color_button_entries); i++) {
+        struct config_dialog_entry_t entry = color_button_entries[i];
+        get_color_button (w, entry.name, entry.id);
+    }
 
-    config_set_int (get_toggle_button (w, "interpolate_check"), ID_INTERPOLATE);
-    config_set_int (get_toggle_button (w, "fill_spectrum_check"), ID_FILL_SPECTRUM);
-    config_set_int (get_toggle_button (w, "tooltip_check"), ID_ENABLE_TOOLTIP);
-    config_set_int (get_toggle_button (w, "spacing_check"), ID_SPACING);
-    config_set_int (get_toggle_button (w, "gaps_check"), ID_GAPS);
-    config_set_int (get_toggle_button (w, "led_check"), ID_ENABLE_BAR_MODE);
-
-    config_set_int (get_toggle_button (w, "peaks_check"), ID_ENABLE_PEAKS);
-    config_set_int (get_toggle_button (w, "amplitudes_check"), ID_ENABLE_AMPLITUDES);
-
-    config_set_int (get_toggle_button (w, "peaks_color_check"), ID_ENABLE_PEAKS_COLOR);
-
-    config_set_int (get_spin_button (w, "barw_spin"), ID_BAR_W);
-    config_set_int (get_spin_button (w, "pitch_spin"), ID_PITCH);
-    config_set_int (get_spin_button (w, "transpose_spin"), ID_TRANSPOSE);
-    config_set_int (get_spin_button (w, "notes_min_spin"), ID_NOTE_MIN);
-    config_set_int (get_spin_button (w, "notes_max_spin"), ID_NOTE_MAX);
-    config_set_int (get_spin_button (w, "amp_min_spin"), ID_AMPLITUDE_MIN);
-    config_set_int (get_spin_button (w, "amp_max_spin"), ID_AMPLITUDE_MAX);
-    config_set_int (get_spin_button (w, "interval_spin"), ID_REFRESH_INTERVAL);
-    config_set_int (get_spin_button (w, "peaks_htime_spin"), ID_PEAK_DELAY);
-    config_set_int (get_spin_button (w, "amplitudes_htime_spin"), ID_BAR_DELAY);
-    config_set_int (get_spin_button (w, "peaks_gravity_spin"), ID_PEAK_FALLOFF);
-    config_set_int (get_spin_button (w, "amplitudes_gravity_spin"), ID_BAR_FALLOFF);
     const int fft_index = get_spin_button (w, "fft_spin");
     config_set_int ((int)exp2 (fft_index + 9), ID_FFT_SIZE); 
 
-    config_set_int (get_combo_box (w, "window_combo"), ID_WINDOW); 
-    config_set_int (get_combo_box (w, "alignment_combo"), ID_ALIGNMENT); 
-    config_set_int (get_combo_box (w, "gradient_combo"), ID_GRADIENT_ORIENTATION); 
-    config_set_int (get_combo_box (w, "mode_combo"), ID_DRAW_STYLE); 
+    for (int i = 0; i < ARRAY_LEN (combo_button_entries); i++) {
+        struct config_dialog_entry_t entry = combo_button_entries[i];
+        config_set_int (get_combo_box (w, entry.name), entry.id); 
+    }
 
-    get_color_button (w, "background_color", ID_COLOR_BG);
-    get_color_button (w, "vgrid_color", ID_COLOR_VGRID);
-    get_color_button (w, "hgrid_color", ID_COLOR_HGRID);
-    get_color_button (w, "ogrid_color", ID_COLOR_OGRID);
-    get_color_button (w, "text_color", ID_COLOR_TEXT);
-    get_color_button (w, "wkeys_color", ID_COLOR_WHITE_KEYS);
-    get_color_button (w, "bkeys_color", ID_COLOR_BLACK_KEYS);
-    get_color_button (w, "peaks_color", ID_COLOR_PEAKS);
-
-    config_set_string (get_font_button (w, "font_button"), ID_STRING_FONT);
-    config_set_string (get_font_button (w, "font_tooltip_button"), ID_STRING_FONT_TOOLTIP);
+    for (int i = 0; i < ARRAY_LEN (font_button_entries); i++) {
+        struct config_dialog_entry_t entry = font_button_entries[i];
+        config_set_string (get_font_button (w, entry.name), entry.id);
+    }
 
     get_gradient_colors (w);
 }
