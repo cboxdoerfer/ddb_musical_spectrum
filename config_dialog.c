@@ -36,14 +36,10 @@
 #include "interface.h"
 #include "callbacks.h"
 
-static const char *window_functions[] = {"Blackmann-Harris", "Hanning", "None"};
-static size_t window_functions_size = 3;
-static const char *alignment_title[] = {"Left", "Right", "Center"};
-static size_t alignment_title_size = 3;
-static const char *grad_orientation[] = {"Vertical", "Horizontal"};
-static size_t grad_orientation_size = 2;
-static const char *visual_mode[] = {"Musical", "Solid"};
-static size_t visual_mode_size = 2;
+static const char *window_functions[NUM_WINDOW] = {"Blackmann-Harris", "Hanning", "None"};
+static const char *alignment_title[NUM_ALIGNMENT] = {"Left", "Right", "Center"};
+static const char *grad_orientation[NUM_ORIENTATION] = {"Vertical", "Horizontal"};
+static const char *visual_mode[NUM_STYLE] = {"Musical", "Solid"};
 
 static GtkWidget *channel_button = NULL;
 
@@ -391,10 +387,10 @@ set_config_values (GtkWidget *w)
     const int fft_index = log2 (spectrum_config_int[ID_FFT_SIZE].val) - 9;
     set_spin_button (w, "fft_spin", fft_index);
 
-    set_combo_box (w, "window_combo", window_functions, window_functions_size, config_get_int (ID_WINDOW));
-    set_combo_box (w, "alignment_combo", alignment_title, alignment_title_size, config_get_int (ID_ALIGNMENT));
-    set_combo_box (w, "gradient_combo", grad_orientation, grad_orientation_size, config_get_int (ID_GRADIENT_ORIENTATION));
-    set_combo_box (w, "mode_combo", visual_mode, visual_mode_size, config_get_int (ID_DRAW_STYLE));
+    set_combo_box (w, "window_combo", window_functions, NUM_WINDOW, config_get_int (ID_WINDOW));
+    set_combo_box (w, "alignment_combo", alignment_title, NUM_ALIGNMENT, config_get_int (ID_ALIGNMENT));
+    set_combo_box (w, "gradient_combo", grad_orientation, NUM_ORIENTATION, config_get_int (ID_GRADIENT_ORIENTATION));
+    set_combo_box (w, "mode_combo", visual_mode, NUM_STYLE, config_get_int (ID_DRAW_STYLE));
 
     set_color_button (w, "background_color", config_get_color (ID_COLOR_BG));
     set_color_button (w, "vgrid_color", config_get_color (ID_COLOR_VGRID));

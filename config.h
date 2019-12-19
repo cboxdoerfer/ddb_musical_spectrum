@@ -29,6 +29,7 @@ enum spectrum_window {
     NO_WINDOW,
     NUM_WINDOW
 };
+
 enum spectrum_alignment {
     LEFT_ALIGN,
     RIGHT_ALIGN,
@@ -39,8 +40,13 @@ enum spectrum_alignment {
 enum spectrum_style {
     MUSICAL_STYLE,
     SOLID_STYLE,
-    BAR_STYLE,
     NUM_STYLE
+};
+
+enum spectrum_orientation {
+    VERTICAL_ORIENTATION,
+    HORIZONTAL_ORIENTATION,
+    NUM_ORIENTATION
 };
 
 // Config Integer
