@@ -160,13 +160,6 @@ spectrum_configure_event (GtkWidget *widget, GdkEvent *event, gpointer user_data
 }
 
 static gboolean
-spectrum_button_press_event (GtkWidget *widget, GdkEventButton *event, gpointer user_data)
-{
-    //w_spectrum_t *w = user_data;
-    return TRUE;
-}
-
-static gboolean
 spectrum_button_release_event (GtkWidget *widget, GdkEventButton *event, gpointer user_data)
 {
     w_spectrum_t *w = user_data;
@@ -322,7 +315,6 @@ w_musical_spectrum_create (void) {
     g_signal_connect_after ((gpointer) w->drawarea, "draw", G_CALLBACK (spectrum_expose_event), w);
 #endif
     g_signal_connect_after ((gpointer) w->drawarea, "configure_event", G_CALLBACK (spectrum_configure_event), w);
-    g_signal_connect_after ((gpointer) w->drawarea, "button_press_event", G_CALLBACK (spectrum_button_press_event), w);
     g_signal_connect_after ((gpointer) w->drawarea, "button_release_event", G_CALLBACK (spectrum_button_release_event), w);
     g_signal_connect_after ((gpointer) w->drawarea, "motion_notify_event", G_CALLBACK (spectrum_motion_notify_event), w);
     g_signal_connect_after ((gpointer) w->drawarea, "enter_notify_event", G_CALLBACK (spectrum_enter_notify_event), w);
