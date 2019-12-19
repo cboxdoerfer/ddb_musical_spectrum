@@ -1,7 +1,7 @@
 Musical Spectrum plugin for DeaDBeeF audio player
 ====================
 
-This plugin is based on DeaDBeeFs stock spectrum. It offers variable FFT size (up to 32768), Blackmann-Harris and Hanning window functions, and various eye candy options.
+This plugin was inspired by the incredible [foo_musical_spectrum](https://wiki.hydrogenaud.io/index.php?title=Foobar2000:Components/Musical_Spectrum_(foo_musical_spectrum)) plugin for the foobar2000 audio player. It offers variable FFT size (up to 32768), Blackmann-Harris and Hanning window functions, and lots of other options..
 
 ## Installation
 
