@@ -32,6 +32,8 @@
 #include "spectrum.h"
 #include "config.h"
 
+#define CONFIG_PREFIX "musical_spectrum"
+
 struct spectrum_config_int_t spectrum_config_int[NUM_ID_INT] = {
     [ID_REFRESH_INTERVAL] =     {"refresh_interval",     0, 25},
     [ID_INTERPOLATE] =          {"interpolate",          0, 1},
@@ -108,7 +110,7 @@ static void
 config_save_int (const int index)
 {
     char config_name[200] = {};
-    snprintf (config_name, sizeof (config_name), "musical_spectrum.%s", spectrum_config_int[index].name);
+    snprintf (config_name, sizeof (config_name), CONFIG_PREFIX ".%s", spectrum_config_int[index].name);
     deadbeef->conf_set_int (config_name, spectrum_config_int[index].val);
 }
 
@@ -116,7 +118,7 @@ static void
 config_save_color (const int index)
 {
     char config_name[200] = {};
-    snprintf (config_name, sizeof (config_name), "musical_spectrum.color.%s", spectrum_config_color[index].name);
+    snprintf (config_name, sizeof (config_name), CONFIG_PREFIX ".color.%s", spectrum_config_color[index].name);
 
     GdkColor *color = &spectrum_config_color[index].val;
     char color_formated[100] = {};
@@ -128,7 +130,7 @@ static void
 config_save_string (const int index)
 {
     char config_name[200] = {};
-    snprintf (config_name, sizeof (config_name), "musical_spectrum.%s", spectrum_config_string[index].name);
+    snprintf (config_name, sizeof (config_name), CONFIG_PREFIX ".%s", spectrum_config_string[index].name);
     deadbeef->conf_set_str (config_name, spectrum_config_string[index].val);
 }
 
@@ -152,7 +154,7 @@ save_config (void)
     for (int i = 0; c != NULL; c = c->next, i++) {
         GdkColor *clr = c->data;
         snprintf (color, sizeof (color), "%d %d %d", clr->red, clr->green, clr->blue);
-        snprintf (conf_str, sizeof (conf_str), "%s%02d", "musical_spectrum.color.gradient_", i);
+        snprintf (conf_str, sizeof (conf_str), "%s%02d", CONFIG_PREFIX ".color.gradient_", i);
         deadbeef->conf_set_str (conf_str, color);
     }
 }
@@ -161,7 +163,7 @@ static void
 config_load_color (const int index)
 {
     char config_name[200] = {};
-    snprintf (config_name, sizeof (config_name), "musical_spectrum.color.%s", spectrum_config_color[index].name);
+    snprintf (config_name, sizeof (config_name), CONFIG_PREFIX ".color.%s", spectrum_config_color[index].name);
 
     char color_def_string[100] = {};
     GdkColor clr = spectrum_config_color[index].val_def;
@@ -175,7 +177,7 @@ static void
 config_load_int (const int index)
 {
     char config_name[200] = {};
-    snprintf (config_name, sizeof (config_name), "musical_spectrum.%s", spectrum_config_int[index].name);
+    snprintf (config_name, sizeof (config_name), CONFIG_PREFIX ".%s", spectrum_config_int[index].name);
     spectrum_config_int[index].val = deadbeef->conf_get_int (config_name, spectrum_config_int[index].val_def);
 }
 
@@ -183,7 +185,7 @@ static void
 config_load_string (const int index)
 {
     char config_name[200] = {};
-    snprintf (config_name, sizeof (config_name), "musical_spectrum.%s", spectrum_config_string[index].name);
+    snprintf (config_name, sizeof (config_name), CONFIG_PREFIX ".%s", spectrum_config_string[index].name);
     spectrum_config_string[index].val = deadbeef->conf_get_str_fast (config_name, spectrum_config_string[index].val_def);
 }
 
@@ -216,7 +218,7 @@ load_config (void)
     g_list_free_full (CONFIG_GRADIENT_COLORS, g_free);
     CONFIG_GRADIENT_COLORS = NULL;
     for (int i = 0; i < spectrum_config_int[ID_NUM_COLORS].val; i++) {
-        snprintf (conf_str, sizeof (conf_str), "%s%02d", "musical_spectrum.color.gradient_", i);
+        snprintf (conf_str, sizeof (conf_str), "%s%02d", CONFIG_PREFIX ".color.gradient_", i);
         if (i < num_default_colors) {
             color = deadbeef->conf_get_str_fast (conf_str, default_colors[i]);
         }
