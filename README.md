@@ -26,4 +26,8 @@ make
 
 ## Screenshot
 
-![](https://user-images.githubusercontent.com/6108388/70710858-6f132880-1ce0-11ea-9b8e-85cfa711eda8.png)
+![Spectrum 1](https://user-images.githubusercontent.com/6108388/70710858-6f132880-1ce0-11ea-9b8e-85cfa711eda8.png)
+
+![Spectrum 2](https://user-images.githubusercontent.com/6108388/71197942-048b5b00-2293-11ea-82fb-b7d2dc80d839.png)
+
+![Settings Dialog](https://user-images.githubusercontent.com/6108388/71197745-95156b80-2292-11ea-9960-a2707d4864d0.png)
