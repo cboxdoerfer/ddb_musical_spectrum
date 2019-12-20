@@ -103,7 +103,6 @@ create_config_dialog (void)
   GtkWidget *table5;
   GtkWidget *label107;
   GtkWidget *label106;
-  GtkWidget *label30;
   GtkWidget *vbox3;
   GtkWidget *llabel_check;
   GtkWidget *rlabel_check;
@@ -122,16 +121,17 @@ create_config_dialog (void)
   GtkWidget *tooltip_check;
   GtkWidget *font_tooltip_button;
   GtkWidget *font_button;
-  GtkWidget *alignment_combo;
   GtkWidget *mode_combo;
   GtkWidget *label31;
   GtkWidget *musical_box;
   GtkWidget *alignment17;
   GtkWidget *musical_vbox;
-  GtkWidget *hbox8;
+  GtkWidget *table6;
   GtkWidget *label108;
   GObject *barw_spin_adj;
   GtkWidget *barw_spin;
+  GtkWidget *label30;
+  GtkWidget *alignment_combo;
   GtkWidget *spacing_check;
   GtkWidget *gaps_check;
   GtkWidget *led_check;
@@ -541,7 +541,7 @@ create_config_dialog (void)
   gtk_widget_show (vbox2);
   gtk_container_add (GTK_CONTAINER (alignment4), vbox2);
 
-  table5 = gtk_table_new (12, 2, FALSE);
+  table5 = gtk_table_new (11, 2, FALSE);
   gtk_widget_show (table5);
   gtk_box_pack_start (GTK_BOX (vbox2), table5, FALSE, TRUE, 0);
   gtk_table_set_row_spacings (GTK_TABLE (table5), 10);
@@ -560,13 +560,6 @@ create_config_dialog (void)
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label106), 1, 0.5);
-
-  label30 = gtk_label_new (_("Alignment:"));
-  gtk_widget_show (label30);
-  gtk_table_attach (GTK_TABLE (table5), label30, 0, 1, 9, 10,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-  gtk_misc_set_alignment (GTK_MISC (label30), 1, 0.5);
 
   vbox3 = gtk_vbox_new (FALSE, 0);
   gtk_widget_show (vbox3);
@@ -658,28 +651,22 @@ create_config_dialog (void)
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
 
-  alignment_combo = gtk_combo_box_text_new ();
-  gtk_widget_show (alignment_combo);
-  gtk_table_attach (GTK_TABLE (table5), alignment_combo, 1, 2, 9, 10,
-                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
-                    (GtkAttachOptions) (GTK_FILL), 0, 0);
-
   mode_combo = gtk_combo_box_text_new ();
   gtk_widget_show (mode_combo);
-  gtk_table_attach (GTK_TABLE (table5), mode_combo, 1, 2, 10, 11,
+  gtk_table_attach (GTK_TABLE (table5), mode_combo, 1, 2, 9, 10,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (GTK_FILL), 0, 0);
 
   label31 = gtk_label_new (_("Style:"));
   gtk_widget_show (label31);
-  gtk_table_attach (GTK_TABLE (table5), label31, 0, 1, 10, 11,
+  gtk_table_attach (GTK_TABLE (table5), label31, 0, 1, 9, 10,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label31), 1, 0.5);
 
   musical_box = gtk_frame_new (NULL);
   gtk_widget_show (musical_box);
-  gtk_table_attach (GTK_TABLE (table5), musical_box, 1, 2, 11, 12,
+  gtk_table_attach (GTK_TABLE (table5), musical_box, 1, 2, 10, 11,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL), 0, 0);
 
@@ -692,19 +679,38 @@ create_config_dialog (void)
   gtk_widget_show (musical_vbox);
   gtk_container_add (GTK_CONTAINER (alignment17), musical_vbox);
 
-  hbox8 = gtk_hbox_new (FALSE, 4);
-  gtk_widget_show (hbox8);
-  gtk_box_pack_start (GTK_BOX (musical_vbox), hbox8, TRUE, TRUE, 0);
+  table6 = gtk_table_new (2, 2, FALSE);
+  gtk_widget_show (table6);
+  gtk_box_pack_start (GTK_BOX (musical_vbox), table6, TRUE, TRUE, 0);
+  gtk_table_set_row_spacings (GTK_TABLE (table6), 4);
+  gtk_table_set_col_spacings (GTK_TABLE (table6), 4);
 
   label108 = gtk_label_new (_("Bar width:"));
   gtk_widget_show (label108);
-  gtk_box_pack_start (GTK_BOX (hbox8), label108, FALSE, FALSE, 0);
+  gtk_table_attach (GTK_TABLE (table6), label108, 0, 1, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label108), 1, 0.5);
 
   barw_spin_adj = G_OBJECT(gtk_adjustment_new (1, 0, 100, 1, 10, 10));
   barw_spin = gtk_spin_button_new (GTK_ADJUSTMENT (barw_spin_adj), 1, 0);
   gtk_widget_show (barw_spin);
-  gtk_box_pack_start (GTK_BOX (hbox8), barw_spin, TRUE, TRUE, 0);
+  gtk_table_attach (GTK_TABLE (table6), barw_spin, 1, 2, 1, 2,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  label30 = gtk_label_new (_("Alignment:"));
+  gtk_widget_show (label30);
+  gtk_table_attach (GTK_TABLE (table6), label30, 0, 1, 0, 1,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label30), 1, 0.5);
+
+  alignment_combo = gtk_combo_box_text_new ();
+  gtk_widget_show (alignment_combo);
+  gtk_table_attach (GTK_TABLE (table6), alignment_combo, 1, 2, 0, 1,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (GTK_FILL), 0, 0);
 
   spacing_check = gtk_check_button_new_with_mnemonic (_("Show spacing"));
   gtk_widget_show (spacing_check);
@@ -1033,7 +1039,6 @@ create_config_dialog (void)
   GLADE_HOOKUP_OBJECT (config_dialog, table5, "table5");
   GLADE_HOOKUP_OBJECT (config_dialog, label107, "label107");
   GLADE_HOOKUP_OBJECT (config_dialog, label106, "label106");
-  GLADE_HOOKUP_OBJECT (config_dialog, label30, "label30");
   GLADE_HOOKUP_OBJECT (config_dialog, vbox3, "vbox3");
   GLADE_HOOKUP_OBJECT (config_dialog, llabel_check, "llabel_check");
   GLADE_HOOKUP_OBJECT (config_dialog, rlabel_check, "rlabel_check");
@@ -1052,15 +1057,16 @@ create_config_dialog (void)
   GLADE_HOOKUP_OBJECT (config_dialog, tooltip_check, "tooltip_check");
   GLADE_HOOKUP_OBJECT (config_dialog, font_tooltip_button, "font_tooltip_button");
   GLADE_HOOKUP_OBJECT (config_dialog, font_button, "font_button");
-  GLADE_HOOKUP_OBJECT (config_dialog, alignment_combo, "alignment_combo");
   GLADE_HOOKUP_OBJECT (config_dialog, mode_combo, "mode_combo");
   GLADE_HOOKUP_OBJECT (config_dialog, label31, "label31");
   GLADE_HOOKUP_OBJECT (config_dialog, musical_box, "musical_box");
   GLADE_HOOKUP_OBJECT (config_dialog, alignment17, "alignment17");
   GLADE_HOOKUP_OBJECT (config_dialog, musical_vbox, "musical_vbox");
-  GLADE_HOOKUP_OBJECT (config_dialog, hbox8, "hbox8");
+  GLADE_HOOKUP_OBJECT (config_dialog, table6, "table6");
   GLADE_HOOKUP_OBJECT (config_dialog, label108, "label108");
   GLADE_HOOKUP_OBJECT (config_dialog, barw_spin, "barw_spin");
+  GLADE_HOOKUP_OBJECT (config_dialog, label30, "label30");
+  GLADE_HOOKUP_OBJECT (config_dialog, alignment_combo, "alignment_combo");
   GLADE_HOOKUP_OBJECT (config_dialog, spacing_check, "spacing_check");
   GLADE_HOOKUP_OBJECT (config_dialog, gaps_check, "gaps_check");
   GLADE_HOOKUP_OBJECT (config_dialog, led_check, "led_check");
