@@ -217,7 +217,9 @@ load_config (void)
 
     const char *color = NULL;
     char conf_str[100] = {};
-    g_list_free_full (CONFIG_GRADIENT_COLORS, g_free);
+
+    g_list_foreach (CONFIG_GRADIENT_COLORS, (GFunc) g_free, NULL);
+    g_list_free (CONFIG_GRADIENT_COLORS);
     CONFIG_GRADIENT_COLORS = NULL;
     for (int i = 0; i < spectrum_config_int[ID_NUM_COLORS].val; i++) {
         snprintf (conf_str, sizeof (conf_str), "%s%02d", CONFIG_PREFIX ".color.gradient_", i);

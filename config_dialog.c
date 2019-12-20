@@ -151,7 +151,7 @@ gradient_draw_generic_event (GtkWidget *widget, cairo_t *cr)
     GList *colors = NULL;
     for (GList *c = children; c != NULL; c = c->next) {
         GtkColorButton *button = GTK_COLOR_BUTTON (c->data);
-        GdkColor *clr = malloc (sizeof (GdkColor));
+        GdkColor *clr = g_new0 (GdkColor, 1);
         gtk_color_button_get_color (button, clr);
         colors = g_list_append (colors, clr);
     }
@@ -168,7 +168,8 @@ gradient_draw_generic_event (GtkWidget *widget, cairo_t *cr)
     cairo_rectangle (cr, 0, 0, a.width, a.height);
     cairo_fill (cr);
 
-    g_list_free_full (colors, free);
+    g_list_foreach (colors, (GFunc) g_free, NULL);
+    g_list_free (colors);
 
     return;
 }
@@ -272,7 +273,8 @@ set_font_button (GtkWidget *w, const char *w_name, const char *font)
 static void
 get_gradient_colors (GtkWidget *w)
 {
-    g_list_free_full (CONFIG_GRADIENT_COLORS, g_free);
+    g_list_foreach (CONFIG_GRADIENT_COLORS, (GFunc) g_free, NULL);
+    g_list_free (CONFIG_GRADIENT_COLORS);
     CONFIG_GRADIENT_COLORS = NULL;
 
     GtkContainer *color_box = GTK_CONTAINER (lookup_widget (w, "color_box"));

@@ -88,7 +88,8 @@ w_spectrum_destroy (ddb_gtkui_widget_t *w) {
         s->drawtimer = 0;
     }
     if (CONFIG_GRADIENT_COLORS) {
-        g_list_free_full (CONFIG_GRADIENT_COLORS, g_free);
+        g_list_foreach (CONFIG_GRADIENT_COLORS, (GFunc) g_free, NULL);
+        g_list_free (CONFIG_GRADIENT_COLORS);
         CONFIG_GRADIENT_COLORS = NULL;
     }
     if (s->data) {

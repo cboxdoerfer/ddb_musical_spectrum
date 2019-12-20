@@ -88,3 +88,21 @@ void gtk_combo_box_text_prepend_text (GtkComboBoxText *combo_box, const gchar *t
 gchar *gtk_combo_box_text_get_active_text  (GtkComboBoxText *combo_box);
 #endif
 
+#if !GTK_CHECK_VERSION(2,18,0)
+void                gtk_widget_set_allocation           (GtkWidget *widget,
+                                                         const GtkAllocation *allocation);
+
+void                gtk_widget_get_allocation           (GtkWidget *widget,
+                                                         GtkAllocation *allocation);
+
+#define gtk_widget_set_can_focus(widget, canfocus) {if (canfocus) GTK_WIDGET_SET_FLAGS (widget, GTK_CAN_FOCUS); else GTK_WIDGET_UNSET_FLAGS(widget, GTK_CAN_FOCUS);}
+
+#define gtk_widget_get_can_focus(widget) (GTK_WIDGET_CAN_FOCUS (widget))
+
+#define gtk_widget_has_focus(widget) (GTK_WIDGET_HAS_FOCUS (widget))
+
+#define gtk_widget_set_can_default(widget, candefault) {if (candefault) GTK_WIDGET_SET_FLAGS (widget, GTK_CAN_DEFAULT); else GTK_WIDGET_UNSET_FLAGS(widget, GTK_CAN_DEFAULT);}
+
+#define gtk_widget_get_can_default(widget) (GTK_WIDGET_CAN_DEFAULT (widget));
+#endif
+
