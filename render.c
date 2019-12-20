@@ -9,6 +9,7 @@
 #include "utils.h"
 #include "draw_utils.h"
 #include "spectrum.h"
+#include "support.h"
 
 #define TOP_EXTRA_SPACE 10
 #define DB_GRID_DISTANCE 10
