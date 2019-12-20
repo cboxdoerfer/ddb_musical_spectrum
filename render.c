@@ -583,7 +583,7 @@ spectrum_draw_cairo (struct spectrum_render_t *render, cairo_t *cr, int bands, c
     // draw spectrum
     cairo_set_source (cr, render->pattern);
 
-    cairo_set_antialias (cr, CAIRO_ANTIALIAS_BEST);
+    cairo_set_antialias (cr, CAIRO_ANTIALIAS_DEFAULT);
     cairo_set_line_width (cr, 1);
     cairo_move_to (cr, r->x, r->height);
     double py = r->height - amp_scale * render->bars[0];
