@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <math.h>
 #include <gdk/gdk.h>
 #include <stdint.h>
