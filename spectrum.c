@@ -124,17 +124,15 @@ spectrum_wavedata_listener (void *ctx, ddb_audio_data_t *data) {
     g_assert (w->data->samples != NULL);
 
     const int channels = data->fmt->channels;
-    const int nsamples = data->nframes;
-    const int sz = channels * MIN (config_get_int (ID_FFT_SIZE), nsamples);
-    const int n = channels * config_get_int (ID_FFT_SIZE) - sz;
-    memmove (w->data->samples, w->data->samples + sz, n * sizeof (double));
+    const int nframes = data->nframes;
+    const int fft_size = config_get_int (ID_FFT_SIZE);
+    const int sz = channels * MIN (fft_size, nframes);
+    const int n = channels * fft_size - sz;
+    memmove (w->data->samples, w->data->samples + sz, n * sizeof (float));
+    memcpy (w->data->samples + n, data->data, sz * sizeof (float));
 
     w->data->num_channels = channels;
     w->data->channel_mask = data->fmt->channelmask;
-    int sample_index = n;
-    for (int i = 0; i < sz; i++, sample_index++) {
-        w->data->samples[sample_index] = data->data[i];
-    }
 }
 
 static gboolean

@@ -127,7 +127,7 @@ struct spectrum_data_t *
 spectrum_data_new (void)
 {
     struct spectrum_data_t *s_data = calloc (1, sizeof (struct spectrum_data_t));
-    s_data->samples = calloc (MAX_FFT_SIZE * DDB_FREQ_MAX_CHANNELS, sizeof (double));
+    s_data->samples = calloc (MAX_FFT_SIZE * DDB_FREQ_MAX_CHANNELS, sizeof (float));
     s_data->spectrum = calloc (MAX_FFT_SIZE, sizeof (double));
     s_data->window = calloc (MAX_FFT_SIZE, sizeof (double));
     s_data->frequency = calloc (MAX_FFT_SIZE, sizeof (double));
@@ -341,20 +341,20 @@ spectrum_bands_fill (w_spectrum_t *w, int num_bands, int playback_status)
         y[i] = w->data->spectrum[w->data->keys[x[i]]];
     }
 
-    int xx = 0;
+    int band = 0;
     // Interpolate
     if (config_get_int (ID_INTERPOLATE)) {
         for (int i = 0; i < low_res_end; i++) {
             const int i_end = MIN (i + 1, low_res_end - 1);
-            for (xx = x[i]; xx < x[i_end]; xx++) {
-                const double mu = (double)(xx - x[i]) / (double)(x[i_end] - x[i]);
+            for (int x_temp = x[i]; x_temp < x[i_end]; x_temp++) {
+                const double mu = (double)(x_temp - x[i]) / (double)(x[i_end] - x[i]);
                 const double amp = hermite_interpolate (y, mu, i-1, 0.35, 0);
-                spectrum_band_set (w->render, playback_status, amp, xx);
+                spectrum_band_set (w->render, playback_status, amp, band++);
             }
         }
     }
     // Fill the rest of the bands which don't need to be interpolated
-    for (int i = xx; i < num_bands; ++i) {
+    for (int i = band; i < num_bands; ++i) {
         const double amp = spectrum_get_value (w, i, num_bands);
         spectrum_band_set (w->render, playback_status, amp, i);
     }

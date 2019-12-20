@@ -136,10 +136,6 @@ hermite_interpolate (double *y,
                      double tension,
                      double bias)
 {
-    int debug = 0;
-    if (start >= 4) {
-        debug = 1;
-    }
     double m0,m1,mu2,mu3;
     double a0,a1,a2,a3;
 
@@ -151,10 +147,9 @@ hermite_interpolate (double *y,
     else {
         y0 = y[start];
     }
-    double y1 = y[start + 1];
-    double y2 = y[start + 2];
-    double y3 = y[start + 3];
-
+    const double y1 = y[start + 1];
+    const double y2 = y[start + 2];
+    const double y3 = y[start + 3];
 
     mu2 = mu * mu;
     mu3 = mu2 * mu;
@@ -169,10 +164,6 @@ hermite_interpolate (double *y,
 
     const double res = a0*y1+a1*m0+a2*m1+a3*y2;
 
-    if (debug) {
-        //printf("debug %d: %f, %f, %f, %f at %f\n", start, y0, y1, y2, y3, mu);
-        //printf("result: %f\n", res);
-    }
     return res;
 }
 
