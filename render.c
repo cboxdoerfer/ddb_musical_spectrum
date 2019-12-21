@@ -654,6 +654,13 @@ spectrum_font_width_max (PangoLayout *layout)
 }
 
 static void
+spectrum_cairo_set_source_color_rgba (cairo_t *cr, GdkColor *clr, double alpha)
+{
+    const double d = 65535.0;
+    cairo_set_source_rgba (cr, clr->red / d , clr->green / d, clr->blue / d, alpha);
+}
+
+static void
 spectrum_draw_labels_freq (cairo_t *cr, PangoLayout *layout, struct spectrum_render_ctx_t *r_ctx, cairo_rectangle_t *r)
 {
     const double note_width = r_ctx->note_width;
@@ -681,11 +688,11 @@ spectrum_draw_labels_freq (cairo_t *cr, PangoLayout *layout, struct spectrum_ren
         }
         else if (show_full_steps && is_full_step (r)) {
             snprintf (s, sizeof (s), "%s", note_array[r]);
-            cairo_set_source_rgba (cr, 0.6, 0.6, 0.6, 1);
+            spectrum_cairo_set_source_color_rgba (cr, config_get_color (ID_COLOR_TEXT), 0.75);
         }
         else if (show_half_steps) {
             snprintf (s, sizeof (s), "%s", note_array[r]);
-            cairo_set_source_rgba (cr, 0.3, 0.3, 0.3, 1);
+            spectrum_cairo_set_source_color_rgba (cr, config_get_color (ID_COLOR_TEXT), 0.5);
         }
         else {
             continue;
@@ -804,11 +811,11 @@ spectrum_draw_tooltip (struct spectrum_render_t *render,
     const double x_rect = x - padding;
     const double y_rect = y - padding;
 
-    cairo_set_source_rgba (cr, 0, 0, 0, 1);
+    gdk_cairo_set_source_color (cr, config_get_color (ID_COLOR_BG));
     cairo_rectangle (cr, x_rect, y_rect, w_rect, h_rect);
     cairo_fill (cr);
 
-    cairo_set_source_rgba (cr, 0.9, 0.9, 0.9, 1);
+    gdk_cairo_set_source_color (cr, config_get_color (ID_COLOR_TEXT));
     cairo_set_line_width (cr, 2.0);
     cairo_rectangle (cr, x_rect, y_rect, w_rect, h_rect);
     cairo_stroke (cr);
