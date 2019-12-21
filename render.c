@@ -778,7 +778,7 @@ spectrum_draw_tooltip (struct spectrum_render_t *render,
     const double note_width = r_ctx->note_width;
 
     const double x_bar = m_ctx->x - r->x;
-    const int pos = (int)(x_bar/note_width + config_get_int (ID_NOTE_MIN));
+    const int pos = (int)floor(x_bar/note_width + config_get_int (ID_NOTE_MIN));
     const int freq_pos = (int)(x_bar/band_width);
 
     if (pos < config_get_int (ID_NOTE_MIN) || pos > config_get_int (ID_NOTE_MAX)
