@@ -703,8 +703,7 @@ static void
 spectrum_draw_labels_db (cairo_t *cr, PangoLayout *layout, cairo_rectangle_t *r)
 {
     const int hgrid_num = get_num_db_gridlines ();
-    pango_layout_set_text (layout, "-100dB", -1);
-    const double font_height = spectrum_pango_font_height (layout, "-100dB");
+    const double font_height = spectrum_pango_font_height (layout, "-120dB");
     if (r->height > 2*hgrid_num && r->width > 1) {
         gdk_cairo_set_source_color (cr, config_get_color (ID_COLOR_TEXT));
         const double y = r->y + TOP_EXTRA_SPACE;
