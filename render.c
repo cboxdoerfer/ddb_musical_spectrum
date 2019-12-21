@@ -413,10 +413,10 @@ spectrum_draw_cairo_static (w_spectrum_t *w, cairo_t *cr, double note_width, int
     cairo_set_line_width (cr, 1);
 
     const double y = r->y;
-    double x = r->x;
     const double height = r->height;
     if (config_get_int (ID_ENABLE_WHITE_KEYS) || config_get_int (ID_ENABLE_BLACK_KEYS)) {
         int num_notes = get_num_notes ();
+        double x = r->x;
         for (int i = 0; i < num_notes; i++, x += note_width) {
             const int r = (config_get_int (ID_NOTE_MIN) + i) % NUM_NOTES_FOR_OCTAVE;
             if (is_full_step (r)) {
