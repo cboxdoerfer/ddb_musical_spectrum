@@ -239,11 +239,12 @@ do_fft (struct spectrum_data_t *s)
     }
 
     deadbeef->mutex_lock (s->mutex);
-    for (int i = 0; i < MAX_FFT_SIZE; ++i) {
+
+    const int fft_size = config_get_int (ID_FFT_SIZE);
+    for (int i = 0; i < fft_size/2; ++i) {
         s->spectrum[i] = -DBL_MAX;
     }
 
-    const int fft_size = config_get_int (ID_FFT_SIZE);
     const double fft_squared = fft_size * fft_size;
 
     for (int ch = 0; ch < s->num_channels; ++ch) {
@@ -274,7 +275,7 @@ spectrum_get_value (w_spectrum_t *w, int band, int num_bands)
     const double k2 = w->data->keys[MIN(band + 1, num_bands -1)];
 
     const int start = ceil((k1 - k0)/2.0 + k0);
-    const int end = ceil((k2 - k1)/2.0 + k1);
+    const int end = MIN (ceil((k2 - k1)/2.0 + k1), config_get_int (ID_FFT_SIZE)/2);
 
     if (start >= end) {
         return w->data->spectrum[end];
