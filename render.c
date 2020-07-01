@@ -241,7 +241,7 @@ do_fft (struct spectrum_data_t *s)
     deadbeef->mutex_lock (s->mutex);
 
     const int fft_size = config_get_int (ID_FFT_SIZE);
-    for (int i = 0; i < fft_size/2; ++i) {
+    for (int i = 0; i < fft_size; ++i) {
         s->spectrum[i] = -DBL_MAX;
     }
 
